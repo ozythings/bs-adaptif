@@ -1,0 +1,14 @@
+@import 'tailwindcss';
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
+.mat-mdc-form-field {
+  @apply w-full;
+}
+
+.mat-mdc-snack-bar-container {
+  @apply mt-4;
+}
+
+.mat-mdc-dialog-container {
+  @apply rounded-lg;
+}
