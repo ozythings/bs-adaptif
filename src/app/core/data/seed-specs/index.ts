@@ -1,0 +1,10 @@
+export { INSTRUCTOR_SPECS } from './instructors';
+export { COURSE_SPECS } from './courses';
+export { OUTCOME_SPECS } from './outcomes';
+export { QUESTION_SPECS } from './questions';
+export { EXAM_SPECS } from './exams';
+export { BLUEPRINT_SPECS } from './blueprints';
+export { CONTENT_SPECS } from './contents';
+export { RUBRIC_SPECS } from './rubrics';
+export { PARTICIPANT_SPECS } from './participants';
+export { COHORT_SPECS } from './cohorts';
