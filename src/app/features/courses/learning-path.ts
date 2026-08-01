@@ -38,7 +38,7 @@ const FORMAT_LABELS: Record<ContentFormat, string> = {
       } @else if (error(); as err) {
         <app-error-state [message]="err" [retryable]="true" (retry)="loadData()" />
       } @else if (pd(); as p) {
-        @if (isParticipant() && !p.isEnrolled && p.enrollmentStatus !== 'approved' && p.enrollmentStatus !== 'completed') {
+        @if (isStudent() && !p.isEnrolled && p.enrollmentStatus !== 'approved' && p.enrollmentStatus !== 'completed') {
           <div class="bg-amber-50 border border-amber-200 rounded-lg p-6 text-center" role="alert">
             <mat-icon class="text-amber-500 text-4xl mb-2">lock</mat-icon>
             <p class="text-amber-800 font-medium mb-1">
@@ -94,7 +94,7 @@ const FORMAT_LABELS: Record<ContentFormat, string> = {
                       }
                     </div>
                   </div>
-                  @if (isParticipant() && !c.isLocked && c.status === 'active') {
+                  @if (isStudent() && !c.isLocked && c.status === 'active') {
                     <div class="flex-shrink-0">
                       @if (isDone(c.id)) {
                         <button mat-stroked-button color="primary" (click)="markStudied(c.id)">
@@ -108,7 +108,7 @@ const FORMAT_LABELS: Record<ContentFormat, string> = {
                     </div>
                   }
                 </div>
-                @if (isParticipant() && p.recommendations.get(c.id); as rec) {
+                @if (isStudent() && p.recommendations.get(c.id); as rec) {
                   <div class="mt-3 pt-3 border-t border-gray-100">
                     <app-recommendation-reason-card
                       [recommendation]="rec"
@@ -119,7 +119,7 @@ const FORMAT_LABELS: Record<ContentFormat, string> = {
             }
           </div>
 
-          @if (isParticipant() && allRequiredStudied() && p.isEnrolled && p.enrollmentStatus !== 'completed') {
+          @if (isStudent() && allRequiredStudied() && p.isEnrolled && p.enrollmentStatus !== 'completed') {
             <div class="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-4">
               <span class="text-green-800 font-medium">Tüm zorunlu içerikler en az 1 kez çalışıldı. Kursu tamamlamak için aşağıdaki butonu kullanın.</span>
               <button mat-raised-button color="primary" (click)="finishCourse()">
@@ -130,7 +130,7 @@ const FORMAT_LABELS: Record<ContentFormat, string> = {
         }
         </div>
 
-        @if (isParticipant()) {
+        @if (isStudent()) {
         <div class="lg:w-80 lg:flex-shrink-0 mt-4 lg:mt-0">
           <mat-card appearance="outlined" class="p-4">
             <h2 class="text-lg font-semibold text-gray-900 mb-3">Kazanım Ustalık Puanları</h2>
@@ -184,7 +184,7 @@ export class LearningPathPage implements OnInit {
   error = signal<string | null>(null);
   pd = signal<LearningPathData | null>(null);
 
-  isParticipant = computed(() => this.currentUser.user().role === UserRole.PARTICIPANT);
+  isStudent = computed(() => this.currentUser.user().role === UserRole.STUDENT);
 
   ngOnInit() {
     this.loadData();
@@ -261,7 +261,7 @@ export class LearningPathPage implements OnInit {
   }
 
   markStudied(contentId: number): void {
-    if (!this.isParticipant()) return;
+    if (!this.isStudent()) return;
     const id = Number(this.route.snapshot.paramMap.get('id'));
     const p = this.pd();
     if (!p) return;
@@ -283,7 +283,7 @@ export class LearningPathPage implements OnInit {
   }
 
   finishCourse(): void {
-    if (!this.isParticipant()) return;
+    if (!this.isStudent()) return;
     const id = Number(this.route.snapshot.paramMap.get('id'));
 
     this.notification.show('Kurs tamamlandı ✓', 'success');

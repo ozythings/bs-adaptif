@@ -24,6 +24,7 @@ import { OutcomesFacade } from './features/outcomes/data-access/outcomes.facade'
 import { ParticipantFacade } from './features/participant-edit/data-access/participant.facade';
 import { QuestionBankFacade } from './features/questions/data-access/question-bank.facade';
 import { StudentAnalyticsFacade } from './features/student-analytics/data-access/student-analytics.facade';
+import { AdaptivePlanFacade } from './features/adaptive-plan/adaptive-plan.facade';
 
 export const APP_SERVICES = [
   MockApiService,
@@ -48,6 +49,7 @@ export const APP_SERVICES = [
   GradingFacade,
   ItemAnalysisFacade,
   LearningFacade,
+  AdaptivePlanFacade,
   OutcomesFacade,
   ParticipantFacade,
   QuestionBankFacade,

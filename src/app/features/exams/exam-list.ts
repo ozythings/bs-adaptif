@@ -117,7 +117,7 @@ import { StatusTextPipe } from '@shared/pipes';
               <th mat-header-cell *matHeaderCellDef></th>
               <td mat-cell *matCellDef="let item">
                 <div class="flex gap-1 items-center">
-                  @if (isParticipant && item.exam.status === 'published') {
+                  @if (isStudent && item.exam.status === 'published') {
                     @if (item.completedAttempt) {
                       <div class="flex items-center gap-2 px-3 py-1 rounded-lg cursor-not-allowed"
                         [class.bg-green-100]="item.completedAttempt.scorePercentage >= item.exam.passingScore"
@@ -137,7 +137,7 @@ import { StatusTextPipe } from '@shared/pipes';
                       </button>
                     }
                   }
-                  @if (!isObserver && !isParticipant) {
+                  @if (!isObserver && !isStudent) {
                     @if (item.exam.status !== 'published') {
                       <button mat-icon-button (click)="showEditDialog(item.exam)" matTooltip="Düzenle">
                         <mat-icon class="text-sm !text-gray-700">edit</mat-icon>
@@ -291,7 +291,7 @@ export class ExamListPage implements OnInit {
   displayedColumns = ['title', 'duration', 'questionCount', 'passingScore', 'status', 'actions'];
 
   get isObserver() { return this.currentUser.user().role === UserRole.OBSERVER; }
-  get isParticipant() { return this.currentUser.user().role === UserRole.PARTICIPANT; }
+  get isStudent() { return this.currentUser.user().role === UserRole.STUDENT; }
 
   ngOnInit() {
     this.courses.set(this.facade.getAllCourses());

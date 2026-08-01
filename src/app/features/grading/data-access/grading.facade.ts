@@ -274,6 +274,6 @@ export class GradingFacade {
   }
 
   private canManage(): boolean {
-    return this.currentUser.hasAnyRole([UserRole.INSTRUCTOR, UserRole.ADMIN, UserRole.PLATFORM_ADMIN]);
+    return this.currentUser.hasAnyRole([UserRole.INSTRUCTOR, UserRole.PLATFORM_ADMIN]);
   }
 }

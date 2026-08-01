@@ -40,7 +40,7 @@ export class ExamsFacade {
 
   getExams(filter: ExamFilter): Observable<{ items: ExamListItem[]; total: number }> {
     const userId = this.currentUser.getUser().id;
-    const studentId = this.currentUser.getUser().participantId ?? userId;
+    const studentId = this.currentUser.getUser().studentId ?? userId;
     const scope = this.dataScope.getScope();
     const isInstructor = this.currentUser.getUser().role === UserRole.INSTRUCTOR;
 
@@ -48,8 +48,8 @@ export class ExamsFacade {
     if (isInstructor && scope.allowedCourseIds) {
       exams = exams.filter(e => scope.allowedCourseIds!.includes(e.courseId));
     }
-    const isParticipant = this.currentUser.getUser().role === UserRole.PARTICIPANT;
-    if (isParticipant) {
+    const isStudent = this.currentUser.getUser().role === UserRole.STUDENT;
+    if (isStudent) {
       const enrolledIds = ENROLLMENTS_SEED
         .filter(e => e.participantId === studentId && !e.deletedAt)
         .map(e => e.courseId);
@@ -113,7 +113,7 @@ export class ExamsFacade {
     }
 
     const userId = this.currentUser.getUser().id;
-    const studentId = this.currentUser.getUser().participantId ?? userId;
+    const studentId = this.currentUser.getUser().studentId ?? userId;
     const completedAttempt = ATTEMPTS_SEED.find(
       a => a.examId === examId && a.studentId === studentId && a.status === ResultStatus.FINALIZED
     );
@@ -211,6 +211,6 @@ export class ExamsFacade {
   }
 
   private canManage(): boolean {
-    return this.currentUser.hasAnyRole([UserRole.INSTRUCTOR, UserRole.ASSESSMENT_SPECIALIST, UserRole.PROGRAM_MANAGER, UserRole.ADMIN, UserRole.PLATFORM_ADMIN]);
+    return this.currentUser.hasAnyRole([UserRole.INSTRUCTOR, UserRole.ASSESSMENT_SPECIALIST, UserRole.PROGRAM_MANAGER, UserRole.PLATFORM_ADMIN]);
   }
 }

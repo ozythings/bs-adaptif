@@ -26,7 +26,7 @@ export class SessionFacade {
   private store = inject(EntityStore);
   private gradingFacade = inject(GradingFacade);
 
-  private sessions = signal<ExamSession[]>(this.store.sessions());
+  private sessions = computed(() => this.store.sessions());
   private drafts = signal<AnswerDraft[]>(this.loadDrafts());
   private nextSessionId = Math.max(...this.store.sessions().map(s => s.id)) + 1;
   private channel: BroadcastChannel;
@@ -122,6 +122,13 @@ export class SessionFacade {
   startExamSession(exam: Exam, userId: number): ExamSession {
     this.sessionService.endSessionsForExam(exam.id, userId);
 
+    const oldSessions = this.sessions().filter(
+      s => s.userId === userId && s.examId === exam.id && s.status === SessionStatus.ACTIVE
+    );
+    for (const s of oldSessions) {
+      this.store.updateSession(s.id, { status: SessionStatus.EXPIRED });
+    }
+
     const token = 'sess_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
     this.sessionService.startSession(exam.id, userId, token);
 
@@ -150,7 +157,7 @@ export class SessionFacade {
       updatedAt: now.toISOString(),
     };
 
-    this.sessions.update(list => [...list, session]);
+    this.store.addSession(session);
     return session;
   }
 
@@ -320,9 +327,6 @@ export class SessionFacade {
 
   submitSession(token: string): Observable<boolean> {
     const session = this.sessions().find(s => s.token === token);
-    this.sessions.update(list => list.map(s =>
-      s.token === token ? { ...s, status: SessionStatus.COMPLETED } : s
-    ));
     if (session) {
       this.store.updateSession(session.id, { status: SessionStatus.COMPLETED });
     }
@@ -356,7 +360,7 @@ export class SessionFacade {
         id: Math.max(0, ...ATTEMPTS_SEED.map(a => a.id)) + 1,
         examId: session.examId,
         sessionToken: session.token,
-        studentId: user.participantId ?? user.id,
+        studentId: user.studentId ?? user.id,
         startedAt: session.startedAt,
         submittedAt: now,
         status: ResultStatus.DRAFT,
@@ -380,9 +384,6 @@ export class SessionFacade {
   expireSession(token: string): void {
     const session = this.sessions().find(s => s.token === token);
     if (!session || session.status !== SessionStatus.ACTIVE) return;
-    this.sessions.update(list => list.map(s =>
-      s.token === token ? { ...s, status: SessionStatus.EXPIRED } : s
-    ));
     this.store.updateSession(session.id, { status: SessionStatus.EXPIRED });
     this.sessionService.endSession(token);
     this.audit.log({ action: AuditAction.SESSION_EXPIRE, entity: 'Session', entityId: session.id, description: 'Sınav oturumu süre aşımına uğradı', oldValue: { status: session.status }, newValue: { status: SessionStatus.EXPIRED } });

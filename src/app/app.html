@@ -37,7 +37,7 @@
             </a>
           </li>
         }
-        @if (canAccess([UserRole.INSTRUCTOR, UserRole.ASSESSMENT_SPECIALIST])) {
+        @if (canAccess([UserRole.INSTRUCTOR, UserRole.ASSESSMENT_SPECIALIST, UserRole.PROGRAM_MANAGER])) {
           <li>
             <a routerLink="/exam-builder" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Sınav Oluşturucu">
               <mat-icon>fact_check</mat-icon>
@@ -45,17 +45,35 @@
             </a>
           </li>
         }
+        @if (canAccess([UserRole.STUDENT, UserRole.INSTRUCTOR, UserRole.ASSESSMENT_SPECIALIST, UserRole.PROGRAM_MANAGER, UserRole.PLATFORM_ADMIN])) {
         <li>
           <a routerLink="/exams" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Sınavlar">
             <mat-icon>assignment</mat-icon>
             <span>Sınavlar</span>
           </a>
         </li>
-        @if (user().role === UserRole.PARTICIPANT && user().participantId) {
+        }
+        @if (canAccess([UserRole.STUDENT])) {
           <li>
-            <a [routerLink]="['/participant', user().participantId, 'edit']" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Profilim">
+            <a routerLink="/my-plan" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Çalışma Planım">
+              <mat-icon>event_note</mat-icon>
+              <span>Çalışma Planım</span>
+            </a>
+          </li>
+        }
+        @if (user().role === UserRole.STUDENT && user().studentId) {
+          <li>
+            <a [routerLink]="['/participant', user().studentId, 'edit']" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Profilim">
               <mat-icon>person</mat-icon>
               <span>Profilim</span>
+            </a>
+          </li>
+        }
+        @if (canAccess([UserRole.PROGRAM_MANAGER, UserRole.PLATFORM_ADMIN])) {
+          <li>
+            <a routerLink="/cohorts" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Kohort Yönetimi">
+              <mat-icon>group_add</mat-icon>
+              <span>Kohort Yönetimi</span>
             </a>
           </li>
         }
@@ -92,6 +110,32 @@
           </li>
         }
       </ul>
+
+      @if (canAccess([UserRole.PLATFORM_ADMIN])) {
+        <div class="border-t pt-3 mt-3">
+          <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Yönetim</p>
+          <ul class="space-y-1">
+            <li>
+              <a routerLink="/admin/roles" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Roller ve İzinler">
+                <mat-icon>admin_panel_settings</mat-icon>
+                <span>Roller ve İzinler</span>
+              </a>
+            </li>
+            <li>
+              <a routerLink="/admin/terms" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Dönem Yönetimi">
+                <mat-icon>calendar_month</mat-icon>
+                <span>Dönem Yönetimi</span>
+              </a>
+            </li>
+            <li>
+              <a routerLink="/admin/parameters" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Sistem Parametreleri">
+                <mat-icon>settings</mat-icon>
+                <span>Sistem Parametreleri</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      }
     </nav>
   </aside>
   }
@@ -120,6 +164,14 @@
                 <span>Kurslar</span>
               </a>
             </li>
+            @if (canAccess([UserRole.PLATFORM_ADMIN, UserRole.PROGRAM_MANAGER, UserRole.INSTRUCTOR])) {
+              <li>
+                <a routerLink="/outcomes" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50" (click)="toggleMenu()" aria-label="Kazanımlar">
+                  <mat-icon>account_tree</mat-icon>
+                  <span>Kazanımlar</span>
+                </a>
+              </li>
+            }
             @if (canAccess([UserRole.INSTRUCTOR, UserRole.ASSESSMENT_SPECIALIST])) {
               <li>
                 <a routerLink="/question-bank" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50" (click)="toggleMenu()" aria-label="Soru Bankası">
@@ -128,15 +180,33 @@
                 </a>
               </li>
             }
+            @if (canAccess([UserRole.INSTRUCTOR, UserRole.ASSESSMENT_SPECIALIST, UserRole.PROGRAM_MANAGER])) {
+              <li>
+                <a routerLink="/exam-builder" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50" (click)="toggleMenu()" aria-label="Sınav Oluşturucu">
+                  <mat-icon>fact_check</mat-icon>
+                  <span>Sınav Oluşturucu</span>
+                </a>
+              </li>
+            }
+            @if (canAccess([UserRole.STUDENT, UserRole.INSTRUCTOR, UserRole.ASSESSMENT_SPECIALIST, UserRole.PROGRAM_MANAGER, UserRole.PLATFORM_ADMIN])) {
             <li>
               <a routerLink="/exams" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50" (click)="toggleMenu()" aria-label="Sınavlar">
                 <mat-icon>assignment</mat-icon>
                 <span>Sınavlar</span>
               </a>
             </li>
-            @if (user().role === UserRole.PARTICIPANT && user().participantId) {
+            }
+            @if (canAccess([UserRole.STUDENT])) {
               <li>
-                <a [routerLink]="['/participant', user().participantId, 'edit']" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50" (click)="toggleMenu()" aria-label="Profilim">
+                <a routerLink="/my-plan" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50" (click)="toggleMenu()" aria-label="Çalışma Planım">
+                  <mat-icon>event_note</mat-icon>
+                  <span>Çalışma Planım</span>
+                </a>
+              </li>
+            }
+            @if (user().role === UserRole.STUDENT && user().studentId) {
+              <li>
+                <a [routerLink]="['/participant', user().studentId, 'edit']" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50" (click)="toggleMenu()" aria-label="Profilim">
                   <mat-icon>person</mat-icon>
                   <span>Profilim</span>
                 </a>
@@ -147,6 +217,14 @@
                 <a routerLink="/grading" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50" (click)="toggleMenu()" aria-label="Değerlendirme">
                   <mat-icon>rate_review</mat-icon>
                   <span>Değerlendirme</span>
+                </a>
+              </li>
+            }
+            @if (canAccess([UserRole.PROGRAM_MANAGER, UserRole.PLATFORM_ADMIN])) {
+              <li>
+                <a routerLink="/cohorts" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50" (click)="toggleMenu()" aria-label="Kohort Yönetimi">
+                  <mat-icon>group_add</mat-icon>
+                  <span>Kohort Yönetimi</span>
                 </a>
               </li>
             }
@@ -175,6 +253,31 @@
               </li>
             }
           </ul>
+          @if (canAccess([UserRole.PLATFORM_ADMIN])) {
+            <div class="pt-3 mt-3 border-t">
+              <p class="px-2 text-xs font-semibold text-gray-400 uppercase mb-2">Yönetim</p>
+              <ul class="space-y-2">
+                <li>
+                  <a routerLink="/admin/roles" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50" (click)="toggleMenu()" aria-label="Roller ve İzinler">
+                    <mat-icon>admin_panel_settings</mat-icon>
+                    <span>Roller ve İzinler</span>
+                  </a>
+                </li>
+                <li>
+                  <a routerLink="/admin/terms" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50" (click)="toggleMenu()" aria-label="Dönem Yönetimi">
+                    <mat-icon>calendar_month</mat-icon>
+                    <span>Dönem Yönetimi</span>
+                  </a>
+                </li>
+                <li>
+                  <a routerLink="/admin/parameters" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50" (click)="toggleMenu()" aria-label="Sistem Parametreleri">
+                    <mat-icon>settings</mat-icon>
+                    <span>Sistem Parametreleri</span>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          }
         </nav>
       </aside>
     </div>

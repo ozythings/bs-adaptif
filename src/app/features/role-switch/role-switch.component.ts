@@ -128,9 +128,8 @@ export class RoleSwitchComponent {
 
   roleLabel(role: UserRole): string {
     const labels: Record<UserRole, string> = {
-      [UserRole.ADMIN]: 'Yönetici',
       [UserRole.INSTRUCTOR]: 'Eğitmen',
-      [UserRole.PARTICIPANT]: 'Katılımcı',
+      [UserRole.STUDENT]: 'Öğrenci',
       [UserRole.ASSESSMENT_SPECIALIST]: 'Ölçme Uzmanı',
       [UserRole.PROGRAM_MANAGER]: 'Program Yöneticisi',
       [UserRole.OBSERVER]: 'Gözlemci',

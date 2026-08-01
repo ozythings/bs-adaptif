@@ -59,14 +59,14 @@ import { LearningOutcome } from '@core/models/learning-outcome.model';
       } @else if (d(); as info) {
         <!-- KPI Cards -->
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-5 gap-4"
-          [class.xl:grid-cols-5]="isParticipant()">
+          [class.xl:grid-cols-5]="isStudent()">
           <app-kpi-card
             borderClass="border-blue-500" iconBgClass="bg-blue-100" iconColorClass="text-blue-600"
             icon="school" label="Toplam Kurs" [value]="info.totalCourses" />
           <app-kpi-card
             borderClass="border-green-500" iconBgClass="bg-green-100" iconColorClass="text-green-600"
             icon="how_to_reg" label="Aktif Kayıt" [value]="info.activeEnrollments" />
-          @if (isParticipant()) {
+          @if (isStudent()) {
             <app-kpi-card
               borderClass="border-purple-500" iconBgClass="bg-purple-100" iconColorClass="text-purple-600"
               icon="check_circle" label="Tamamlanan" [value]="info.completedContents" />
@@ -94,7 +94,7 @@ import { LearningOutcome } from '@core/models/learning-outcome.model';
               </div>
             </mat-card>
           } -->
-          @if (isParticipant() && info.courseProgress.length > 0) {
+          @if (isStudent() && info.courseProgress.length > 0) {
             <mat-card appearance="outlined" class="p-5">
               <h2 class="text-lg font-semibold text-gray-900 mb-4">İçerik Tamamlama</h2>
               <div class="h-64">
@@ -112,7 +112,7 @@ import { LearningOutcome } from '@core/models/learning-outcome.model';
         }
 
         <!-- Course Progress Cards -->
-        @if (isParticipant() && info.courseProgress.length > 0) {
+        @if (isStudent() && info.courseProgress.length > 0) {
           <div>
             <h2 class="text-lg font-semibold text-gray-900 mb-3">Kurs İlerlemem</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -154,7 +154,7 @@ import { LearningOutcome } from '@core/models/learning-outcome.model';
         }
 
         <!-- Mastery Heatmap + Recommendations -->
-        @if (isParticipant()) {
+        @if (isStudent()) {
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <mat-card appearance="outlined" class="p-5" [class.lg:col-span-2]="recommendations().length === 0">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Kazanım Haritası</h2>
@@ -180,7 +180,7 @@ import { LearningOutcome } from '@core/models/learning-outcome.model';
         }
 
         <!-- Exam Results + Active Sessions -->
-        @if (isParticipant()) {
+        @if (isStudent()) {
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <mat-card appearance="outlined" class="p-5">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Sınav Sonuçlarım</h2>
@@ -247,7 +247,7 @@ import { LearningOutcome } from '@core/models/learning-outcome.model';
         }
 
         <!-- Active Sessions (tüm öğrenciler - eğitmen/yönetici) -->
-        @if (!isParticipant()) {
+        @if (!isStudent()) {
           <mat-card appearance="outlined" class="p-5">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Aktif Sınav Oturumları</h2>
             @if (allActiveSessions().length === 0) {
@@ -278,7 +278,7 @@ import { LearningOutcome } from '@core/models/learning-outcome.model';
         }
 
         <!-- Activity Stream (sadece eğitmen/yöneticiler) -->
-        @if (!isParticipant()) {
+        @if (!isStudent()) {
           <mat-card appearance="outlined" class="p-5">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Aktivite Akışı</h2>
           @if (recentEvents().length === 0) {
@@ -323,9 +323,9 @@ export class DashboardPage implements OnInit {
   userName = computed(() => this.currentUser.user().name.split(' ')[0]);
   roleLabel = computed(() => {
     const u = this.currentUser.user();
-    if (u.role === UserRole.PARTICIPANT) return 'Katılımcı';
+    if (u.role === UserRole.STUDENT) return 'Öğrenci';
     if (u.role === UserRole.INSTRUCTOR) return 'Eğitmen';
-    if (u.role === UserRole.PLATFORM_ADMIN || u.role === UserRole.ADMIN) return 'Yönetici';
+    if (u.role === UserRole.PLATFORM_ADMIN) return 'Yönetici';
     return 'Kullanıcı';
   });
 
@@ -334,7 +334,7 @@ export class DashboardPage implements OnInit {
   ) ?? []);
   progressValues = computed(() => this.d()?.courseProgress.map(cp => cp.completedContents) ?? []);
 
-  isParticipant = computed(() => this.currentUser.user().role === UserRole.PARTICIPANT);
+  isStudent = computed(() => this.currentUser.user().role === UserRole.STUDENT);
 
   ngOnInit() {
     this.loadData();
@@ -353,7 +353,7 @@ export class DashboardPage implements OnInit {
       }, ...list].slice(0, 10));
     });
 
-    if (!this.isParticipant()) {
+    if (!this.isStudent()) {
       interval(1000).pipe(
         takeUntilDestroyed(this.destroyRef)
       ).subscribe(() => {

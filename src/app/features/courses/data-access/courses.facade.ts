@@ -53,7 +53,7 @@ export class CoursesFacade {
     }
     const items = available.map(course => {
       const enrollment = ENROLLMENTS_SEED.find(
-        e => e.courseId === course.id && e.participantId === (user.participantId ?? user.id) && !e.deletedAt
+        e => e.courseId === course.id && e.participantId === (user.studentId ?? user.id) && !e.deletedAt
       );
       return {
         course,
@@ -68,7 +68,7 @@ export class CoursesFacade {
 
   enroll(courseId: number): Observable<Enrollment> {
     const user = this.currentUser.user();
-    const participantId = user.participantId ?? user.id;
+    const participantId = user.studentId ?? user.id;
     const existing = ENROLLMENTS_SEED.find(
       e => e.courseId === courseId && e.participantId === participantId && !e.deletedAt
     );
@@ -172,7 +172,7 @@ export class CoursesFacade {
 
   unenroll(courseId: number): Observable<void> {
     const user = this.currentUser.user();
-    const participantId = user.participantId ?? user.id;
+    const participantId = user.studentId ?? user.id;
     const enrollment = ENROLLMENTS_SEED.find(
       e => e.courseId === courseId && e.participantId === participantId && !e.deletedAt
     );
@@ -229,7 +229,7 @@ export class CoursesFacade {
       .filter(c => c.courseId === courseId)
       .sort((a, b) => a.sortOrder - b.sortOrder);
 
-    if (user.role !== UserRole.PARTICIPANT) {
+    if (user.role !== UserRole.STUDENT) {
       return this.mockApi.get({
         course,
         contents,
@@ -243,7 +243,7 @@ export class CoursesFacade {
       });
     }
 
-    const studentId = user.participantId ?? user.id;
+    const studentId = user.studentId ?? user.id;
     const masteryScores = MASTERY_SEED.filter(m => m.studentId === studentId);
 
     const masteryCompleted = new Set<number>();
@@ -312,7 +312,7 @@ export class CoursesFacade {
 
   getCourseMasteryScores(courseId: number, studentId?: number): MasteryScore[] {
     const user = this.currentUser.user();
-    const sid = studentId ?? user.participantId ?? user.id;
+    const sid = studentId ?? user.studentId ?? user.id;
     const masteryScores = MASTERY_SEED.filter(m => m.studentId === sid);
     const courseOutcomeIds = new Set(OUTCOMES_SEED.filter(o => o.courseId === courseId).map(o => o.id));
     return [...courseOutcomeIds].map(outcomeId => {
@@ -329,10 +329,10 @@ export class CoursesFacade {
 
   markContentStudied(courseId: number, contentId: number): Observable<ContentCompletion> {
     const user = this.currentUser.user();
-    if (user.role !== UserRole.PARTICIPANT) {
+    if (user.role !== UserRole.STUDENT) {
       return this.mockApi.simulateError();
     }
-    const studentId = user.participantId ?? user.id;
+    const studentId = user.studentId ?? user.id;
     const now = new Date().toISOString();
     const existing = CONTENT_COMPLETIONS_SEED.find(
       c => c.studentId === studentId && c.contentId === contentId && c.courseId === courseId
@@ -415,10 +415,10 @@ export class CoursesFacade {
 
   finishCourse(courseId: number): Observable<Course> {
     const user = this.currentUser.user();
-    if (user.role !== UserRole.PARTICIPANT) {
+    if (user.role !== UserRole.STUDENT) {
       return this.mockApi.simulateError();
     }
-    const studentId = user.participantId ?? user.id;
+    const studentId = user.studentId ?? user.id;
     const course = this.courses().find(c => c.id === courseId);
     const enrollment = ENROLLMENTS_SEED.find(
       e => e.courseId === courseId && e.participantId === studentId && !e.deletedAt
@@ -482,6 +482,6 @@ export class CoursesFacade {
   }
 
   private canManage(): boolean {
-    return this.currentUser.hasAnyRole([UserRole.INSTRUCTOR, UserRole.PROGRAM_MANAGER, UserRole.ADMIN, UserRole.PLATFORM_ADMIN]);
+    return this.currentUser.hasAnyRole([UserRole.INSTRUCTOR, UserRole.PROGRAM_MANAGER, UserRole.PLATFORM_ADMIN]);
   }
 }

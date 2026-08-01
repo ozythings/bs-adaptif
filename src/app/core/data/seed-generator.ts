@@ -20,7 +20,7 @@ import { AuditLogEntry } from '@core/models/audit-log-entry.model';
 import {
   CourseStatus, EnrollmentStatus, ExamStatus, QuestionStatus,
   Difficulty, ResultStatus, BlueprintStatus,
-  MasteryLevel, ContentStatus, OutcomeStatus,
+  MasteryLevel, ContentStatus, OutcomeStatus, SessionStatus,
   RecommendationStatus, AuditAction, UserRole,
 } from '@core/models/enums';
 
@@ -294,8 +294,30 @@ export function generateSeeds() {
     { id: 14, courseId: 6, participantId: 11, enrollmentDate: '2026-07-14T10:00:00Z', status: EnrollmentStatus.PENDING, createdAt: '2026-07-14T10:00:00Z', updatedAt: '2026-07-14T10:00:00Z' },
   ];
 
-  // exam sessions (none seeded — sessions only exist when a user starts an exam)
-  const examSessions: ExamSession[] = [];
+  // exam sessions — demo active session for student Ali Korkmaz
+  const now = new Date().toISOString();
+  const examSessions: ExamSession[] = [
+    {
+      id: 1001,
+      token: 'sess_demo_active_1',
+      examId: 1,
+      userId: 4,
+      startedAt: new Date(Date.now() - 20 * 60000).toISOString(),
+      serverTimeReference: now,
+      durationMinutes: 60,
+      timeRemainingSeconds: 2400,
+      status: SessionStatus.ACTIVE,
+      questionOrder: [1, 2, 3, 4, 11, 12],
+      currentQuestionIndex: 2,
+      markedQuestions: [1],
+      connectionStatus: 'online',
+      version: 1,
+      questionVersionIds: null,
+      questionSnapshots: questions.slice(0, 4),
+      createdAt: now,
+      updatedAt: now,
+    },
+  ];
 
   // attempts (same as existing for compatibility)
   const Q1: QuestionResponse[] = [
@@ -484,11 +506,11 @@ export function generateSeeds() {
 
   // audit log entries
   const auditLogs: AuditLogEntry[] = [
-    { id: 1, action: AuditAction.CREATE, entity: 'Course', entityId: 1, user: 'Admin Kullanıcı', role: UserRole.ADMIN, timestamp: '2026-07-07T08:00:00Z', description: 'Kurs oluşturuldu: Angular 22 Temelleri', version: 1, createdAt: '2026-07-07T08:00:00Z', updatedAt: '2026-07-07T08:00:00Z' },
-    { id: 2, action: AuditAction.UPDATE, entity: 'Enrollment', entityId: 1, user: 'Admin Kullanıcı', role: UserRole.ADMIN, timestamp: '2026-07-08T10:00:00Z', description: 'Kayıt durumu değiştirildi: Pending → Approved', version: 1, createdAt: '2026-07-08T10:00:00Z', updatedAt: '2026-07-08T10:00:00Z' },
+    { id: 1, action: AuditAction.CREATE, entity: 'Course', entityId: 1, user: 'Admin Kullanıcı', role: UserRole.PLATFORM_ADMIN, timestamp: '2026-07-07T08:00:00Z', description: 'Kurs oluşturuldu: Angular 22 Temelleri', version: 1, createdAt: '2026-07-07T08:00:00Z', updatedAt: '2026-07-07T08:00:00Z' },
+    { id: 2, action: AuditAction.UPDATE, entity: 'Enrollment', entityId: 1, user: 'Admin Kullanıcı', role: UserRole.PLATFORM_ADMIN, timestamp: '2026-07-08T10:00:00Z', description: 'Kayıt durumu değiştirildi: Pending → Approved', version: 1, createdAt: '2026-07-08T10:00:00Z', updatedAt: '2026-07-08T10:00:00Z' },
     { id: 3, action: AuditAction.CREATE, entity: 'Exam', entityId: 1, user: 'Ahmet Yılmaz', role: UserRole.INSTRUCTOR, timestamp: '2026-07-09T14:00:00Z', description: 'Sınav oluşturuldu: Angular Temelleri Final Sınavı', version: 1, createdAt: '2026-07-09T14:00:00Z', updatedAt: '2026-07-09T14:00:00Z' },
-    { id: 4, action: AuditAction.CREATE, entity: 'CertificateEligibility', entityId: 1, user: 'System', role: UserRole.ADMIN, timestamp: '2026-07-10T16:00:00Z', description: 'Sertifika uygunluğu oluşturuldu', version: 1, createdAt: '2026-07-10T16:00:00Z', updatedAt: '2026-07-10T16:00:00Z' },
-    { id: 5, action: AuditAction.UPDATE, entity: 'CertificateEligibility', entityId: 1, user: 'Admin Kullanıcı', role: UserRole.ADMIN, timestamp: '2026-07-11T09:00:00Z', description: 'Sertifika verildi: CERT-2026-0001', version: 1, createdAt: '2026-07-11T09:00:00Z', updatedAt: '2026-07-11T09:00:00Z' },
+    { id: 4, action: AuditAction.CREATE, entity: 'CertificateEligibility', entityId: 1, user: 'System', role: UserRole.PLATFORM_ADMIN, timestamp: '2026-07-10T16:00:00Z', description: 'Sertifika uygunluğu oluşturuldu', version: 1, createdAt: '2026-07-10T16:00:00Z', updatedAt: '2026-07-10T16:00:00Z' },
+    { id: 5, action: AuditAction.UPDATE, entity: 'CertificateEligibility', entityId: 1, user: 'Admin Kullanıcı', role: UserRole.PLATFORM_ADMIN, timestamp: '2026-07-11T09:00:00Z', description: 'Sertifika verildi: CERT-2026-0001', version: 1, createdAt: '2026-07-11T09:00:00Z', updatedAt: '2026-07-11T09:00:00Z' },
   ];
 
   return {

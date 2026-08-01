@@ -15,12 +15,12 @@ export class DataScopeService {
     const user = this.currentUser.getUser();
     const role = user.role;
 
-    if (role === UserRole.PLATFORM_ADMIN || role === UserRole.ADMIN) {
+    if (role === UserRole.PLATFORM_ADMIN) {
       return {};
     }
 
-    if (role === UserRole.PARTICIPANT) {
-      return { allowedStudentIds: [user.participantId ?? user.id] };
+    if (role === UserRole.STUDENT) {
+      return { allowedStudentIds: [user.studentId ?? user.id] };
     }
 
     if (role === UserRole.INSTRUCTOR) {

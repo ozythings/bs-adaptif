@@ -64,7 +64,7 @@ export class StudentAnalyticsFacade {
   }
 
   getAllOutcomes(): Observable<LearningOutcome[]> {
-    if (!this.validateAccess(this.currentUser.getUser().participantId ?? this.currentUser.getUser().id)) {
+    if (!this.validateAccess(this.currentUser.getUser().studentId ?? this.currentUser.getUser().id)) {
       return of([]);
     }
     return this.mockApi.get([...OUTCOMES_SEED]);

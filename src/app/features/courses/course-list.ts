@@ -28,7 +28,7 @@ import { StatusTextPipe } from '@shared/pipes';
     <div class="space-y-4">
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-900">Kurslar</h1>
-        @if (isAdmin()) {
+        @if (!isStudent()) {
           <button mat-raised-button color="primary" (click)="showForm.set(!showForm())">
             <mat-icon>{{ showForm() ? 'close' : 'add' }}</mat-icon> {{ showForm() ? 'Kapat' : 'Kurs Ekle' }}
           </button>
@@ -151,7 +151,7 @@ import { StatusTextPipe } from '@shared/pipes';
                       <mat-icon>route</mat-icon> Öğrenme Yolu
                     </button>
                   }
-                  @if (isParticipant()) {
+                  @if (isStudent()) {
                     @if (item.enrollmentStatus === 'approved' || item.enrollmentStatus === 'completed') {
                       <button mat-stroked-button color="warn" (click)="unenroll(item.course.id)">
                         <mat-icon>close</mat-icon> Kaydı İptal Et
@@ -166,7 +166,7 @@ import { StatusTextPipe } from '@shared/pipes';
                       </button>
                     }
                   }
-                  @if (isAdmin()) {
+                  @if (!isStudent()) {
                     <button mat-icon-button [routerLink]="['/courses', item.course.id, 'edit']" color="primary">
                       <mat-icon>edit</mat-icon>
                     </button>
@@ -188,7 +188,7 @@ import { StatusTextPipe } from '@shared/pipes';
         }
       </div>
 
-      @if (isAdmin() && pendingEnrollments().length > 0) {
+      @if (!isStudent() && pendingEnrollments().length > 0) {
         <div class="bg-white rounded-lg shadow-sm p-4">
           <h3 class="text-lg font-semibold text-gray-900 mb-3">Bekleyen Kayıt Talepleri</h3>
           <div class="space-y-2">
@@ -246,8 +246,7 @@ export class CourseListPage implements OnInit {
     maxParticipants: [25, [Validators.required, Validators.min(1)]],
   });
 
-  isParticipant = computed(() => this.currentUser.user().role === UserRole.PARTICIPANT);
-  isAdmin = computed(() => this.currentUser.isAdmin());
+  isStudent = computed(() => this.currentUser.user().role === UserRole.STUDENT);
 
   displayedColumns: string[] = [];
 
@@ -267,7 +266,7 @@ export class CourseListPage implements OnInit {
 
   ngOnInit() {
     const cols = ['title', 'instructor', 'status', 'actions'];
-    if (this.isParticipant()) {
+    if (this.isStudent()) {
       cols.splice(2, 0, 'enrollmentCount');
       cols.splice(4, 0, 'enrollmentStatus');
     }
@@ -322,7 +321,7 @@ export class CourseListPage implements OnInit {
         this.loading.set(false);
       }
     });
-    if (this.isAdmin()) {
+    if (!this.isStudent()) {
       this.facade.getPendingEnrollments().subscribe(data => this.pendingEnrollments.set(data));
     }
   }
@@ -375,7 +374,7 @@ export class CourseListPage implements OnInit {
   }
 
   isPaleRow(item: CourseListItem): boolean {
-    return this.isParticipant() && !this.isEnrolledOrCompleted(item.enrollmentStatus);
+    return this.isStudent() && !this.isEnrolledOrCompleted(item.enrollmentStatus);
   }
 
   enrollmentLabel(status?: EnrollmentStatus): string {

@@ -53,8 +53,8 @@ export class LearningFacade {
 
   getDashboardData(): Observable<DashboardData> {
     const user = this.currentUser.getUser();
-    const studentId = user.participantId ?? user.id;
-    const isParticipant = this.currentUser.getUser().role === UserRole.PARTICIPANT;
+    const studentId = user.studentId ?? user.id;
+    const isStudent = this.currentUser.getUser().role === UserRole.STUDENT;
 
     const masteryScores = MASTERY_SEED.filter(m => m.studentId === studentId);
     const avgScore = masteryScores.length > 0
@@ -115,7 +115,7 @@ export class LearningFacade {
 
     return this.mockApi.get({
       totalCourses: COURSES_SEED.filter(c => !c.deletedAt).length,
-      activeEnrollments: ENROLLMENTS_SEED.filter(e => e.status === 'approved' && !e.deletedAt && (!isParticipant || e.participantId === studentId)).length,
+      activeEnrollments: ENROLLMENTS_SEED.filter(e => e.status === 'approved' && !e.deletedAt && (!isStudent || e.participantId === studentId)).length,
       pendingExams: this.sessionFacade.getActiveSessionsForUser(user.id).length,
       avgMastery: avgScore,
       weakOutcomes: masteryScores.filter(m => m.score < 50).length,
@@ -137,7 +137,7 @@ export class LearningFacade {
     return this.sessionFacade.getAllActiveSessions().map(s => {
       const exam = EXAMS_SEED.find(e => e.id === s.examId);
       const user = demoUsers.find(u => u.id === s.userId);
-      const participantId = user?.participantId ?? s.userId;
+      const participantId = user?.studentId ?? s.userId;
       const participant = PARTICIPANTS_SEED.find(p => p.id === participantId);
       return {
         token: s.token,
@@ -153,7 +153,7 @@ export class LearningFacade {
 
   getRecommendations(): Recommendation[] {
     const user = this.currentUser.getUser();
-    const studentId = user.participantId ?? user.id;
+    const studentId = user.studentId ?? user.id;
     const userMastery = MASTERY_SEED.filter(m => m.studentId === studentId);
 
     const completedCourseIds = ENROLLMENTS_SEED
@@ -204,7 +204,7 @@ export class LearningFacade {
 
   getAllMasteryScores() {
     const user = this.currentUser.getUser();
-    const studentId = user.participantId ?? user.id;
+    const studentId = user.studentId ?? user.id;
     return MASTERY_SEED.filter(m => m.studentId === studentId);
   }
 

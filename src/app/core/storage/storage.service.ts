@@ -1,6 +1,13 @@
+import { Injectable } from '@angular/core';
+
+@Injectable({ providedIn: 'root' })
 export class StorageService {
   private readonly STORAGE_PREFIX = 'bs_adaptif_';
   private isBrowser = typeof localStorage !== 'undefined';
+
+  prefixedKey(key: string): string {
+    return this.STORAGE_PREFIX + key;
+  }
 
   get<T>(key: string): T | null {
     if (!this.isBrowser) return null;

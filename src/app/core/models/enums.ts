@@ -65,9 +65,8 @@ export enum AuditAction {
 }
 
 export enum UserRole {
-  ADMIN = 'admin',
+  STUDENT = 'student',
   INSTRUCTOR = 'instructor',
-  PARTICIPANT = 'participant',
   ASSESSMENT_SPECIALIST = 'assessment_specialist',
   PROGRAM_MANAGER = 'program_manager',
   OBSERVER = 'observer',

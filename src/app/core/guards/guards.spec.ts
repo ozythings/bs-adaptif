@@ -2,26 +2,26 @@ import { describe, it, expect } from 'vitest';
 
 describe('RoleGuard (unit)', () => {
   it('should allow access when user role is in required roles', () => {
-    const userRole = 'admin';
-    const requiredRoles = ['admin', 'instructor'];
+    const userRole = 'platform_admin';
+    const requiredRoles = ['platform_admin', 'instructor'];
     expect(requiredRoles.includes(userRole)).toBe(true);
   });
 
   it('should deny access when user role is not in required roles', () => {
-    const userRole = 'participant';
-    const requiredRoles = ['admin'];
+    const userRole = 'student';
+    const requiredRoles = ['platform_admin'];
     expect(requiredRoles.includes(userRole)).toBe(false);
   });
 
-  it('should allow participant to access participant routes', () => {
-    const userRole = 'participant';
-    const requiredRoles = ['admin', 'instructor', 'participant'];
+  it('should allow student to access student routes', () => {
+    const userRole = 'student';
+    const requiredRoles = ['platform_admin', 'instructor', 'student'];
     expect(requiredRoles.includes(userRole)).toBe(true);
   });
 
-  it('should deny admin-only access for instructor', () => {
+  it('should deny platform-admin-only access for instructor', () => {
     const userRole = 'instructor';
-    const requiredRoles = ['admin'];
+    const requiredRoles = ['platform_admin'];
     expect(requiredRoles.includes(userRole)).toBe(false);
   });
 
@@ -29,9 +29,9 @@ describe('RoleGuard (unit)', () => {
     const checkRole = (userRole: string, requiredRoles: string[]): boolean =>
       requiredRoles.includes(userRole);
 
-    expect(checkRole('admin', ['admin', 'instructor'])).toBe(true);
-    expect(checkRole('instructor', ['admin', 'instructor'])).toBe(true);
-    expect(checkRole('participant', ['admin'])).toBe(false);
-    expect(checkRole('unknown', ['admin', 'instructor'])).toBe(false);
+    expect(checkRole('platform_admin', ['platform_admin', 'instructor'])).toBe(true);
+    expect(checkRole('instructor', ['platform_admin', 'instructor'])).toBe(true);
+    expect(checkRole('student', ['platform_admin'])).toBe(false);
+    expect(checkRole('unknown', ['platform_admin', 'instructor'])).toBe(false);
   });
 });

@@ -42,9 +42,8 @@ const ACTION_COLORS: Record<string, string> = {
 
 const ROLE_COLORS: Record<string, string> = {
   [UserRole.PLATFORM_ADMIN]: 'bg-red-100 text-red-700',
-  [UserRole.ADMIN]: 'bg-red-100 text-red-700',
   [UserRole.INSTRUCTOR]: 'bg-blue-100 text-blue-700',
-  [UserRole.PARTICIPANT]: 'bg-green-100 text-green-700',
+  [UserRole.STUDENT]: 'bg-green-100 text-green-700',
   [UserRole.ASSESSMENT_SPECIALIST]: 'bg-purple-100 text-purple-700',
   [UserRole.PROGRAM_MANAGER]: 'bg-amber-100 text-amber-700',
   [UserRole.OBSERVER]: 'bg-gray-100 text-gray-700',

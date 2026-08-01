@@ -301,6 +301,6 @@ export class QuestionBankFacade {
   }
 
   private canManage(): boolean {
-    return this.currentUser.hasAnyRole([UserRole.INSTRUCTOR, UserRole.ASSESSMENT_SPECIALIST, UserRole.ADMIN, UserRole.PLATFORM_ADMIN]);
+    return this.currentUser.hasAnyRole([UserRole.INSTRUCTOR, UserRole.ASSESSMENT_SPECIALIST, UserRole.PLATFORM_ADMIN]);
   }
 }

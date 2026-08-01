@@ -1,0 +1,5 @@
+import { Routes } from '@angular/router';
+
+export const COHORT_ROUTES: Routes = [
+  { path: '', loadComponent: () => import('./cohort-list.component').then(m => m.CohortListComponent) }
+];

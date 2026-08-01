@@ -7,27 +7,26 @@ export interface UserInfo {
   name: string;
   role: UserRole;
   instructorId?: number;
-  participantId?: number;
+  studentId?: number;
   assessmentSpecialistId?: number;
   observerCohortIds?: number[];
 }
 
 export const ROLE_HIERARCHY: Record<UserRole, UserRole[]> = {
-  [UserRole.PLATFORM_ADMIN]: [UserRole.ADMIN, UserRole.PROGRAM_MANAGER, UserRole.INSTRUCTOR, UserRole.ASSESSMENT_SPECIALIST, UserRole.OBSERVER, UserRole.PARTICIPANT, UserRole.PLATFORM_ADMIN],
-  [UserRole.PROGRAM_MANAGER]: [UserRole.ADMIN, UserRole.OBSERVER, UserRole.PARTICIPANT, UserRole.PROGRAM_MANAGER],
-  [UserRole.ADMIN]: [UserRole.ADMIN, UserRole.INSTRUCTOR, UserRole.PARTICIPANT],
-  [UserRole.INSTRUCTOR]: [UserRole.INSTRUCTOR, UserRole.PARTICIPANT],
+  [UserRole.PLATFORM_ADMIN]: [UserRole.PROGRAM_MANAGER, UserRole.INSTRUCTOR, UserRole.ASSESSMENT_SPECIALIST, UserRole.OBSERVER, UserRole.STUDENT, UserRole.PLATFORM_ADMIN],
+  [UserRole.PROGRAM_MANAGER]: [UserRole.OBSERVER, UserRole.STUDENT, UserRole.PROGRAM_MANAGER],
+  [UserRole.INSTRUCTOR]: [UserRole.INSTRUCTOR, UserRole.STUDENT],
   [UserRole.ASSESSMENT_SPECIALIST]: [UserRole.ASSESSMENT_SPECIALIST],
   [UserRole.OBSERVER]: [UserRole.OBSERVER],
-  [UserRole.PARTICIPANT]: [UserRole.PARTICIPANT]
+  [UserRole.STUDENT]: [UserRole.STUDENT]
 };
 
 const DEMO_USERS: UserInfo[] = [
-  { id: 1, name: 'Admin', role: UserRole.PLATFORM_ADMIN },
+  { id: 1, name: 'Platform Yöneticisi', role: UserRole.PLATFORM_ADMIN },
   { id: 2, name: 'Ahmet Yılmaz', role: UserRole.INSTRUCTOR, instructorId: 1 },
   { id: 3, name: 'Ayşe Demir', role: UserRole.INSTRUCTOR, instructorId: 2 },
-  { id: 4, name: 'Ali Korkmaz', role: UserRole.PARTICIPANT, participantId: 1 },
-  { id: 5, name: 'Zeynep Kaya', role: UserRole.PARTICIPANT, participantId: 2 },
+  { id: 4, name: 'Ali Korkmaz', role: UserRole.STUDENT, studentId: 1 },
+  { id: 5, name: 'Zeynep Kaya', role: UserRole.STUDENT, studentId: 2 },
   { id: 6, name: 'Dr. Mehmet Can', role: UserRole.ASSESSMENT_SPECIALIST, assessmentSpecialistId: 1 },
   { id: 7, name: 'Elif Yıldız', role: UserRole.PROGRAM_MANAGER },
   { id: 8, name: 'Ali Rıza', role: UserRole.OBSERVER, observerCohortIds: [100, 101] },
@@ -77,15 +76,11 @@ export class CurrentUserService {
     return roles.some(r => effective.includes(r));
   }
 
-  isAdmin(): boolean {
-    return this.userSignal().role === UserRole.PLATFORM_ADMIN || this.userSignal().role === UserRole.ADMIN;
-  }
-
   isInstructor(): boolean {
     return this.userSignal().role === UserRole.INSTRUCTOR;
   }
 
-  isParticipant(): boolean {
-    return this.userSignal().role === UserRole.PARTICIPANT;
+  isStudent(): boolean {
+    return this.userSignal().role === UserRole.STUDENT;
   }
 }

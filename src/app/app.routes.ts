@@ -16,13 +16,13 @@ export const routes: Routes = [
     path: 'learning/dashboard',
     loadChildren: () => import('./features/learning/dashboard.routes').then(m => m.LEARNING_ROUTES),
     canActivate: [roleGuard],
-    data: { roles: [UserRole.PLATFORM_ADMIN, UserRole.ADMIN, UserRole.INSTRUCTOR, UserRole.PARTICIPANT, UserRole.ASSESSMENT_SPECIALIST, UserRole.PROGRAM_MANAGER, UserRole.OBSERVER] }
+    data: { roles: [UserRole.PLATFORM_ADMIN, UserRole.INSTRUCTOR, UserRole.STUDENT, UserRole.ASSESSMENT_SPECIALIST, UserRole.PROGRAM_MANAGER, UserRole.OBSERVER] }
   },
   {
     path: 'courses',
     loadChildren: () => import('./features/courses/courses.routes').then(m => m.COURSES_ROUTES),
     canActivate: [roleGuard],
-    data: { roles: [UserRole.PLATFORM_ADMIN, UserRole.ADMIN, UserRole.INSTRUCTOR, UserRole.PARTICIPANT, UserRole.ASSESSMENT_SPECIALIST, UserRole.PROGRAM_MANAGER, UserRole.OBSERVER] }
+    data: { roles: [UserRole.PLATFORM_ADMIN, UserRole.INSTRUCTOR, UserRole.STUDENT, UserRole.ASSESSMENT_SPECIALIST, UserRole.PROGRAM_MANAGER, UserRole.OBSERVER] }
   },
   {
     path: 'outcomes',
@@ -52,13 +52,13 @@ export const routes: Routes = [
     path: 'exams',
     loadChildren: () => import('./features/exams/exams.routes').then(m => m.EXAMS_ROUTES),
     canActivate: [roleGuard],
-    data: { roles: [UserRole.PLATFORM_ADMIN, UserRole.ADMIN, UserRole.INSTRUCTOR, UserRole.PARTICIPANT, UserRole.ASSESSMENT_SPECIALIST, UserRole.PROGRAM_MANAGER] }
+    data: { roles: [UserRole.PLATFORM_ADMIN, UserRole.INSTRUCTOR, UserRole.STUDENT, UserRole.ASSESSMENT_SPECIALIST, UserRole.PROGRAM_MANAGER] }
   },
   {
     path: 'exam-session/:token',
     loadChildren: () => import('./features/exam-session/exam-session.routes').then(m => m.EXAM_SESSION_ROUTES),
     canActivate: [roleGuard],
-    data: { roles: [UserRole.PARTICIPANT] }
+    data: { roles: [UserRole.STUDENT] }
   },
   {
     path: 'grading',
@@ -70,13 +70,13 @@ export const routes: Routes = [
     path: 'student/:id/analytics',
     loadChildren: () => import('./features/student-analytics/student-analytics.routes').then(m => m.STUDENT_ANALYTICS_ROUTES),
     canActivate: [roleGuard],
-    data: { roles: [UserRole.INSTRUCTOR, UserRole.PARTICIPANT, UserRole.PROGRAM_MANAGER, UserRole.OBSERVER] }
+    data: { roles: [UserRole.INSTRUCTOR, UserRole.STUDENT, UserRole.PROGRAM_MANAGER, UserRole.OBSERVER] }
   },
   {
     path: 'participant/:id/edit',
     loadChildren: () => import('./features/participant-edit/participant-edit.routes').then(m => m.PARTICIPANT_EDIT_ROUTES),
     canActivate: [roleGuard],
-    data: { roles: [UserRole.PLATFORM_ADMIN, UserRole.INSTRUCTOR, UserRole.PARTICIPANT, UserRole.PROGRAM_MANAGER] }
+    data: { roles: [UserRole.PLATFORM_ADMIN, UserRole.INSTRUCTOR, UserRole.STUDENT, UserRole.PROGRAM_MANAGER] }
   },
   {
     path: 'cohort-analytics',
@@ -93,6 +93,36 @@ export const routes: Routes = [
   {
     path: 'audit-log',
     loadChildren: () => import('./features/audit-log/audit-log.routes').then(m => m.AUDIT_LOG_ROUTES),
+    canActivate: [roleGuard],
+    data: { roles: [UserRole.PLATFORM_ADMIN] }
+  },
+  {
+    path: 'my-plan',
+    loadComponent: () => import('./features/adaptive-plan/adaptive-plan.component').then(m => m.AdaptivePlanPage),
+    canActivate: [roleGuard],
+    data: { roles: [UserRole.STUDENT] }
+  },
+  {
+    path: 'cohorts',
+    loadChildren: () => import('./features/cohort-management/cohorts.routes').then(m => m.COHORT_ROUTES),
+    canActivate: [roleGuard],
+    data: { roles: [UserRole.PROGRAM_MANAGER, UserRole.PLATFORM_ADMIN] }
+  },
+  {
+    path: 'admin/roles',
+    loadComponent: () => import('./features/admin/role-permission/role-permission-list.component').then(m => m.RolePermissionListComponent),
+    canActivate: [roleGuard],
+    data: { roles: [UserRole.PLATFORM_ADMIN] }
+  },
+  {
+    path: 'admin/terms',
+    loadChildren: () => import('./features/admin/term-management/terms.routes').then(m => m.TERMS_ROUTES),
+    canActivate: [roleGuard],
+    data: { roles: [UserRole.PLATFORM_ADMIN] }
+  },
+  {
+    path: 'admin/parameters',
+    loadComponent: () => import('./features/admin/system-parameters/system-parameters.component').then(m => m.SystemParametersComponent),
     canActivate: [roleGuard],
     data: { roles: [UserRole.PLATFORM_ADMIN] }
   },

@@ -47,11 +47,10 @@ export class App {
     const labels: Record<UserRole, string> = {
       [UserRole.PLATFORM_ADMIN]: 'Platform Yöneticisi',
       [UserRole.PROGRAM_MANAGER]: 'Program Yöneticisi',
-      [UserRole.ADMIN]: 'Eğitim Yöneticisi',
       [UserRole.INSTRUCTOR]: 'Eğitmen',
       [UserRole.ASSESSMENT_SPECIALIST]: 'Ölçme Uzmanı',
       [UserRole.OBSERVER]: 'Gözlemci',
-      [UserRole.PARTICIPANT]: 'Katılımcı'
+      [UserRole.STUDENT]: 'Öğrenci'
     };
     return labels[role] || role;
   }

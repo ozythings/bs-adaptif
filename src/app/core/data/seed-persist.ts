@@ -39,7 +39,11 @@ export function clearSnapshot(): void {
   autoSaveEnabled = false;
   if (!isBrowser()) return;
   try {
-    localStorage.removeItem(SNAPSHOT_KEY);
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('bs_adaptif_')) {
+        localStorage.removeItem(key);
+      }
+    });
   } catch {
     // ignore
   }
