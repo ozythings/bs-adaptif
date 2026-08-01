@@ -34,6 +34,7 @@ export interface QuestionSummary {
   type: QuestionType;
   difficulty: Difficulty;
   points: number;
+  solution?: string;
   outcomeIds: number[];
   tags: string[];
   status: QuestionVersionStatus;

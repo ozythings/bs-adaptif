@@ -7,6 +7,7 @@ export interface Question {
   type: QuestionType;
   options?: string[];
   correctAnswer: number | string;
+  solution?: string;
   difficulty: Difficulty;
   points: number;
   status: QuestionStatus;

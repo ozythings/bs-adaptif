@@ -1,10 +1,11 @@
-import { ContentFormat, ContentStatus } from './enums';
+import { ContentFormat, ContentStatus, Difficulty } from './enums';
 
 export interface ContentItem {
   id: number;
   title: string;
   description: string;
   format: ContentFormat;
+  difficulty?: Difficulty;
   durationMinutes: number;
   outcomeIds: number[];
   courseId: number;

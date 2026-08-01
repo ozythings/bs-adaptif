@@ -11,6 +11,8 @@ export interface Exam {
   status: ExamStatus;
   version: number;
   questionVersionIds: Record<number, number> | null;
+  startDate?: string | null;
+  endDate?: string | null;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string | null;
