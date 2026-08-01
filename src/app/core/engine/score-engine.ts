@@ -17,7 +17,7 @@ export interface ScoreResult {
 export function autoScore(input: ScoreInput): ScoreResult {
   const { response, question, partialPoints = false, partialPointsRules } = input;
 
-  if (question.type === QuestionType.ESSAY || question.type === QuestionType.MATCHING) {
+  if (question.type === QuestionType.ESSAY) {
     return { autoScore: 0, isCorrect: false };
   }
 
