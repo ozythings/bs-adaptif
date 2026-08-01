@@ -22,6 +22,7 @@ export interface Rubric {
   id: number;
   name: string;
   questionId: number;
+  questionType?: string;
   criteria: RubricCriterion[];
   status: RubricStatus;
   version: number;

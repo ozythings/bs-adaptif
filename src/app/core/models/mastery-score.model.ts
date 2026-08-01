@@ -6,6 +6,11 @@ export interface DifficultyBreakdown {
   hard: { correct: number; total: number; successRate: number };
 }
 
+export interface MasterySnapshot {
+  score: number;
+  date: string;
+}
+
 export interface MasteryScore {
   id: number;
   studentId: number;
@@ -18,6 +23,7 @@ export interface MasteryScore {
   repeatCount: number;
   lastAssessedAt: string;
   calculatedAt: string;
+  history: MasterySnapshot[];
   version: number;
   createdAt: string;
   updatedAt: string;
