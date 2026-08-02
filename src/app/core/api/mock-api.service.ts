@@ -118,6 +118,10 @@ export class MockApiService {
     return throwError(() => new Error('Simüle hata'));
   }
 
+  getServerTime(): Observable<string> {
+    return this.get(new Date().toISOString());
+  }
+
   private wrap<T>(data: T, options: MockApiOptions = {}): Observable<T> {
     const ms = options.delay ?? this.simulationDelay;
     const errRate = options.errorRate ?? this.simulationErrorRate;
