@@ -1,6 +1,7 @@
 const SNAPSHOT_KEY = 'bs_adaptif_seed_snapshot';
+const SNAPSHOT_VERSION = 2;
 
-export type SeedSnapshot = Record<string, unknown[]>;
+export type SeedSnapshot = Record<string, unknown[]> & { __version?: number };
 
 let autoSaveEnabled = true;
 
@@ -13,7 +14,9 @@ export function loadSnapshot(): SeedSnapshot | null {
   try {
     const raw = localStorage.getItem(SNAPSHOT_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as SeedSnapshot;
+    const parsed = JSON.parse(raw) as SeedSnapshot;
+    if (parsed.__version !== SNAPSHOT_VERSION) return null;
+    return parsed;
   } catch {
     return null;
   }
@@ -22,7 +25,8 @@ export function loadSnapshot(): SeedSnapshot | null {
 export function saveSnapshot(seeds: SeedSnapshot): void {
   if (!isBrowser() || !autoSaveEnabled) return;
   try {
-    localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(seeds));
+    const withVersion = { ...seeds, __version: SNAPSHOT_VERSION };
+    localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(withVersion));
   } catch {
     // storage full or unavailable — keep the session in-memory
   }
