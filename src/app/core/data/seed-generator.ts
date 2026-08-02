@@ -10,7 +10,7 @@ import { Participant } from '@core/models/participant.model';
 import { Cohort } from '@core/models/cohort.model';
 import { Enrollment } from '@core/models/enrollment.model';
 import { Attempt, QuestionResponse } from '@core/models/attempt.model';
-import { MasteryScore, DifficultyBreakdown } from '@core/models/mastery-score.model';
+import { MasteryScore, MasterySnapshot, DifficultyBreakdown } from '@core/models/mastery-score.model';
 import { ExamSession } from '@core/models/exam-session.model';
 import { Recommendation, ReasonDetail } from '@core/models/recommendation.model';
 import { ItemAnalysis, DistractorAnalysis } from '@core/models/item-analysis.model';
@@ -77,6 +77,21 @@ function breakdownFor(score: number): DifficultyBreakdown {
     medium: { correct: correct(mediumRate, totals.medium), total: totals.medium, successRate: mediumRate },
     hard: { correct: correct(hardRate, totals.hard), total: totals.hard, successRate: hardRate },
   };
+}
+
+function historyFor(finalScore: number, lastDate: string): MasterySnapshot[] {
+  const count = randInt(4, 6);
+  const end = new Date(lastDate).getTime();
+  const fourWeeks = 28 * 24 * 60 * 60 * 1000;
+  const snapshots: MasterySnapshot[] = [];
+  for (let i = 0; i < count; i++) {
+    const progress = (i + 1) / count;
+    const jitter = randInt(-8, 8);
+    const score = Math.max(5, Math.min(100, Math.round(finalScore * progress + jitter)));
+    const date = new Date(end - fourWeeks + (fourWeeks * progress)).toISOString().slice(0, 19) + 'Z';
+    snapshots.push({ score, date });
+  }
+  return snapshots;
 }
 
 export function generateSeeds() {
@@ -160,10 +175,12 @@ export function generateSeeds() {
     type: s.type,
     options: s.options.length > 0 ? s.options : undefined,
     correctAnswer: s.correctAnswer,
+    solution: s.solution,
     difficulty: s.difficulty,
     points: s.points,
     status: QuestionStatus.ACTIVE,
     outcomeIds: s.outcomeIds,
+    tags: s.tags,
     version: 1,
     createdAt: '2026-07-01T10:00:00Z',
     updatedAt: '2026-07-01T10:00:00Z',
@@ -180,6 +197,8 @@ export function generateSeeds() {
     status: s.status,
     version: 1,
     questionVersionIds: null,
+    startDate: s.startDate,
+    endDate: s.endDate,
     createdAt: '2024-03-15T10:00:00Z',
     updatedAt: s.status === ExamStatus.ARCHIVED ? '2024-03-20T17:00:00Z' : '2024-03-15T10:00:00Z',
   }));
@@ -220,6 +239,7 @@ export function generateSeeds() {
     title: s.title,
     description: s.description,
     format: s.format,
+    difficulty: s.difficulty,
     durationMinutes: s.durationMinutes,
     outcomeIds: s.outcomeIds,
     courseId: s.courseId,
@@ -359,17 +379,17 @@ export function generateSeeds() {
 
   // mastery
   const masteryScores: MasteryScore[] = [
-    { id: 100, studentId: 1, outcomeId: 100, masteryLevel: MasteryLevel.ADVANCED, score: 92, recentAnswers: [1, 1, 1, 0, 1], difficultyWeightedAverage: 0.88, difficultyBreakdown: breakdownFor(92), repeatCount: 2, lastAssessedAt: '2024-03-15T10:00:00Z', calculatedAt: '2024-03-15T10:00:00Z', version: 1, createdAt: '2024-03-15T10:00:00Z', updatedAt: '2024-03-15T10:00:00Z' },
-    { id: 101, studentId: 1, outcomeId: 101, masteryLevel: MasteryLevel.PROFICIENT, score: 78, recentAnswers: [1, 0, 1, 1, 1], difficultyWeightedAverage: 0.75, difficultyBreakdown: breakdownFor(78), repeatCount: 3, lastAssessedAt: '2024-03-15T10:00:00Z', calculatedAt: '2024-03-15T10:00:00Z', version: 1, createdAt: '2024-03-15T10:00:00Z', updatedAt: '2024-03-15T10:00:00Z' },
-    { id: 102, studentId: 1, outcomeId: 102, masteryLevel: MasteryLevel.NOVICE, score: 35, recentAnswers: [0, 1, 0, 0], difficultyWeightedAverage: 0.3, difficultyBreakdown: breakdownFor(35), repeatCount: 1, lastAssessedAt: '2024-03-10T10:00:00Z', calculatedAt: '2024-03-10T10:00:00Z', version: 1, createdAt: '2024-03-10T10:00:00Z', updatedAt: '2024-03-10T10:00:00Z' },
-    { id: 103, studentId: 2, outcomeId: 100, masteryLevel: MasteryLevel.EMERGING, score: 55, recentAnswers: [1, 0, 1, 0], difficultyWeightedAverage: 0.5, difficultyBreakdown: breakdownFor(55), repeatCount: 2, lastAssessedAt: '2024-03-20T10:00:00Z', calculatedAt: '2024-03-20T10:00:00Z', version: 1, createdAt: '2024-03-20T10:00:00Z', updatedAt: '2024-03-20T10:00:00Z' },
-    { id: 104, studentId: 2, outcomeId: 103, masteryLevel: MasteryLevel.NOVICE, score: 25, recentAnswers: [0, 0, 1], difficultyWeightedAverage: 0.22, difficultyBreakdown: breakdownFor(25), repeatCount: 1, lastAssessedAt: '2024-03-18T10:00:00Z', calculatedAt: '2024-03-18T10:00:00Z', version: 1, createdAt: '2024-03-18T10:00:00Z', updatedAt: '2024-03-18T10:00:00Z' },
-    { id: 105, studentId: 4, outcomeId: 106, masteryLevel: MasteryLevel.PROFICIENT, score: 82, recentAnswers: [1, 1, 1, 1, 0], difficultyWeightedAverage: 0.8, difficultyBreakdown: breakdownFor(82), repeatCount: 4, lastAssessedAt: '2024-04-01T10:00:00Z', calculatedAt: '2024-04-01T10:00:00Z', version: 1, createdAt: '2024-04-01T10:00:00Z', updatedAt: '2024-04-01T10:00:00Z' },
-    { id: 106, studentId: 4, outcomeId: 107, masteryLevel: MasteryLevel.ADVANCED, score: 95, recentAnswers: [1, 1, 1, 1], difficultyWeightedAverage: 0.92, difficultyBreakdown: breakdownFor(95), repeatCount: 2, lastAssessedAt: '2024-04-05T10:00:00Z', calculatedAt: '2024-04-05T10:00:00Z', version: 1, createdAt: '2024-04-05T10:00:00Z', updatedAt: '2024-04-05T10:00:00Z' },
-    { id: 107, studentId: 4, outcomeId: 108, masteryLevel: MasteryLevel.EMERGING, score: 48, recentAnswers: [0, 1, 0, 1, 0], difficultyWeightedAverage: 0.45, difficultyBreakdown: breakdownFor(48), repeatCount: 3, lastAssessedAt: '2024-04-10T10:00:00Z', calculatedAt: '2024-04-10T10:00:00Z', version: 1, createdAt: '2024-04-10T10:00:00Z', updatedAt: '2024-04-10T10:00:00Z' },
-    { id: 108, studentId: 5, outcomeId: 109, masteryLevel: MasteryLevel.PROFICIENT, score: 85, recentAnswers: [1, 1, 0, 1], difficultyWeightedAverage: 0.82, difficultyBreakdown: breakdownFor(85), repeatCount: 1, lastAssessedAt: '2024-02-10T10:00:00Z', calculatedAt: '2024-02-10T10:00:00Z', version: 1, createdAt: '2024-02-10T10:00:00Z', updatedAt: '2024-02-10T10:00:00Z' },
-    { id: 109, studentId: 5, outcomeId: 110, masteryLevel: MasteryLevel.EMERGING, score: 45, recentAnswers: [0, 1, 0], difficultyWeightedAverage: 0.4, difficultyBreakdown: breakdownFor(45), repeatCount: 2, lastAssessedAt: '2024-02-15T10:00:00Z', calculatedAt: '2024-02-15T10:00:00Z', version: 1, createdAt: '2024-02-15T10:00:00Z', updatedAt: '2024-02-15T10:00:00Z' },
-    { id: 110, studentId: 7, outcomeId: 114, masteryLevel: MasteryLevel.PROFICIENT, score: 72, recentAnswers: [1, 1, 0, 1], difficultyWeightedAverage: 0.7, difficultyBreakdown: breakdownFor(72), repeatCount: 2, lastAssessedAt: '2024-04-20T10:00:00Z', calculatedAt: '2024-04-20T10:00:00Z', version: 1, createdAt: '2024-04-20T10:00:00Z', updatedAt: '2024-04-20T10:00:00Z' },
+    { id: 100, studentId: 1, outcomeId: 100, masteryLevel: MasteryLevel.ADVANCED, score: 92, recentAnswers: [1, 1, 1, 0, 1], difficultyWeightedAverage: 0.88, difficultyBreakdown: breakdownFor(92), repeatCount: 2, lastAssessedAt: '2024-03-15T10:00:00Z', calculatedAt: '2024-03-15T10:00:00Z', history: historyFor(92, '2024-03-15T10:00:00Z'), version: 1, createdAt: '2024-03-15T10:00:00Z', updatedAt: '2024-03-15T10:00:00Z' },
+    { id: 101, studentId: 1, outcomeId: 101, masteryLevel: MasteryLevel.PROFICIENT, score: 78, recentAnswers: [1, 0, 1, 1, 1], difficultyWeightedAverage: 0.75, difficultyBreakdown: breakdownFor(78), repeatCount: 3, lastAssessedAt: '2024-03-15T10:00:00Z', calculatedAt: '2024-03-15T10:00:00Z', history: historyFor(78, '2024-03-15T10:00:00Z'), version: 1, createdAt: '2024-03-15T10:00:00Z', updatedAt: '2024-03-15T10:00:00Z' },
+    { id: 102, studentId: 1, outcomeId: 102, masteryLevel: MasteryLevel.NOVICE, score: 35, recentAnswers: [0, 1, 0, 0], difficultyWeightedAverage: 0.3, difficultyBreakdown: breakdownFor(35), repeatCount: 1, lastAssessedAt: '2024-03-10T10:00:00Z', calculatedAt: '2024-03-10T10:00:00Z', history: historyFor(35, '2024-03-10T10:00:00Z'), version: 1, createdAt: '2024-03-10T10:00:00Z', updatedAt: '2024-03-10T10:00:00Z' },
+    { id: 103, studentId: 2, outcomeId: 100, masteryLevel: MasteryLevel.EMERGING, score: 55, recentAnswers: [1, 0, 1, 0], difficultyWeightedAverage: 0.5, difficultyBreakdown: breakdownFor(55), repeatCount: 2, lastAssessedAt: '2024-03-20T10:00:00Z', calculatedAt: '2024-03-20T10:00:00Z', history: historyFor(55, '2024-03-20T10:00:00Z'), version: 1, createdAt: '2024-03-20T10:00:00Z', updatedAt: '2024-03-20T10:00:00Z' },
+    { id: 104, studentId: 2, outcomeId: 103, masteryLevel: MasteryLevel.NOVICE, score: 25, recentAnswers: [0, 0, 1], difficultyWeightedAverage: 0.22, difficultyBreakdown: breakdownFor(25), repeatCount: 1, lastAssessedAt: '2024-03-18T10:00:00Z', calculatedAt: '2024-03-18T10:00:00Z', history: historyFor(25, '2024-03-18T10:00:00Z'), version: 1, createdAt: '2024-03-18T10:00:00Z', updatedAt: '2024-03-18T10:00:00Z' },
+    { id: 105, studentId: 4, outcomeId: 106, masteryLevel: MasteryLevel.PROFICIENT, score: 82, recentAnswers: [1, 1, 1, 1, 0], difficultyWeightedAverage: 0.8, difficultyBreakdown: breakdownFor(82), repeatCount: 4, lastAssessedAt: '2024-04-01T10:00:00Z', calculatedAt: '2024-04-01T10:00:00Z', history: historyFor(82, '2024-04-01T10:00:00Z'), version: 1, createdAt: '2024-04-01T10:00:00Z', updatedAt: '2024-04-01T10:00:00Z' },
+    { id: 106, studentId: 4, outcomeId: 107, masteryLevel: MasteryLevel.ADVANCED, score: 95, recentAnswers: [1, 1, 1, 1], difficultyWeightedAverage: 0.92, difficultyBreakdown: breakdownFor(95), repeatCount: 2, lastAssessedAt: '2024-04-05T10:00:00Z', calculatedAt: '2024-04-05T10:00:00Z', history: historyFor(95, '2024-04-05T10:00:00Z'), version: 1, createdAt: '2024-04-05T10:00:00Z', updatedAt: '2024-04-05T10:00:00Z' },
+    { id: 107, studentId: 4, outcomeId: 108, masteryLevel: MasteryLevel.EMERGING, score: 48, recentAnswers: [0, 1, 0, 1, 0], difficultyWeightedAverage: 0.45, difficultyBreakdown: breakdownFor(48), repeatCount: 3, lastAssessedAt: '2024-04-10T10:00:00Z', calculatedAt: '2024-04-10T10:00:00Z', history: historyFor(48, '2024-04-10T10:00:00Z'), version: 1, createdAt: '2024-04-10T10:00:00Z', updatedAt: '2024-04-10T10:00:00Z' },
+    { id: 108, studentId: 5, outcomeId: 109, masteryLevel: MasteryLevel.PROFICIENT, score: 85, recentAnswers: [1, 1, 0, 1], difficultyWeightedAverage: 0.82, difficultyBreakdown: breakdownFor(85), repeatCount: 1, lastAssessedAt: '2024-02-10T10:00:00Z', calculatedAt: '2024-02-10T10:00:00Z', history: historyFor(85, '2024-02-10T10:00:00Z'), version: 1, createdAt: '2024-02-10T10:00:00Z', updatedAt: '2024-02-10T10:00:00Z' },
+    { id: 109, studentId: 5, outcomeId: 110, masteryLevel: MasteryLevel.EMERGING, score: 45, recentAnswers: [0, 1, 0], difficultyWeightedAverage: 0.4, difficultyBreakdown: breakdownFor(45), repeatCount: 2, lastAssessedAt: '2024-02-15T10:00:00Z', calculatedAt: '2024-02-15T10:00:00Z', history: historyFor(45, '2024-02-15T10:00:00Z'), version: 1, createdAt: '2024-02-15T10:00:00Z', updatedAt: '2024-02-15T10:00:00Z' },
+    { id: 110, studentId: 7, outcomeId: 114, masteryLevel: MasteryLevel.PROFICIENT, score: 72, recentAnswers: [1, 1, 0, 1], difficultyWeightedAverage: 0.7, difficultyBreakdown: breakdownFor(72), repeatCount: 2, lastAssessedAt: '2024-04-20T10:00:00Z', calculatedAt: '2024-04-20T10:00:00Z', history: historyFor(72, '2024-04-20T10:00:00Z'), version: 1, createdAt: '2024-04-20T10:00:00Z', updatedAt: '2024-04-20T10:00:00Z' },
   ];
 
   // generated: masteries for more students (students 2, 3, 6 across their enrolled outcomes)
@@ -394,6 +414,7 @@ export function generateSeeds() {
           repeatCount: randInt(1, 3),
           lastAssessedAt: '2024-04-01T10:00:00Z',
           calculatedAt: '2024-04-01T10:00:00Z',
+          history: historyFor(score, '2024-04-01T10:00:00Z'),
           version: 1,
           createdAt: '2024-04-01T10:00:00Z',
           updatedAt: '2024-04-01T10:00:00Z',
