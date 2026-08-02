@@ -9,6 +9,7 @@ import { ActivityStreamService } from './core/realtime/activity-stream.service';
 import { EntityStore } from './core/state/entity.store';
 import { EventBusService } from './core/state/event-bus.service';
 import { ConflictResolverService } from './core/storage/conflict-resolver.service';
+import { DraftStore } from './core/storage/draft-store.service';
 import { OfflineQueueService } from './core/storage/offline-queue.service';
 import { StorageService } from './core/storage/storage.service';
 import { AuditLogService } from './features/audit-log/data-access/audit-log.facade';
@@ -38,6 +39,7 @@ export const APP_SERVICES = [
   EntityStore,
   EventBusService,
   ConflictResolverService,
+  DraftStore,
   OfflineQueueService,
   StorageService,
   AuditLogService,
