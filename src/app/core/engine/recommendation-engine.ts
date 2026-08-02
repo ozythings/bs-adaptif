@@ -1,7 +1,8 @@
 import { MasteryScore } from '@core/models/mastery-score.model';
 import { ContentItem } from '@core/models/content-item.model';
 import { Recommendation, ReasonDetail } from '@core/models/recommendation.model';
-import { RecommendationStatus, MasteryLevel } from '@core/models/enums';
+import { RecommendationStatus, MasteryLevel, Difficulty } from '@core/models/enums';
+import { generateStudySequence, SequencedContent } from './study-sequencer';
 
 export interface RecommendationInput {
   masteryScores: MasteryScore[];
@@ -20,43 +21,39 @@ const LEVEL_LABELS: Record<MasteryLevel, string> = {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-export function generateRecommendations(input: RecommendationInput, studentId: number): Omit<Recommendation, 'id' | 'version' | 'createdAt' | 'updatedAt'>[] {
-  const weakOutcomes = input.masteryScores
-    .filter(m => m.score < 60)
-    .sort((a, b) => a.score - b.score);
+export function generateRecommendations(
+  input: RecommendationInput,
+  studentId: number
+): Omit<Recommendation, 'id' | 'version' | 'createdAt' | 'updatedAt'>[] {
+  const sequence = generateStudySequence(input);
+  const weakItems = sequence.filter(s => s.isWeak);
 
-  const recommendations: Omit<Recommendation, 'id' | 'version' | 'createdAt' | 'updatedAt'>[] = [];
+  return weakItems
+    .slice(0, 5)
+    .map(s => {
+      const mastery = input.masteryScores.find(m =>
+        s.content.outcomeIds.includes(m.outcomeId)
+      );
+      const details = mastery ? buildReasonDetails(mastery, s.content) : [];
+      const isCritical = s.priority === 'critical';
+      const label = isCritical ? 'kritik eksik' : 'geliştirilmeli';
 
-  for (const mastery of weakOutcomes) {
-    const relevantContents = input.contents.filter(c =>
-      c.outcomeIds.includes(mastery.outcomeId) &&
-      !input.completedContentIds.includes(c.id) &&
-      !input.lockedContentIds.includes(c.id)
-    );
-
-    for (const content of relevantContents) {
-      const details = buildReasonDetails(mastery);
-      const isCritical = mastery.score < 40;
-
-      recommendations.push({
+      return {
         studentId,
-        contentType: 'content',
-        contentId: content.id,
-        outcomeId: mastery.outcomeId,
-        reason: `${content.title} — ${isCritical ? 'kritik eksik' : 'geliştirilmeli'} (${mastery.score})`,
+        contentType: 'content' as const,
+        contentId: s.content.id,
+        outcomeId: s.content.outcomeIds[0],
+        reason: `${s.content.title} — ${label} (%${s.masteryScore})`,
         reasonDetails: details,
         priority: isCritical ? 1 : 2,
         status: RecommendationStatus.PENDING,
         isApplied: false,
-        isDismissed: false
-      });
-    }
-  }
-
-  return recommendations.sort((a, b) => a.priority - b.priority).slice(0, 5);
+        isDismissed: false,
+      };
+    });
 }
 
-function buildReasonDetails(mastery: MasteryScore): ReasonDetail[] {
+function buildReasonDetails(mastery: MasteryScore, content: ContentItem): ReasonDetail[] {
   const details: ReasonDetail[] = [];
 
   const isCritical = mastery.score < 40;
@@ -67,6 +64,10 @@ function buildReasonDetails(mastery: MasteryScore): ReasonDetail[] {
     description: `Ustalık puanı ${mastery.score} — ${levelLabel}`,
   });
 
+  if (content.difficulty) {
+    details.push(contentDifficultyReason(content.difficulty));
+  }
+
   const difficulty = difficultyReason(mastery);
   if (difficulty) details.push(difficulty);
 
@@ -76,6 +77,19 @@ function buildReasonDetails(mastery: MasteryScore): ReasonDetail[] {
   if (lastAssessed) details.push(lastAssessed);
 
   return details;
+}
+
+function contentDifficultyReason(difficulty: Difficulty): ReasonDetail {
+  const labels: Record<Difficulty, string> = {
+    [Difficulty.EASY]: 'Kolay',
+    [Difficulty.MEDIUM]: 'Orta',
+    [Difficulty.HARD]: 'Zor',
+  };
+  return {
+    factor: 'content_difficulty',
+    weight: 0.15,
+    description: `İçerik zorluğu: ${labels[difficulty]}`,
+  };
 }
 
 function difficultyReason(mastery: MasteryScore): ReasonDetail | null {
