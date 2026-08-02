@@ -1,5 +1,7 @@
 export { calculateMastery, DIFFICULTY_WEIGHTS } from './mastery-calculator';
 export { generateRecommendations } from './recommendation-engine';
+export { generateStudySequence, difficultyLabel, difficultyColor } from './study-sequencer';
+export type { SequencedContent, SequenceInput } from './study-sequencer';
 export { autoScore, calculateAttemptScore } from './score-engine';
 export type { MasteryInput, MasteryResult } from './mastery-calculator';
 export type { DifficultyBreakdown } from './mastery-calculator';
