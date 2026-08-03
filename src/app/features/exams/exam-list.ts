@@ -14,7 +14,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
-import { ExamsFacade, ExamListItem, ExamFilter } from './data-access/exams.facade';
+import { ExamsFacade, ExamListItem, ExamFilter, isExamAvailable, ExamAvailability } from './data-access/exams.facade';
 import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components';
 import { CurrentUserService } from '@core/auth/current-user.service';
 import { NotificationService } from '@core/observability/notification.service';
@@ -131,6 +131,16 @@ import { StatusTextPipe } from '@shared/pipes';
                       <a mat-stroked-button color="primary" [routerLink]="['/exam-session', item.activeSessionToken]">
                         <mat-icon>play_arrow</mat-icon> Devam Et
                       </a>
+                    } @else if (getAvailability(item.exam) === 'upcoming') {
+                      <span class="px-3 py-1 rounded-lg text-sm font-medium bg-blue-100 text-blue-700">
+                        <mat-icon class="text-sm align-middle">schedule</mat-icon>
+                        Yaklaşan Sınav · {{ formatDate(item.exam.startDate!) }}
+                      </span>
+                    } @else if (getAvailability(item.exam) === 'expired') {
+                      <span class="px-3 py-1 rounded-lg text-sm font-medium bg-gray-100 text-gray-500 cursor-not-allowed">
+                        <mat-icon class="text-sm align-middle">event_busy</mat-icon>
+                        Süresi Doldu
+                      </span>
                     } @else {
                       <button mat-raised-button color="primary" (click)="startExam(item.exam.id)">
                         <mat-icon>play_arrow</mat-icon> Başla
@@ -204,6 +214,16 @@ import { StatusTextPipe } from '@shared/pipes';
               <input matInput type="number" formControlName="passingScore" min="0" max="100">
             </mat-form-field>
           </div>
+          <div class="flex gap-3">
+            <mat-form-field appearance="outline" class="flex-1">
+              <mat-label>Başlangıç Tarihi</mat-label>
+              <input matInput type="date" formControlName="startDate">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="flex-1">
+              <mat-label>Bitiş Tarihi</mat-label>
+              <input matInput type="date" formControlName="endDate">
+            </mat-form-field>
+          </div>
         </mat-dialog-content>
         <mat-dialog-actions align="end">
           <button mat-button mat-dialog-close>İptal</button>
@@ -236,6 +256,16 @@ import { StatusTextPipe } from '@shared/pipes';
             <mat-form-field appearance="outline" class="flex-1">
               <mat-label>Geçme Puanı (%)</mat-label>
               <input matInput type="number" formControlName="passingScore" min="0" max="100">
+            </mat-form-field>
+          </div>
+          <div class="flex gap-3">
+            <mat-form-field appearance="outline" class="flex-1">
+              <mat-label>Başlangıç Tarihi</mat-label>
+              <input matInput type="date" formControlName="startDate">
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="flex-1">
+              <mat-label>Bitiş Tarihi</mat-label>
+              <input matInput type="date" formControlName="endDate">
             </mat-form-field>
           </div>
         </mat-dialog-content>
@@ -277,6 +307,8 @@ export class ExamListPage implements OnInit {
     courseId: [null as number | null, Validators.required],
     duration: [60, [Validators.required, Validators.min(5), Validators.max(180)]],
     passingScore: [70, [Validators.required, Validators.min(0), Validators.max(100)]],
+    startDate: [null as string | null],
+    endDate: [null as string | null],
   });
 
   editForm = this.fb.group({
@@ -284,6 +316,8 @@ export class ExamListPage implements OnInit {
     courseId: [null as number | null, Validators.required],
     duration: [60, [Validators.required, Validators.min(5), Validators.max(180)]],
     passingScore: [70, [Validators.required, Validators.min(0), Validators.max(100)]],
+    startDate: [null as string | null],
+    endDate: [null as string | null],
   });
 
   editExamId: number | null = null;
@@ -362,7 +396,7 @@ export class ExamListPage implements OnInit {
   }
 
   showCreateDialog(): void {
-    this.createForm.reset({ title: '', courseId: null, duration: 60, passingScore: 70 });
+    this.createForm.reset({ title: '', courseId: null, duration: 60, passingScore: 70, startDate: null, endDate: null });
     const tpl = this.createDialogTpl();
     if (!tpl) return;
     this.dialog.open(tpl);
@@ -375,6 +409,8 @@ export class ExamListPage implements OnInit {
       courseId: exam.courseId,
       duration: exam.duration,
       passingScore: exam.passingScore,
+      startDate: exam.startDate ? exam.startDate.substring(0, 10) : null,
+      endDate: exam.endDate ? exam.endDate.substring(0, 10) : null,
     });
     const tpl = this.editDialogTpl();
     if (!tpl) return;
@@ -387,7 +423,7 @@ export class ExamListPage implements OnInit {
   createExam(): void {
     if (this.createForm.invalid) return;
     const v = this.createForm.value;
-    this.facade.createExam(v.title!, v.courseId!, v.duration!, v.passingScore!);
+    this.facade.createExam(v.title!, v.courseId!, v.duration!, v.passingScore!, v.startDate || null, v.endDate || null);
     this.loadData();
     this.dialog.closeAll();
   }
@@ -400,9 +436,21 @@ export class ExamListPage implements OnInit {
       courseId: v.courseId!,
       duration: v.duration!,
       passingScore: v.passingScore!,
+      startDate: v.startDate || null,
+      endDate: v.endDate || null,
     });
     this.loadData();
     this.dialog.closeAll();
+  }
+
+  getAvailability(exam: any): ExamAvailability {
+    return isExamAvailable(exam);
+  }
+
+  formatDate(iso: string): string {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
   toggleStatus(exam: any, targetStatus: string): void {

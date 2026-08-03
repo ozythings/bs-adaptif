@@ -13,6 +13,15 @@ import { Exam } from '@core/models/exam.model';
 import { ExamBlueprint } from '@core/models/exam-blueprint.model';
 import { AuditAction, ExamStatus, ResultStatus, UserRole, EnrollmentStatus, BlueprintStatus } from '@core/models/enums';
 
+export type ExamAvailability = 'upcoming' | 'active' | 'expired';
+
+export function isExamAvailable(exam: Exam, now = new Date()): ExamAvailability {
+  const nowMs = now.getTime();
+  if (exam.startDate && nowMs < Date.parse(exam.startDate)) return 'upcoming';
+  if (exam.endDate && nowMs > Date.parse(exam.endDate)) return 'expired';
+  return 'active';
+}
+
 export interface ExamListItem {
   exam: Exam;
   courseName: string;
@@ -112,6 +121,16 @@ export class ExamsFacade {
       return;
     }
 
+    const availability = isExamAvailable(exam);
+    if (availability === 'upcoming') {
+      this.notification.show('Bu sınav henüz başlamadı', 'warning');
+      return;
+    }
+    if (availability === 'expired') {
+      this.notification.show('Bu sınavın süresi dolmuş', 'error');
+      return;
+    }
+
     const userId = this.currentUser.getUser().id;
     const studentId = this.currentUser.getUser().studentId ?? userId;
     const completedAttempt = ATTEMPTS_SEED.find(
@@ -128,9 +147,9 @@ export class ExamsFacade {
       return;
     }
 
-    const result = this.sessionFacade.startExamSession(exam, userId);
-    this.store.addSession(result);
-    this.router.navigate(['/exam-session', result.token]);
+    this.sessionFacade.startExamSession(exam, userId).subscribe(session => {
+      this.router.navigate(['/exam-session', session.token]);
+    });
   }
 
   updateExam(id: number, patch: Partial<Exam>): Observable<Exam> {
@@ -144,7 +163,7 @@ export class ExamsFacade {
       return this.mockApi.put(undefined as any);
     }
     if (exam.status === ExamStatus.PUBLISHED && (patch.title || patch.duration || patch.passingScore || patch.courseId)) {
-      this.notification.show('Yayınlanmış sınav doğrudan değiştirilemez. Arşivleyip yeni sınav oluşturun.', 'error');
+      this.notification.show('Yayınlanmış sınavda tarih dışında alanlar değiştirilemez. Arşivleyip yeni sınav oluşturun.', 'error');
       return this.mockApi.put(undefined as any);
     }
     this.store.updateExam(id, patch);
@@ -153,7 +172,7 @@ export class ExamsFacade {
     return this.mockApi.put({ ...exam, ...patch });
   }
 
-  createExam(title: string, courseId: number, duration: number, passingScore: number): Observable<Exam> {
+  createExam(title: string, courseId: number, duration: number, passingScore: number, startDate?: string | null, endDate?: string | null): Observable<Exam> {
     if (!this.canManage()) {
       this.notification.show('Bu işlem için yetkiniz bulunmamaktadır', 'error');
       return this.mockApi.post(undefined as any);
@@ -170,6 +189,8 @@ export class ExamsFacade {
       status: ExamStatus.DRAFT,
       version: 1,
       questionVersionIds: null,
+      startDate: startDate ?? null,
+      endDate: endDate ?? null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
