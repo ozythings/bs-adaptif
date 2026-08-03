@@ -359,6 +359,12 @@ export class DashboardPage implements OnInit {
       ).subscribe(() => {
         this.allActiveSessions.set(this.facade.getAllActiveSessions());
       });
+    } else {
+      interval(1000).pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(() => {
+        this.activeSessions.set(this.facade.getActiveSessions());
+      });
     }
 
     this.router.events.pipe(
