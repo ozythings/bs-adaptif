@@ -5,7 +5,7 @@ import { NotificationService } from '@core/observability/notification.service';
 import { AuditService } from '@core/observability/audit.service';
 import { EntityStore } from '@core/state/entity.store';
 import { AuditAction } from '@core/models/enums';
-import { ExamBlueprint, BlueprintConstraint, BlueprintSummary } from '@core/models/exam-blueprint.model';
+import { ExamBlueprint, BlueprintConstraint, BlueprintSummary, PointDistribution } from '@core/models/exam-blueprint.model';
 import { Exam } from '@core/models/exam.model';
 import { Question } from '@core/models/question.model';
 import { LearningOutcome } from '@core/models/learning-outcome.model';
@@ -118,7 +118,8 @@ export class ExamBuilderFacade {
         const displayName = outcomeName ? `${outcomeName.code} - ${outcomeName.name}` : `Kazanım #${constraint.outcomeId}`;
         const typeLabel = this.typeLabel(constraint.questionType);
         const diffLabel = this.diffLabel(constraint.difficulty);
-        violations.push(`${displayName} (${typeLabel}, ${diffLabel}): ${selected.length} seçildi, ${constraint.minCount} gerekli`);
+        const missing = constraint.minCount - selected.length;
+        violations.push(`${displayName} (${typeLabel}, ${diffLabel}): ${selected.length}/${constraint.minCount} seçildi — ${missing} daha ${typeLabel}, ${diffLabel} zorlukta soru ekleyin veya soru havuzunu genişletin.`);
       }
     }
 
@@ -159,6 +160,56 @@ export class ExamBuilderFacade {
       valid: blueprint.summary.violations.length === 0,
       violations: blueprint.summary.violations,
     });
+  }
+
+  computePointDistribution(blueprintId: number): PointDistribution | undefined {
+    const blueprint = this.store.blueprints().find(b => b.id === blueprintId);
+    if (!blueprint || blueprint.constraints.length === 0) return undefined;
+
+    const byDifficulty: { difficulty: Difficulty; totalPoints: number; count: number }[] = [];
+    const byOutcome: { outcomeId: number; outcomeName: string; totalPoints: number; count: number }[] = [];
+    const byType: { type: QuestionType; totalPoints: number; count: number }[] = [];
+
+    const diffMap = new Map<Difficulty, { totalPoints: number; count: number }>();
+    const outcomeMap = new Map<number, { totalPoints: number; count: number }>();
+    const typeMap = new Map<QuestionType, { totalPoints: number; count: number }>();
+
+    for (const c of blueprint.constraints) {
+      const points = c.minCount * c.pointsPerQuestion;
+
+      const de = diffMap.get(c.difficulty) ?? { totalPoints: 0, count: 0 };
+      de.totalPoints += points;
+      de.count += c.minCount;
+      diffMap.set(c.difficulty, de);
+
+      const oe = outcomeMap.get(c.outcomeId) ?? { totalPoints: 0, count: 0 };
+      oe.totalPoints += points;
+      oe.count += c.minCount;
+      outcomeMap.set(c.outcomeId, oe);
+
+      const te = typeMap.get(c.questionType) ?? { totalPoints: 0, count: 0 };
+      te.totalPoints += points;
+      te.count += c.minCount;
+      typeMap.set(c.questionType, te);
+    }
+
+    const diffOrder: Difficulty[] = [Difficulty.EASY, Difficulty.MEDIUM, Difficulty.HARD];
+    for (const d of diffOrder) {
+      const e = diffMap.get(d);
+      if (e) byDifficulty.push({ difficulty: d, ...e });
+    }
+
+    for (const [outcomeId, e] of outcomeMap.entries()) {
+      const outcome = this.outcomes.find(o => o.id === outcomeId);
+      byOutcome.push({ outcomeId, outcomeName: outcome ? `${outcome.code} - ${outcome.name}` : `#${outcomeId}`, ...e });
+    }
+    byOutcome.sort((a, b) => a.outcomeName.localeCompare(b.outcomeName));
+
+    for (const [type, e] of typeMap.entries()) {
+      byType.push({ type, ...e });
+    }
+
+    return { byDifficulty, byOutcome, byType };
   }
 
   createBlueprint(name: string, examId: number): Observable<ExamBlueprint> {

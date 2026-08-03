@@ -20,7 +20,7 @@ import { BlueprintEditorComponent } from '@shared/components/blueprint-editor/bl
 import { QuestionEditorComponent } from '@shared/components/question-editor/question-editor.component';
 import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components';
 import { StatusTextPipe } from '@shared/pipes';
-import { ExamBlueprint, BlueprintConstraint, BlueprintSummary } from '@core/models/exam-blueprint.model';
+import { ExamBlueprint, BlueprintConstraint, BlueprintSummary, PointDistribution } from '@core/models/exam-blueprint.model';
 import { Exam } from '@core/models/exam.model';
 import { Question } from '@core/models/question.model';
 import { LearningOutcome } from '@core/models/learning-outcome.model';
@@ -123,6 +123,35 @@ import { BlueprintStatus, QuestionType, Difficulty } from '@core/models/enums';
                 {{ bp.status === BlueprintStatus.READY ? 'HAZIR' : bp.status === BlueprintStatus.VIOLATED ? 'İHLAL' : 'TASLAK' }}
               </span>
             </div>
+
+            @if (pointDistribution(); as pd) {
+              <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2">
+                <h4 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Puan Dağılımı</h4>
+                <div class="flex flex-wrap gap-2 text-xs">
+                  @for (item of pd.byDifficulty; track item.difficulty) {
+                    <span class="px-2 py-1 rounded-full font-medium"
+                      [class.bg-green-100]="item.difficulty === 'easy'"
+                      [class.text-green-800]="item.difficulty === 'easy'"
+                      [class.bg-yellow-100]="item.difficulty === 'medium'"
+                      [class.text-yellow-800]="item.difficulty === 'medium'"
+                      [class.bg-red-100]="item.difficulty === 'hard'"
+                      [class.text-red-800]="item.difficulty === 'hard'">
+                      {{ item.difficulty === 'easy' ? 'Kolay' : item.difficulty === 'medium' ? 'Orta' : 'Zor' }}: {{ item.totalPoints }}p ({{ item.count }})
+                    </span>
+                  }
+                </div>
+                <div class="flex flex-wrap gap-1 text-xs text-gray-600">
+                  @for (item of pd.byOutcome; track item.outcomeId) {
+                    <span class="px-1.5 py-0.5 bg-white border rounded">{{ item.outcomeName }}: {{ item.totalPoints }}p</span>
+                  }
+                </div>
+                <div class="flex flex-wrap gap-1 text-xs text-gray-600">
+                  @for (item of pd.byType; track item.type) {
+                    <span class="px-1.5 py-0.5 bg-white border rounded">{{ typeShortLabel(item.type) }}: {{ item.totalPoints }}p ({{ item.count }})</span>
+                  }
+                </div>
+              </div>
+            }
 
             <app-blueprint-constraint-panel
               [constraints]="bp.constraints"
@@ -273,6 +302,11 @@ export class ExamBuilderPage implements OnInit {
   manualSelectedIds = signal<Set<number>>(new Set());
 
   selectedCount = computed(() => this.manualSelectedIds().size);
+
+  pointDistribution = computed(() => {
+    const bp = this.selectedBlueprint();
+    return bp ? this.facade.computePointDistribution(bp.id) : undefined;
+  });
 
   activeCoverage = computed(() => {
     const bp = this.selectedBlueprint();
@@ -611,6 +645,17 @@ export class ExamBuilderPage implements OnInit {
       case 'medium': return 'Orta';
       case 'hard': return 'Zor';
       default: return d;
+    }
+  }
+
+  typeShortLabel(t: string): string {
+    switch (t) {
+      case 'multiple_choice': return 'ÇS';
+      case 'true_false': return 'D/Y';
+      case 'short_answer': return 'KC';
+      case 'essay': return 'KM';
+      case 'matching': return 'EŞ';
+      default: return t;
     }
   }
 }
