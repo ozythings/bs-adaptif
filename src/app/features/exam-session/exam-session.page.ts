@@ -1,4 +1,4 @@
-import { Component,  inject,  signal,  computed,  OnInit,  DestroyRef,  ElementRef,  viewChild } from '@angular/core';
+import { Component,  inject,  signal,  computed,  OnInit,  DestroyRef,  ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { fromEvent } from 'rxjs';
@@ -13,6 +13,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { SessionFacade } from './data-access/session.facade';
+import { DraftStore } from '@core/storage/draft-store.service';
 import { QuestionType } from '@core/models/enums';
 import { ExamSession } from '@core/models/exam-session.model';
 import { ExamTimerComponent } from '@shared/components/exam-timer/exam-timer.component';
@@ -131,9 +132,11 @@ import { AutosaveIndicatorComponent } from '@shared/components/autosave-indicato
                   <button mat-mini-fab
                           [class.mat-primary]="i === currentIndex()"
                           [class.mat-accent]="isMarked(q.id) && i !== currentIndex()"
+                          [class.border-green-500]="isAnswered(q.id) && i !== currentIndex() && !isMarked(q.id)"
+                          [class.border-2]="isAnswered(q.id) && i !== currentIndex() && !isMarked(q.id)"
                           color="{{ i === currentIndex() ? 'primary' : (isMarked(q.id) ? 'accent' : 'basic') }}"
                           (click)="goToQuestion(i)"
-                          [attr.aria-label]="'Soru ' + (i + 1) + (isMarked(q.id) ? ' (işaretli)' : '')">
+                          [attr.aria-label]="'Soru ' + (i + 1) + (isAnswered(q.id) ? ' (cevaplandı)' : '') + (isMarked(q.id) ? ' (işaretli)' : '')">
                     {{ i + 1 }}
                   </button>
                 }
@@ -156,6 +159,7 @@ export class ExamSessionPage implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private facade = inject(SessionFacade);
+  private draftStore = inject(DraftStore);
   private dialog = inject(MatDialog);
   private destroyRef = inject(DestroyRef);
 
@@ -182,6 +186,18 @@ export class ExamSessionPage implements OnInit {
   totalQuestions = computed(() => this.questions().length);
   currentQuestion = computed(() => this.questions()[this.currentIndex()]);
 
+  private draftVersion = computed(() => this.draftStore.version());
+  private answerMap = computed(() => {
+    this.draftVersion();
+    const s = this.session();
+    if (!s) return new Map<number, string>();
+    const map = new Map<number, string>();
+    for (const d of this.draftStore.getBySession(s.id)) {
+      if (d.answer) map.set(d.questionId, d.answer);
+    }
+    return map;
+  });
+
   ngOnInit() {
     const token = this.route.snapshot.paramMap.get('token');
     if (!token) {
@@ -192,6 +208,12 @@ export class ExamSessionPage implements OnInit {
     this.facade.getSession(token).subscribe({
       next: s => {
         if (!s) { this.error.set('Oturum bulunamadı'); return; }
+        if (s.status === 'expired') {
+          this.facade.submitExpiredSession(token).subscribe(() => {
+            this.submitted.set(true);
+          });
+          return;
+        }
         this.session.set(s);
       },
       error: e => this.error.set(e.message || 'Oturum yüklenemedi')
@@ -202,6 +224,7 @@ export class ExamSessionPage implements OnInit {
     ).subscribe(event => {
       if (this.session() && !this.submitted()) {
         event.preventDefault();
+        event.returnValue = '';
       }
     });
 
@@ -224,9 +247,7 @@ export class ExamSessionPage implements OnInit {
   }
 
   getAnswer(questionId: number): string | undefined {
-    const s = this.session();
-    if (!s) return undefined;
-    return this.facade.getDraft(s.id, questionId)?.answer;
+    return this.answerMap().get(questionId);
   }
 
   toggleMark(questionId: number): void {
@@ -236,6 +257,11 @@ export class ExamSessionPage implements OnInit {
 
   isMarked(questionId: number): boolean {
     return this.markedQuestions().includes(questionId);
+  }
+
+  isAnswered(questionId: number): boolean {
+    const answer = this.answerMap().get(questionId);
+    return !!(answer?.trim());
   }
 
   getOptionLabel(index: number): string {

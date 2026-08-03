@@ -1,11 +1,13 @@
-import { inject,  signal,  computed,  effect } from '@angular/core';
-import { Observable, of, Subject } from 'rxjs';
+import { inject, signal, computed, effect } from '@angular/core';
+import { Observable, of, map } from 'rxjs';
 import { MockApiService } from '@core/api/mock-api.service';
 import { CurrentUserService } from '@core/auth/current-user.service';
 import { AuditService } from '@core/observability/audit.service';
+import { NotificationService } from '@core/observability/notification.service';
 import { SessionService } from '@core/auth/session.service';
 import { OfflineQueueService } from '@core/storage/offline-queue.service';
 import { StorageService } from '@core/storage/storage.service';
+import { DraftStore } from '@core/storage/draft-store.service';
 import { EntityStore } from '@core/state/entity.store';
 import { ANSWER_DRAFTS_SEED, ATTEMPTS_SEED } from '@core/data';
 import { ExamSession } from '@core/models/exam-session.model';
@@ -16,42 +18,36 @@ import { Question } from '@core/models/question.model';
 import { SessionStatus, AuditAction, ResultStatus } from '@core/models/enums';
 import { autoScore } from '@core/engine';
 import { GradingFacade } from '../../grading/data-access/grading.facade';
+
 export class SessionFacade {
   private mockApi = inject(MockApiService);
   private currentUser = inject(CurrentUserService);
   private audit = inject(AuditService);
+  private notification = inject(NotificationService);
   private sessionService = inject(SessionService);
   private offlineQueue = inject(OfflineQueueService);
   private storage = inject(StorageService);
   private store = inject(EntityStore);
   private gradingFacade = inject(GradingFacade);
+  private draftStore = inject(DraftStore);
 
   private sessions = computed(() => this.store.sessions());
-  private drafts = signal<AnswerDraft[]>(this.loadDrafts());
   private nextSessionId = Math.max(...this.store.sessions().map(s => s.id)) + 1;
-  private channel: BroadcastChannel;
   private debounceTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
-  private readonly DRAFTS_KEY = 'exam_session_drafts';
-
   constructor() {
-    this.channel = new BroadcastChannel('bs_adaptif_sessions');
-    this.channel.onmessage = (event) => {
-      if (event.data?.type === 'draft_updated') {
-        const session = this.activeSession();
-        if (session && session.id === event.data.sessionId) {
-          const draft = this.drafts().find(
-            d => d.sessionId === session.id && d.questionId === event.data.questionId
-          );
-          if (draft) {
-            this.saveStatus.set('conflict');
-            this.conflictQuestionId.set(event.data.questionId);
-          }
-        }
-      }
-    };
+    this.draftStore.loadInitial(this.storage.get<AnswerDraft[]>('exam_session_drafts') || ANSWER_DRAFTS_SEED);
+
     effect(() => {
-      this.storage.set(this.DRAFTS_KEY, this.drafts());
+      const updates = this.draftStore.remoteUpdates();
+      if (updates.length === 0) return;
+      for (const u of updates) {
+        const session = this.sessions().find(s => s.id === u.sessionId);
+        const idx = session?.questionOrder.indexOf(u.questionId) ?? -1;
+        const num = idx >= 0 ? idx + 1 : '?';
+        this.notification.show(`Soru ${num} cevabı güncellendi`, 'info', 3000);
+      }
+      this.draftStore.remoteUpdates.set([]);
     });
 
     this.setupNetworkListeners();
@@ -69,14 +65,6 @@ export class SessionFacade {
     if (!navigator.onLine) {
       this.connectionStatus.set('offline');
     }
-  }
-
-  private loadDrafts(): AnswerDraft[] {
-    return this.storage.get<AnswerDraft[]>(this.DRAFTS_KEY) || ANSWER_DRAFTS_SEED;
-  }
-
-  private notifyChannel(type: string, data?: unknown): void {
-    this.channel.postMessage({ type, data });
   }
 
   readonly activeSession = signal<ExamSession | null>(null);
@@ -119,7 +107,7 @@ export class SessionFacade {
     return remaining > 0;
   }
 
-  startExamSession(exam: Exam, userId: number): ExamSession {
+  startExamSession(exam: Exam, userId: number): Observable<ExamSession> {
     this.sessionService.endSessionsForExam(exam.id, userId);
 
     const oldSessions = this.sessions().filter(
@@ -157,8 +145,13 @@ export class SessionFacade {
       updatedAt: now.toISOString(),
     };
 
-    this.store.addSession(session);
-    return session;
+    return this.mockApi.getServerTime().pipe(
+      map(serverNow => {
+        session.serverTimeReference = serverNow;
+        this.store.addSession(session);
+        return session;
+      })
+    );
   }
 
   getQuestions(examId: number) {
@@ -175,37 +168,26 @@ export class SessionFacade {
   }
 
   getDraft(sessionId: number, questionId: number): AnswerDraft | undefined {
-    return this.drafts().find(d => d.sessionId === sessionId && d.questionId === questionId);
+    return this.draftStore.get(sessionId, questionId);
   }
 
   saveAnswer(sessionId: number, questionId: number, answer: string): void {
     if (!this.canAnswer(sessionId)) return;
-    const existing = this.drafts().find(d => d.sessionId === sessionId && d.questionId === questionId);
+    const existing = this.draftStore.get(sessionId, questionId);
 
     const newVersion = (existing?.version ?? 0) + 1;
-    const draftData = {
+    const draftData: AnswerDraft = {
       id: existing?.id ?? Date.now(),
       sessionId,
       questionId,
       answer,
       version: newVersion,
       isSynced: false,
-      syncStatus: 'pending' as const,
+      syncStatus: 'pending',
       lastSavedAt: new Date().toISOString(),
+      createdAt: existing?.createdAt ?? new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
-
-    if (existing) {
-      this.drafts.update(list => list.map(d =>
-        d.id === existing.id ? { ...d, ...draftData } : d
-      ));
-    } else {
-      this.drafts.update(list => [...list, {
-        ...draftData,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        id: draftData.id,
-      } as AnswerDraft]);
-    }
 
     const key = `${sessionId}_${questionId}`;
     if (this.debounceTimers.has(key)) {
@@ -214,11 +196,11 @@ export class SessionFacade {
 
     this.debounceTimers.set(key, setTimeout(() => {
       this.debounceTimers.delete(key);
-      this.flushAnswer(sessionId, questionId, draftData, existing);
+      this.flushAnswer(sessionId, questionId, draftData);
     }, 1000));
   }
 
-  private flushAnswer(sessionId: number, questionId: number, draftData: any, existing: AnswerDraft | undefined): void {
+  private flushAnswer(sessionId: number, questionId: number, draftData: AnswerDraft): void {
     if (this.connectionStatus() === 'offline') {
       this.offlineQueue.enqueue({ type: 'PUT', url: '/api/drafts', body: draftData });
       this.saveStatus.set('offline');
@@ -226,45 +208,30 @@ export class SessionFacade {
     }
 
     this.saveStatus.set('saving');
-    this.mockApi.put(draftData, existing as any).subscribe({
-      next: (result) => {
-        this.drafts.update(list => list.map(d =>
-          d.sessionId === sessionId && d.questionId === questionId
-            ? { ...d, isSynced: true, syncStatus: 'synced' as const, version: (result as any)?.version ?? draftData.version }
-            : d
-        ));
-        this.saveStatus.set('saved');
-        this.notifyChannel('draft_updated', { sessionId, questionId });
-      },
-      error: () => {
-        if (this.connectionStatus() === 'offline') {
-          this.offlineQueue.enqueue({ type: 'PUT', url: '/api/drafts', body: draftData });
-          this.saveStatus.set('offline');
-        } else {
-          this.saveStatus.set('error');
-        }
-      }
-    });
+    const result = this.draftStore.save(draftData);
+    if (result.conflict) {
+      this.saveStatus.set('conflict');
+      this.conflictQuestionId.set(questionId);
+      return;
+    }
+    this.saveStatus.set('saved');
   }
 
   resolveConflict(sessionId: number, questionId: number): void {
-    const draft = this.drafts().find(d => d.sessionId === sessionId && d.questionId === questionId);
+    const draft = this.draftStore.get(sessionId, questionId);
     if (!draft) return;
     this.saveStatus.set('saving');
-    this.mockApi.put(draft, draft).subscribe({
-      next: () => {
-        this.drafts.update(list => list.map(d =>
-          d.id === draft.id ? { ...d, isSynced: true, syncStatus: 'synced' as const } : d
-        ));
-        this.saveStatus.set('saved');
-        this.conflictQuestionId.set(null);
-      },
-      error: () => this.saveStatus.set('conflict')
-    });
+    const result = this.draftStore.save({ ...draft, version: draft.version + 1 });
+    if (result.ok) {
+      this.saveStatus.set('saved');
+      this.conflictQuestionId.set(null);
+    } else {
+      this.saveStatus.set('conflict');
+    }
   }
 
   getSubmitSummary(sessionId: number, totalQuestions: number): { answered: number; unanswered: number; marked: number; unansweredNums: number[] } {
-    const sessionDrafts = this.drafts().filter(d => d.sessionId === sessionId);
+    const sessionDrafts = this.draftStore.getBySession(sessionId);
     const answeredIds = new Set(sessionDrafts.filter(d => d.answer?.trim()).map(d => d.questionId));
     const allOrder = this.sessions().find(s => s.id === sessionId)?.questionOrder || [];
     const unansweredNums = allOrder
@@ -290,14 +257,6 @@ export class SessionFacade {
       this.mockApi.post(item.body).subscribe({
         next: () => {
           this.offlineQueue.remove(item.id);
-          const body = item.body as any;
-          if (body.sessionId && body.questionId) {
-            this.drafts.update(list => list.map(d =>
-              d.sessionId === body.sessionId && d.questionId === body.questionId
-                ? { ...d, isSynced: true, syncStatus: 'synced' as const }
-                : d
-            ));
-          }
           delay = 300;
         },
         error: () => {
@@ -329,55 +288,10 @@ export class SessionFacade {
     const session = this.sessions().find(s => s.token === token);
     if (session) {
       this.store.updateSession(session.id, { status: SessionStatus.COMPLETED });
+      this.submitAnswers(session, SessionStatus.COMPLETED);
     }
     this.activeSession.set(null);
     this.sessionService.endSession(token);
-
-    if (session) {
-      const questions = this.getQuestions(session.examId);
-      const sessionDrafts = this.drafts().filter(d => d.sessionId === session.id);
-      const questionResponses: QuestionResponse[] = questions.map(q => {
-        const draft = sessionDrafts.find(d => d.questionId === q.id);
-        const answer = draft?.answer ?? '';
-        const result = autoScore({
-          response: { questionId: q.id, answer, isCorrect: false, autoScore: 0, maxScore: q.points },
-          question: q,
-        });
-        return {
-          questionId: q.id,
-          answer,
-          isCorrect: result.isCorrect,
-          autoScore: result.autoScore,
-          maxScore: q.points,
-        };
-      });
-      const totalScore = questionResponses.reduce((s, r) => s + r.autoScore, 0);
-      const maxScore = questionResponses.reduce((s, r) => s + r.maxScore, 0);
-      const scorePercentage = maxScore > 0 ? Math.round((totalScore / maxScore) * 10000) / 100 : 0;
-      const now = new Date().toISOString();
-      const user = this.currentUser.getUser();
-      const newAttempt: Attempt = {
-        id: Math.max(0, ...ATTEMPTS_SEED.map(a => a.id)) + 1,
-        examId: session.examId,
-        sessionToken: session.token,
-        studentId: user.studentId ?? user.id,
-        startedAt: session.startedAt,
-        submittedAt: now,
-        status: ResultStatus.DRAFT,
-        questionResponses,
-        totalScore,
-        maxScore,
-        scorePercentage,
-        version: 1,
-        createdAt: now,
-        updatedAt: now,
-      };
-      ATTEMPTS_SEED.push(newAttempt);
-      this.gradingFacade.syncFromSeed();
-
-      this.audit.log({ action: AuditAction.SESSION_END, entity: 'Session', entityId: session.id, description: 'Sınav oturumu tamamlandı', oldValue: { status: session.status }, newValue: { status: SessionStatus.COMPLETED } });
-      this.audit.log({ action: AuditAction.SUBMIT, entity: 'Attempt', entityId: session.examId, description: `Sınav gönderildi: Sınav #${session.examId}` });
-    }
     return this.mockApi.post(true);
   }
 
@@ -385,8 +299,65 @@ export class SessionFacade {
     const session = this.sessions().find(s => s.token === token);
     if (!session || session.status !== SessionStatus.ACTIVE) return;
     this.store.updateSession(session.id, { status: SessionStatus.EXPIRED });
+    this.submitAnswers(session, SessionStatus.EXPIRED);
     this.sessionService.endSession(token);
-    this.audit.log({ action: AuditAction.SESSION_EXPIRE, entity: 'Session', entityId: session.id, description: 'Sınav oturumu süre aşımına uğradı', oldValue: { status: session.status }, newValue: { status: SessionStatus.EXPIRED } });
+    this.activeSession.set(null);
+    this.audit.log({ action: AuditAction.SESSION_EXPIRE, entity: 'Session', entityId: session.id, description: 'Sınav oturumu süre aşımına uğradı', oldValue: { status: SessionStatus.ACTIVE }, newValue: { status: SessionStatus.EXPIRED } });
+  }
+
+  submitExpiredSession(token: string): Observable<boolean> {
+    const session = this.sessions().find(s => s.token === token);
+    if (!session) return this.mockApi.post(false);
+    this.submitAnswers(session, SessionStatus.EXPIRED);
+    this.activeSession.set(null);
+    this.sessionService.endSession(token);
+    return this.mockApi.post(true);
+  }
+
+  private submitAnswers(session: ExamSession, finalStatus: SessionStatus): void {
+    const questions = this.getQuestions(session.examId);
+    const sessionDrafts = this.draftStore.getBySession(session.id);
+    const questionResponses: QuestionResponse[] = questions.map(q => {
+      const draft = sessionDrafts.find(d => d.questionId === q.id);
+      const answer = draft?.answer ?? '';
+      const result = autoScore({
+        response: { questionId: q.id, answer, isCorrect: false, autoScore: 0, maxScore: q.points },
+        question: q,
+      });
+      return {
+        questionId: q.id,
+        answer,
+        isCorrect: result.isCorrect,
+        autoScore: result.autoScore,
+        maxScore: q.points,
+      };
+    });
+    const totalScore = questionResponses.reduce((s, r) => s + r.autoScore, 0);
+    const maxScore = questionResponses.reduce((s, r) => s + r.maxScore, 0);
+    const scorePercentage = maxScore > 0 ? Math.round((totalScore / maxScore) * 10000) / 100 : 0;
+    const now = new Date().toISOString();
+    const user = this.currentUser.getUser();
+    const newAttempt: Attempt = {
+      id: Math.max(0, ...ATTEMPTS_SEED.map(a => a.id)) + 1,
+      examId: session.examId,
+      sessionToken: session.token,
+      studentId: user.studentId ?? user.id,
+      startedAt: session.startedAt,
+      submittedAt: now,
+      status: ResultStatus.DRAFT,
+      questionResponses,
+      totalScore,
+      maxScore,
+      scorePercentage,
+      version: 1,
+      createdAt: now,
+      updatedAt: now,
+    };
+    ATTEMPTS_SEED.push(newAttempt);
+    this.gradingFacade.syncFromSeed();
+
+    const description = finalStatus === SessionStatus.EXPIRED ? 'Sınav oturumu süre aşımına uğradı' : 'Sınav oturumu tamamlandı';
+    this.audit.log({ action: AuditAction.SUBMIT, entity: 'Attempt', entityId: session.examId, description: `Sınav gönderildi: Sınav #${session.examId} (${description.toLowerCase()})` });
   }
 
   simulateOffline(): void {
