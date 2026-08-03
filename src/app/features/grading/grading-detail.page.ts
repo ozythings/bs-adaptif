@@ -408,8 +408,7 @@ export class GradingDetailPage {
       [QuestionType.MULTIPLE_CHOICE]: 'Çoktan Seçmeli',
       [QuestionType.TRUE_FALSE]: 'Doğru/Yanlış',
       [QuestionType.SHORT_ANSWER]: 'Kısa Cevap',
-      [QuestionType.ESSAY]: 'Essay',
-      [QuestionType.MATCHING]: 'Eşleştirme',
+      [QuestionType.ESSAY]: 'Kompozisyon',
     };
     return labels[type] ?? type;
   }

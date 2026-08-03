@@ -1,7 +1,7 @@
 import { inject,  signal,  computed } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Attempt, QuestionResponse } from '@core/models/attempt.model';
-import { Rubric, RubricScore, GradingResult } from '@core/models/rubric.model';
+import { Rubric, RubricCriterion, RubricScore, GradingResult, RubricStatus } from '@core/models/rubric.model';
 import { ResultStatus, AuditAction, QuestionType, UserRole } from '@core/models/enums';
 import { Question } from '@core/models/question.model';
 import { MockApiService } from '@core/api/mock-api.service';
@@ -75,6 +75,134 @@ export class GradingFacade {
     this.historySignal.set(history);
   }
 
+  private saveRubrics(rubrics: Rubric[]): void {
+    this.storage.set(this.RUBRICS_KEY, rubrics);
+    this.rubricsSignal.set(rubrics);
+  }
+
+  getRubrics(): Observable<Rubric[]> {
+    return this.mockApi.get([...this.rubricsSignal()]);
+  }
+
+  getRubricById(id: number): Observable<Rubric | undefined> {
+    return this.mockApi.get(this.rubricsSignal().find(r => r.id === id));
+  }
+
+  createRubric(data: {
+    name: string;
+    questionId: number;
+    questionType?: string;
+    criteria: { name: string; description: string; maxPoints: number; levels: { score: number; label: string; description: string }[] }[];
+    status?: RubricStatus;
+  }): Observable<Rubric> {
+    if (!this.canManage()) {
+      this.notification.show('Bu işlem için yetkiniz bulunmamaktadır', 'error');
+      return this.mockApi.post(undefined as any);
+    }
+
+    const rubrics = this.rubricsSignal();
+    const nextId = rubrics.length > 0 ? Math.max(...rubrics.map(r => r.id)) + 1 : 1;
+    let nextCriterionId = 1;
+    for (const r of rubrics) {
+      for (const c of r.criteria) {
+        if (c.id >= nextCriterionId) nextCriterionId = c.id + 1;
+      }
+    }
+
+    const newRubric: Rubric = {
+      id: nextId,
+      name: data.name,
+      questionId: data.questionId,
+      questionType: data.questionType,
+      criteria: data.criteria.map(c => ({
+        id: nextCriterionId++,
+        name: c.name,
+        description: c.description,
+        maxPoints: c.maxPoints,
+        levels: c.levels,
+      })),
+      status: data.status ?? RubricStatus.ACTIVE,
+      version: 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.saveRubrics([...rubrics, newRubric]);
+    this.audit.log({ action: AuditAction.CREATE, entity: 'Rubric', entityId: newRubric.id, description: `Rubrik oluşturuldu: ${data.name}` });
+    this.notification.show('Rubrik oluşturuldu', 'success');
+    return this.mockApi.post(newRubric);
+  }
+
+  updateRubric(id: number, data: {
+    name?: string;
+    questionId?: number;
+    questionType?: string;
+    criteria?: { id?: number; name: string; description: string; maxPoints: number; levels: { score: number; label: string; description: string }[] }[];
+    status?: RubricStatus;
+  }): Observable<Rubric | undefined> {
+    if (!this.canManage()) {
+      this.notification.show('Bu işlem için yetkiniz bulunmamaktadır', 'error');
+      return this.mockApi.put(undefined);
+    }
+
+    const rubrics = this.rubricsSignal();
+    const existing = rubrics.find(r => r.id === id);
+    if (!existing) {
+      this.notification.show('Rubrik bulunamadı', 'error');
+      return this.mockApi.put(undefined);
+    }
+
+    let nextCriterionId = 1;
+    for (const r of rubrics) {
+      for (const c of r.criteria) {
+        if (c.id >= nextCriterionId) nextCriterionId = c.id + 1;
+      }
+    }
+
+    const updated: Rubric = {
+      ...existing,
+      name: data.name ?? existing.name,
+      questionId: data.questionId ?? existing.questionId,
+      questionType: data.questionType ?? existing.questionType,
+      criteria: data.criteria
+        ? data.criteria.map(c => ({
+            id: c.id ?? nextCriterionId++,
+            name: c.name,
+            description: c.description,
+            maxPoints: c.maxPoints,
+            levels: c.levels,
+          }))
+        : existing.criteria,
+      status: data.status ?? existing.status,
+      version: existing.version + 1,
+      updatedAt: new Date().toISOString(),
+    };
+
+    this.saveRubrics(rubrics.map(r => r.id === id ? updated : r));
+    this.audit.log({ action: AuditAction.UPDATE, entity: 'Rubric', entityId: id, description: `Rubrik güncellendi: ${updated.name}` });
+    this.notification.show('Rubrik güncellendi', 'success');
+    return this.mockApi.put(updated);
+  }
+
+  deleteRubric(id: number): Observable<boolean> {
+    if (!this.canManage()) {
+      this.notification.show('Bu işlem için yetkiniz bulunmamaktadır', 'error');
+      return this.mockApi.delete(false);
+    }
+
+    const rubrics = this.rubricsSignal();
+    const existing = rubrics.find(r => r.id === id);
+    if (!existing) {
+      this.notification.show('Rubrik bulunamadı', 'error');
+      return this.mockApi.delete(false);
+    }
+
+    this.saveRubrics(rubrics.filter(r => r.id !== id));
+    this.audit.log({ action: AuditAction.DELETE, entity: 'Rubric', entityId: id, description: `Rubrik silindi: ${existing.name}` });
+    this.notification.show('Rubrik silindi', 'success');
+    return this.mockApi.delete(true);
+  }
+
   getPendingGrading(): Observable<Attempt[]> {
     this.syncFromSeed();
     return this.mockApi.get(this.pendingAttempts());
@@ -126,6 +254,12 @@ export class GradingFacade {
 
   getRubricSync(questionId: number): Rubric | undefined {
     const type = this.getQuestionType(questionId);
+    const byQuestionId = this.rubricsSignal().find(r => r.questionId === questionId && r.status === RubricStatus.ACTIVE);
+    if (byQuestionId) return byQuestionId;
+
+    const byType = this.rubricsSignal().find(r => r.questionType === type && r.status === RubricStatus.ACTIVE);
+    if (byType) return byType;
+
     return this.rubricsSignal().find(r => {
       if (type === QuestionType.SHORT_ANSWER && r.name.includes('Kisa Cevap')) return true;
       if (type === QuestionType.ESSAY && r.name.includes('Essay')) return true;
