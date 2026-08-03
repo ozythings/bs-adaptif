@@ -10,7 +10,7 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { QuestionSummary } from '@core/models/question-version.model';
-import { QuestionType, Difficulty } from '@core/models/enums';
+import { QuestionType, Difficulty, QuestionVersionStatus } from '@core/models/enums';
 import { LearningOutcome } from '@core/models/learning-outcome.model';
 
 export interface QuestionFormValue {
@@ -18,10 +18,12 @@ export interface QuestionFormValue {
   type: QuestionType;
   options: { key: string; value: string; isCorrect: boolean }[];
   correctAnswer: string;
+  solution: string;
   difficulty: Difficulty;
   points: number;
   outcomeIds: number[];
   tags: string[];
+  changeNote: string;
 }
 
 @Component({
@@ -41,7 +43,7 @@ export interface QuestionFormValue {
   ],
   template: `
     <h2 mat-dialog-title class="text-xl font-semibold text-gray-900">
-      {{ dialogData ? (dialogData.question ? 'Soruyu Düzenle' : 'Yeni Soru') : '' }}
+      {{ dialogTitle }}
     </h2>
 
     <mat-dialog-content class="!pt-3 !px-6">
@@ -61,7 +63,6 @@ export interface QuestionFormValue {
             <mat-option [value]="QuestionType.TRUE_FALSE">Doğru/Yanlış</mat-option>
             <mat-option [value]="QuestionType.SHORT_ANSWER">Kısa Cevap</mat-option>
             <mat-option [value]="QuestionType.ESSAY">Kompozisyon</mat-option>
-            <mat-option [value]="QuestionType.MATCHING">Eşleştirme</mat-option>
           </mat-select>
         </mat-form-field>
 
@@ -124,26 +125,6 @@ export interface QuestionFormValue {
           </div>
         }
 
-        @if (form.get('type')?.value === QuestionType.MATCHING) {
-          <fieldset class="border border-gray-200 rounded-lg p-4 space-y-3">
-            <legend class="text-sm font-medium text-gray-700 px-1">Eşleştirme Çiftleri</legend>
-            @for (i of [0,1,2,3]; track i) {
-              <div class="flex items-center gap-2">
-                <span class="text-xs text-gray-500 w-4">{{ i + 1 }}.</span>
-                <mat-form-field appearance="outline" class="flex-1">
-                  <mat-label>Sol Öğe {{ i + 1 }}</mat-label>
-                  <input matInput [formControlName]="'matchLeft' + i" placeholder="Sol taraf">
-                </mat-form-field>
-                <mat-icon class="text-gray-400">arrow_forward</mat-icon>
-                <mat-form-field appearance="outline" class="flex-1">
-                  <mat-label>Sağ Eşleşme {{ i + 1 }}</mat-label>
-                  <input matInput [formControlName]="'matchRight' + i" placeholder="Eşleşen sağ taraf">
-                </mat-form-field>
-              </div>
-            }
-          </fieldset>
-        }
-
         <div class="grid grid-cols-2 gap-4">
           <mat-form-field appearance="outline">
             <mat-label>Zorluk</mat-label>
@@ -182,6 +163,18 @@ export interface QuestionFormValue {
           <mat-label>Etiketler (virgülle ayırın)</mat-label>
           <input matInput formControlName="tagsInput" placeholder="etiket1, etiket2, etiket3">
         </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Çözüm</mat-label>
+          <textarea matInput formControlName="solution" rows="3" placeholder="Sorunun çözümünü veya açıklamasını girin"></textarea>
+        </mat-form-field>
+
+        @if (dialogData?.question) {
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Değişiklik Notu</mat-label>
+            <input matInput formControlName="changeNote" placeholder="Bu değişikliğin açıklaması">
+          </mat-form-field>
+        }
       </form>
     </mat-dialog-content>
 
@@ -208,6 +201,13 @@ export class QuestionEditorComponent {
   readonly Difficulty = Difficulty;
   readonly outcomes = this.dialogData?.outcomes || [];
 
+  get dialogTitle(): string {
+    const q = this.dialogData?.question;
+    if (!q) return 'Yeni Soru';
+    if (q.status === QuestionVersionStatus.PUBLISHED) return 'Yeni Versiyon Oluştur';
+    return 'Soruyu Düzenle';
+  }
+
   private initialData = this.dialogData || { question: this.question(), type: this.type() };
 
   private createOption(key: string, value = ''): FormGroup {
@@ -226,18 +226,12 @@ export class QuestionEditorComponent {
     type: [this.initialData.type || this.initialData.question?.type || QuestionType.MULTIPLE_CHOICE, Validators.required],
     options: this.fb.array([this.createOption('A'), this.createOption('B')]),
     correctAnswer: ['', [Validators.required, Validators.minLength(1)]],
+    solution: [(this.initialData.question as any)?.solution || ''],
     difficulty: [this.initialData.question?.difficulty || Difficulty.MEDIUM, Validators.required],
     points: [this.initialData.question?.points || 10, [Validators.required, Validators.min(0)]],
     outcomeIds: [this.initialData.question?.outcomeIds || []],
     tagsInput: [(this.initialData.question?.tags || []).join(', ')],
-    matchLeft0: [''],
-    matchLeft1: [''],
-    matchLeft2: [''],
-    matchLeft3: [''],
-    matchRight0: [''],
-    matchRight1: [''],
-    matchRight2: [''],
-    matchRight3: [''],
+    changeNote: ['Yeni versiyon'],
   });
 
   constructor() {
@@ -276,11 +270,11 @@ export class QuestionEditorComponent {
 
   onTypeChange(type: QuestionType): void {
     const correctAnswer = this.form.get('correctAnswer');
-    const isEssayOrMatching = type === QuestionType.ESSAY || type === QuestionType.MATCHING;
+    const isEssay = type === QuestionType.ESSAY;
 
     if (type === QuestionType.TRUE_FALSE) {
       correctAnswer?.setValue('true');
-    } else if (isEssayOrMatching) {
+    } else if (isEssay) {
       correctAnswer?.clearValidators();
       correctAnswer?.setValue('');
     } else if (type === QuestionType.SHORT_ANSWER) {
@@ -298,20 +292,6 @@ export class QuestionEditorComponent {
         valueCtrl?.clearValidators();
       }
       valueCtrl?.updateValueAndValidity();
-    }
-
-    for (let i = 0; i < 4; i++) {
-      const left = this.form.get('matchLeft' + i);
-      const right = this.form.get('matchRight' + i);
-      if (type === QuestionType.MATCHING) {
-        left?.setValidators(Validators.required);
-        right?.setValidators(Validators.required);
-      } else {
-        left?.clearValidators();
-        right?.clearValidators();
-      }
-      left?.updateValueAndValidity();
-      right?.updateValueAndValidity();
     }
 
     correctAnswer?.updateValueAndValidity();
@@ -336,14 +316,6 @@ export class QuestionEditorComponent {
       correctAnswer = options.find(o => o.isCorrect)?.value || '';
     } else if (type === QuestionType.TRUE_FALSE) {
       correctAnswer = val['correctAnswer'] === 'true' ? 'Doğru' : 'Yanlış';
-    } else if (type === QuestionType.MATCHING) {
-      const pairs: string[] = [];
-      for (let i = 0; i < 4; i++) {
-        const left = (val['matchLeft' + i] as string) || '';
-        const right = (val['matchRight' + i] as string) || '';
-        if (left && right) pairs.push(`${left} -> ${right}`);
-      }
-      correctAnswer = pairs.join('; ');
     } else if (type === QuestionType.ESSAY) {
       correctAnswer = '';
     } else {
@@ -360,10 +332,12 @@ export class QuestionEditorComponent {
       type,
       options,
       correctAnswer,
+      solution: (val['solution'] as string) || '',
       difficulty: val['difficulty'] as Difficulty,
       points: (val['points'] as number) || 0,
       outcomeIds: (val['outcomeIds'] as number[]) || [],
       tags,
+      changeNote: (val['changeNote'] as string) || '',
     };
 
     if (this.dialogRef) {

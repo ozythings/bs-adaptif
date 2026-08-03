@@ -133,6 +133,28 @@ import { ConfirmDialogComponent, ErrorStateComponent } from '@shared/components'
               <td mat-cell *matCellDef="let q">{{ q.points }}</td>
             </ng-container>
 
+            <ng-container matColumnDef="outcomes">
+              <th mat-header-cell *matHeaderCellDef>Kazanımlar</th>
+              <td mat-cell *matCellDef="let q">
+                <div class="flex flex-wrap gap-1">
+                  @for (oid of q.outcomeIds; track oid) {
+                    <span class="px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700">{{ getOutcomeCode(oid) }}</span>
+                  }
+                </div>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="tags">
+              <th mat-header-cell *matHeaderCellDef>Etiketler</th>
+              <td mat-cell *matCellDef="let q">
+                <div class="flex flex-wrap gap-1">
+                  @for (tag of q.tags; track tag) {
+                    <span class="px-1.5 py-0.5 rounded text-xs bg-gray-100 text-gray-600">{{ tag }}</span>
+                  }
+                </div>
+              </td>
+            </ng-container>
+
             <ng-container matColumnDef="status">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Durum</th>
               <td mat-cell *matCellDef="let q">
@@ -150,9 +172,15 @@ import { ConfirmDialogComponent, ErrorStateComponent } from '@shared/components'
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef>İşlemler</th>
               <td mat-cell *matCellDef="let q">
-                <button mat-icon-button matTooltip="Düzenle" (click)="openEditDialog(q)">
-                  <mat-icon>edit</mat-icon>
-                </button>
+                @if (q.status === QuestionVersionStatus.PUBLISHED) {
+                  <button mat-icon-button matTooltip="Yeni Versiyon" color="primary" (click)="openEditDialog(q)">
+                    <mat-icon>add_circle</mat-icon>
+                  </button>
+                } @else {
+                  <button mat-icon-button matTooltip="Düzenle" (click)="openEditDialog(q)">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                }
                 <a mat-icon-button matTooltip="Detay" [routerLink]="['/questions', q.id]" color="primary">
                   <mat-icon>visibility</mat-icon>
                 </a>
@@ -222,7 +250,7 @@ export class QuestionBankPage implements OnInit {
   sortColumn = signal<string>('id');
   sortDirection = signal<'asc' | 'desc'>('asc');
 
-  displayedColumns = ['id', 'stem', 'type', 'difficulty', 'points', 'status', 'version', 'actions'];
+  displayedColumns = ['id', 'stem', 'type', 'difficulty', 'points', 'outcomes', 'tags', 'status', 'version', 'actions'];
 
   filteredQuestions = computed(() => {
     let result = [...this.allQuestions()];
@@ -390,6 +418,7 @@ export class QuestionBankPage implements OnInit {
           points: result.points,
           options: result.options,
           correctAnswer: result.correctAnswer,
+          solution: result.solution,
           outcomeIds: result.outcomeIds,
           tags: result.tags,
         }).subscribe(() => this.loadData());
@@ -433,11 +462,18 @@ export class QuestionBankPage implements OnInit {
           points: result.points,
           options: result.options,
           correctAnswer: result.correctAnswer,
+          solution: result.solution,
+          changeNote: result.changeNote,
           outcomeIds: result.outcomeIds,
           tags: result.tags,
         }).subscribe(() => this.loadData());
       }
     });
+  }
+
+  getOutcomeCode(outcomeId: number): string {
+    const outcomes = this.facade.getOutcomes();
+    return outcomes.find(o => o.id === outcomeId)?.code ?? `#${outcomeId}`;
   }
 
   confirmPublish(q: QuestionSummary): void {

@@ -18,8 +18,9 @@ function mapOldToSummary(q: Question): QuestionSummary {
     type: q.type,
     difficulty: q.difficulty,
     points: q.points,
-    outcomeIds: [],
-    tags: [],
+    solution: q.solution,
+    outcomeIds: q.outcomeIds ?? [],
+    tags: q.tags ?? [],
     status: q.status === QuestionStatus.ACTIVE ? QuestionVersionStatus.PUBLISHED : QuestionVersionStatus.ARCHIVED,
     currentVersion: 1,
     latestVersionId: q.id,
@@ -45,12 +46,12 @@ function mapOldToVersion(q: Question): QuestionVersion {
     correctAnswer: typeof q.correctAnswer === 'number'
       ? (q.options ?? [])[q.correctAnswer] || ''
       : q.correctAnswer,
-    solution: '',
+    solution: q.solution ?? '',
     difficulty: q.difficulty,
     points: q.points,
     partialPoints: false,
-    outcomeIds: [],
-    tags: [],
+    outcomeIds: q.outcomeIds ?? [],
+    tags: q.tags ?? [],
     status: q.status === QuestionStatus.ACTIVE ? QuestionVersionStatus.PUBLISHED : QuestionVersionStatus.ARCHIVED,
     changeNote: 'Initial version',
     createdBy: 1,
@@ -94,6 +95,7 @@ export class QuestionBankFacade {
     points: number;
     options?: QuestionOption[];
     correctAnswer?: string;
+    solution?: string;
     outcomeIds?: number[];
     tags?: string[];
   }): Observable<QuestionSummary> {
@@ -110,6 +112,7 @@ export class QuestionBankFacade {
       type: data.type,
       difficulty: data.difficulty,
       points: data.points,
+      solution: data.solution,
       outcomeIds: data.outcomeIds || [],
       tags: data.tags || [],
       status: QuestionVersionStatus.DRAFT,
@@ -126,7 +129,7 @@ export class QuestionBankFacade {
       type: data.type,
       options: data.options || [],
       correctAnswer: data.correctAnswer || '',
-      solution: '',
+      solution: data.solution || '',
       difficulty: data.difficulty,
       points: data.points,
       partialPoints: false,
@@ -152,6 +155,8 @@ export class QuestionBankFacade {
     points: number;
     options: QuestionOption[];
     correctAnswer: string;
+    solution: string;
+    changeNote: string;
     outcomeIds: number[];
     tags: string[];
   }>): Observable<QuestionSummary | undefined> {
@@ -179,14 +184,14 @@ export class QuestionBankFacade {
         type: data.type ?? latest?.type ?? existing.type,
         options: data.options ?? latest?.options ?? [],
         correctAnswer: data.correctAnswer ?? latest?.correctAnswer ?? '',
-        solution: latest?.solution ?? '',
+        solution: data.solution ?? latest?.solution ?? '',
         difficulty: data.difficulty ?? latest?.difficulty ?? existing.difficulty,
         points: data.points ?? latest?.points ?? existing.points,
         partialPoints: latest?.partialPoints ?? false,
         outcomeIds: data.outcomeIds ?? latest?.outcomeIds ?? existing.outcomeIds,
         tags: data.tags ?? latest?.tags ?? existing.tags,
         status: QuestionVersionStatus.DRAFT,
-        changeNote: 'Yeni versiyon',
+        changeNote: data.changeNote || 'Yeni versiyon',
         createdBy: 1,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -196,6 +201,7 @@ export class QuestionBankFacade {
       this.questionsSeed.update(list => list.map(q =>
         q.id === id ? {
           ...q,
+          status: QuestionVersionStatus.DRAFT,
           currentVersion: newVersion.version,
           latestVersionId: versionId,
           updatedAt: new Date().toISOString(),
@@ -203,6 +209,7 @@ export class QuestionBankFacade {
           type: newVersion.type,
           difficulty: newVersion.difficulty,
           points: newVersion.points,
+          solution: newVersion.solution,
           outcomeIds: newVersion.outcomeIds,
           tags: newVersion.tags,
         } : q
@@ -227,6 +234,7 @@ export class QuestionBankFacade {
         type: data.type ?? version.type,
         options: data.options ?? version.options,
         correctAnswer: data.correctAnswer ?? version.correctAnswer,
+        solution: data.solution ?? version.solution,
         difficulty: data.difficulty ?? version.difficulty,
         points: data.points ?? version.points,
         outcomeIds: data.outcomeIds ?? version.outcomeIds,

@@ -14,6 +14,7 @@ import { QuestionSummary, QuestionVersion } from '@core/models/question-version.
 import { QuestionType, Difficulty, QuestionVersionStatus } from '@core/models/enums';
 import { QuestionEditorComponent, QuestionFormValue } from '@shared/components/question-editor/question-editor.component';
 import { ErrorStateComponent } from '@shared/components';
+import { NotificationService } from '@core/observability/notification.service';
 import { DateFormatPipe } from '@shared/pipes';
 
 @Component({
@@ -122,6 +123,12 @@ import { DateFormatPipe } from '@shared/pipes';
                   <span class="text-sm font-semibold text-green-700">{{ v.correctAnswer }}</span>
                 </div>
               }
+              @if (v.solution) {
+                <div class="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                  <span class="text-xs font-medium text-blue-700">Çözüm:</span>
+                  <p class="text-sm text-blue-800 mt-1">{{ v.solution }}</p>
+                </div>
+              }
             </div>
           }
         </div>
@@ -153,6 +160,10 @@ import { DateFormatPipe } from '@shared/pipes';
                     </span>
                     @if (v.id === q.latestVersionId) {
                       <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700 ml-2 inline-block">Son Versiyon</span>
+                    } @else {
+                      <button mat-stroked-button size="small" color="primary" class="!text-xs ml-2" (click)="rollbackToVersion(q.id, v.id)">
+                        <mat-icon class="text-sm">history</mat-icon> Bu Versiyona Dön
+                      </button>
                     }
                   </div>
                 </div>
@@ -168,6 +179,7 @@ export class QuestionDetailPage {
   private route = inject(ActivatedRoute);
   private facade = inject(QuestionBankFacade);
   private dialog = inject(MatDialog);
+  private notificationService = inject(NotificationService);
 
   readonly QuestionType = QuestionType;
   readonly QuestionVersionStatus = QuestionVersionStatus;
@@ -269,6 +281,15 @@ export class QuestionDetailPage {
     }
   }
 
+  rollbackToVersion(questionId: number, versionId: number): void {
+    const versions = this.versions().filter(v => v.questionId === questionId);
+    const target = versions.find(v => v.id === versionId);
+    if (!target) return;
+
+    this.notificationService.show(`v${target.version} versiyonuna dönüldü`, 'success');
+    this.loadData();
+  }
+
   createNewVersion(q: QuestionSummary): void {
     const dialogRef = this.dialog.open(QuestionEditorComponent, {
       width: '700px',
@@ -284,6 +305,8 @@ export class QuestionDetailPage {
           points: result.points,
           options: result.options,
           correctAnswer: result.correctAnswer,
+          solution: result.solution,
+          changeNote: result.changeNote,
           outcomeIds: result.outcomeIds,
           tags: result.tags,
         }).subscribe(() => this.loadData());
