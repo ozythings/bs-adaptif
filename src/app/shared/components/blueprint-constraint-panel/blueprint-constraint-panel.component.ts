@@ -239,7 +239,6 @@ export class BlueprintConstraintPanelComponent {
       case QuestionType.TRUE_FALSE: return 'Doğru/Yanlış';
       case QuestionType.SHORT_ANSWER: return 'Kısa Cevap';
       case QuestionType.ESSAY: return 'Kompozisyon';
-      case QuestionType.MATCHING: return 'Eşleştirme';
       default: return t;
     }
   }
