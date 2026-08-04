@@ -85,7 +85,7 @@
             </a>
           </li>
         }
-        @if (canAccess([UserRole.PLATFORM_ADMIN, UserRole.PROGRAM_MANAGER])) {
+        @if (canAccess([UserRole.PLATFORM_ADMIN, UserRole.PROGRAM_MANAGER, UserRole.OBSERVER])) {
           <li>
             <a routerLink="/cohort-analytics" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Cohort Analizi">
               <mat-icon>groups</mat-icon>
@@ -228,7 +228,7 @@
                 </a>
               </li>
             }
-            @if (canAccess([UserRole.PLATFORM_ADMIN, UserRole.PROGRAM_MANAGER])) {
+            @if (canAccess([UserRole.PLATFORM_ADMIN, UserRole.PROGRAM_MANAGER, UserRole.OBSERVER])) {
               <li>
                 <a routerLink="/cohort-analytics" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50" (click)="toggleMenu()" aria-label="Cohort Analizi">
                   <mat-icon>groups</mat-icon>

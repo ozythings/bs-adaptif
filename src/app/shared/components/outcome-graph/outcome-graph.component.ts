@@ -1,66 +1,24 @@
 import { Component,  input,  output,  signal,  computed,  effect,  ElementRef,  viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LearningOutcome } from '@core/models/learning-outcome.model';
+import { OutcomeLevel } from '@core/models/enums';
 import { memoizeWithKey } from '@shared/utils/memoize';
 
 const NODE_LIMIT_WARN = 100;
 
-const memoizedLayout = memoizeWithKey(
-  (items: LearningOutcome[]) => {
-    const levels: Map<number, number> = new Map();
-    const cache = new Map<number, number>();
-    const assignLevel = (id: number): number => {
-      if (cache.has(id)) return cache.get(id)!;
-      cache.set(id, 0);
-      const node = items.find(o => o.id === id);
-      if (!node || node.prerequisiteIds.length === 0) {
-        levels.set(id, 0);
-        cache.set(id, 0);
-        return 0;
-      }
-      const maxPrereqLevel = Math.max(0, ...node.prerequisiteIds.map(assignLevel));
-      const level = maxPrereqLevel + 1;
-      levels.set(id, level);
-      cache.set(id, level);
-      return level;
-    };
-    items.forEach(o => assignLevel(o.id));
-    const maxLevel = Math.max(0, ...Array.from(levels.values()));
-    const levelHeight = Math.max(90, 320 / (maxLevel + 1));
-    const levelWidth = 140;
-    const levelCounts = new Map<number, number>();
-    const levelIndices = new Map<number, number>();
-    const slotSpacing = 60;
+const LEVEL_COLORS: Record<OutcomeLevel, { fill: string; stroke: string; label: string }> = {
+  [OutcomeLevel.REMEMBER]:   { fill: '#fef3c7', stroke: '#eab308', label: 'Hatırlama' },
+  [OutcomeLevel.UNDERSTAND]: { fill: '#dbeafe', stroke: '#3b82f6', label: 'Anlama' },
+  [OutcomeLevel.APPLY]:      { fill: '#dcfce7', stroke: '#22c55e', label: 'Uygulama' },
+  [OutcomeLevel.ANALYZE]:    { fill: '#f3e8ff', stroke: '#a855f7', label: 'Çözümleme' },
+  [OutcomeLevel.EVALUATE]:   { fill: '#fce7f3', stroke: '#ec4899', label: 'Değerlendirme' },
+  [OutcomeLevel.CREATE]:     { fill: '#e0e7ff', stroke: '#6366f1', label: 'Oluşturma' },
+};
 
-    const nodes: GraphNode[] = items.map(o => {
-      const lvl = levels.get(o.id) ?? 0;
-      levelCounts.set(lvl, (levelCounts.get(lvl) ?? 0) + 1);
-      const idx = levelIndices.get(lvl) ?? 0;
-      levelIndices.set(lvl, idx + 1);
-      const count = levelCounts.get(lvl)!;
-      const spacing = Math.max(slotSpacing, 320 / Math.max(count, 1));
-      return {
-        id: o.id,
-        label: o.code,
-        x: 100 + lvl * levelWidth,
-        y: 50 + idx * spacing,
-        level: lvl,
-        highlighted: false
-      };
-    });
-
-    const edges: GraphEdge[] = [];
-    items.forEach(o => {
-      o.prerequisiteIds.forEach(prereqId => {
-        edges.push({ from: prereqId, to: o.id });
-      });
-    });
-
-    const maxY = Math.max(400, ...nodes.map(n => n.y + 40));
-    return { nodes, edges, width: Math.max(800, (maxLevel + 1) * levelWidth + 100), height: maxY };
-  },
-  (items: LearningOutcome[]) => items.map(o => o.id).sort().join(',')
-);
+export const levelColorEntries = Object.entries(LEVEL_COLORS).map(([key, val]) => ({
+  level: key as OutcomeLevel,
+  ...val,
+}));
 
 interface GraphNode {
   id: number;
@@ -68,13 +26,108 @@ interface GraphNode {
   x: number;
   y: number;
   level: number;
+  levelColor: string;
+  levelStroke: string;
+  isActive: boolean;
   highlighted: boolean;
 }
 
 interface GraphEdge {
   from: number;
   to: number;
+  cyclic: boolean;
 }
+
+interface LayoutResult {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  width: number;
+  height: number;
+  cyclicEdges: Set<string>;
+}
+
+function computeLayout(items: LearningOutcome[]): LayoutResult {
+  const depth = new Map<number, number>();
+  const visiting = new Set<number>();
+  const cyclicEdges = new Set<string>();
+
+  const assignDepth = (id: number): number => {
+    if (depth.has(id)) return depth.get(id)!;
+    if (visiting.has(id)) {
+      depth.set(id, 0);
+      return 0;
+    }
+    visiting.add(id);
+    const node = items.find(o => o.id === id);
+    if (!node || node.prerequisiteIds.length === 0) {
+      depth.set(id, 0);
+      visiting.delete(id);
+      return 0;
+    }
+    for (const pid of node.prerequisiteIds) {
+      if (visiting.has(pid)) {
+        cyclicEdges.add(`${pid}-${id}`);
+      }
+    }
+    const maxPrereqDepth = Math.max(0, ...node.prerequisiteIds.map(assignDepth));
+    visiting.delete(id);
+    const d = maxPrereqDepth + 1;
+    depth.set(id, d);
+    return d;
+  };
+
+  items.forEach(o => assignDepth(o.id));
+
+  const maxDepth = Math.max(0, ...Array.from(depth.values()));
+  const levelHeight = Math.max(90, 320 / (maxDepth + 1));
+  const levelWidth = 140;
+  const levelCounts = new Map<number, number>();
+  const levelIndices = new Map<number, number>();
+  const slotSpacing = 60;
+
+  const nodes: GraphNode[] = items.map(o => {
+    const lvl = depth.get(o.id) ?? 0;
+    levelCounts.set(lvl, (levelCounts.get(lvl) ?? 0) + 1);
+    const idx = levelIndices.get(lvl) ?? 0;
+    levelIndices.set(lvl, idx + 1);
+    const count = levelCounts.get(lvl)!;
+    const spacing = Math.max(slotSpacing, 320 / Math.max(count, 1));
+    const colors = LEVEL_COLORS[o.level] || LEVEL_COLORS[OutcomeLevel.REMEMBER];
+    return {
+      id: o.id,
+      label: o.code,
+      x: 100 + lvl * levelWidth,
+      y: 50 + idx * spacing,
+      level: lvl,
+      levelColor: colors.fill,
+      levelStroke: colors.stroke,
+      isActive: o.isActive,
+      highlighted: false
+    };
+  });
+
+  const edges: GraphEdge[] = [];
+  items.forEach(o => {
+    o.prerequisiteIds.forEach(prereqId => {
+      const key = `${prereqId}-${o.id}`;
+      edges.push({ from: prereqId, to: o.id, cyclic: cyclicEdges.has(key) });
+    });
+  });
+
+  const maxY = Math.max(400, ...nodes.map(n => n.y + 40));
+  return {
+    nodes,
+    edges,
+    width: Math.max(800, (maxDepth + 1) * levelWidth + 100),
+    height: maxY,
+    cyclicEdges,
+  };
+}
+
+const memoizedLayout = memoizeWithKey(
+  computeLayout,
+  (items: LearningOutcome[]) => items.map(o => o.id).sort().join(',')
+);
 
 @Component({
   selector: 'app-outcome-graph',
@@ -85,6 +138,11 @@ interface GraphEdge {
       @if (outcomes().length >= NODE_LIMIT_WARN) {
         <div class="absolute top-2 left-2 z-10 bg-amber-50 border border-amber-200 rounded-lg px-3 py-1.5 text-sm text-amber-700">
           {{ outcomes().length }} kazanım görüntüleniyor. Filtreleme veya odak modu önerilir.
+        </div>
+      }
+      @if (hasCycles()) {
+        <div class="absolute top-2 left-2 z-10 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5 text-sm text-red-700" [class.mt-10]="outcomes().length >= NODE_LIMIT_WARN">
+          <strong>⚠ Döngüsel önkoşul tespit edildi.</strong> Kırmızı oklara sahip kenarlar bir döngü oluşturuyor.
         </div>
       }
       <div class="absolute top-2 right-2 z-10 flex flex-col gap-1 bg-white/90 rounded-lg shadow-sm p-1">
@@ -113,19 +171,19 @@ interface GraphEdge {
               [attr.y1]="getNode(edge.from)?.y ?? 0"
               [attr.x2]="getNode(edge.to)?.x ?? 0"
               [attr.y2]="getNode(edge.to)?.y ?? 0"
-              stroke="#94a3b8" stroke-width="2"
-              [class.stroke-red-400]="edge.from === selectedId()"
-              [class.stroke-blue-400]="edge.to === selectedId()" />
+              [attr.stroke]="edge.cyclic ? '#ef4444' : edge.from === selectedId() ? '#f97316' : edge.to === selectedId() ? '#3b82f6' : '#94a3b8'"
+              [attr.stroke-width]="edge.cyclic ? 3 : 2"
+              [attr.stroke-dasharray]="edge.cyclic ? '6,3' : 'none'" />
           }
           @for (node of nodes(); track node.id) {
-            <g (click)="selectNode(node.id)" class="cursor-pointer">
+            <g (click)="selectNode(node.id)" class="cursor-pointer" [style.opacity]="node.isActive ? 1 : 0.35">
               <rect [attr.x]="node.x - 60" [attr.y]="node.y - 18"
                 width="120" height="36" rx="6"
-                [attr.fill]="node.highlighted ? '#dbeafe' : '#ffffff'"
-                [attr.stroke]="node.id === selectedId() ? '#3b82f6' : '#cbd5e1'"
+                [attr.fill]="node.levelColor"
+                [attr.stroke]="node.id === selectedId() ? '#1d4ed8' : node.levelStroke"
                 stroke-width="2" />
               <text [attr.x]="node.x" [attr.y]="node.y + 5"
-                text-anchor="middle" class="text-xs fill-gray-700"
+                text-anchor="middle" class="text-xs fill-gray-800"
                 font-size="11">{{ node.label }}</text>
             </g>
           } @empty {
@@ -147,6 +205,7 @@ export class OutcomeGraphComponent {
   protected svgWidth = signal(800);
   protected svgHeight = signal(400);
   protected zoomLevel = signal(1);
+  protected hasCycles = signal(false);
   protected readonly NODE_LIMIT_WARN = NODE_LIMIT_WARN;
 
   private panOffset = { x: 0, y: 0 };
@@ -162,6 +221,7 @@ export class OutcomeGraphComponent {
       if (items.length === 0) {
         this.nodes.set([]);
         this.edges.set([]);
+        this.hasCycles.set(false);
         return;
       }
       if (focusId !== null) {
@@ -177,6 +237,7 @@ export class OutcomeGraphComponent {
       this.edges.set(layout.edges);
       this.svgWidth.set(layout.width);
       this.svgHeight.set(layout.height);
+      this.hasCycles.set(layout.cyclicEdges.size > 0);
     });
   }
 

@@ -65,7 +65,7 @@ interface ItemAnalysisDisplay extends ItemAnalysis {
 
       @if (filteredCount() > 0) {
         <div class="bg-white rounded-lg shadow-sm p-3 flex flex-wrap gap-2 text-xs text-gray-600">
-          <span class="font-medium text-gray-800">Ort. Güçlük: {{ avgDifficulty() | number:'1.2' }}</span>
+          <span class="font-medium text-gray-800">Ort. Zorluk: {{ avgDifficulty() | number:'1.2' }}</span>
           <span class="text-gray-300">|</span>
           <span class="font-medium text-gray-800">Ort. Ayırt Edicilik: {{ avgDiscrimination() | number:'1.2' }}</span>
           <span class="text-gray-300">|</span>
