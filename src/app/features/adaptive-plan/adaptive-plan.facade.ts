@@ -3,7 +3,9 @@ import { Observable } from 'rxjs';
 import { MockApiService } from '@core/api/mock-api.service';
 import { CurrentUserService } from '@core/auth/current-user.service';
 import { ExamStatus } from '@core/models/enums';
-import { generateRecommendations } from '@core/engine';
+import { isExamAvailable, type ExamAvailability } from '../exams/data-access/exams.facade';
+import { generateRecommendations, generateStudySequence, difficultyColor } from '@core/engine';
+import type { SequencedContent } from '@core/engine';
 import { Recommendation } from '@core/models/recommendation.model';
 import { COURSES_SEED, ENROLLMENTS_SEED, CONTENTS_SEED, OUTCOMES_SEED, MASTERY_SEED, CONTENT_COMPLETIONS_SEED, ATTEMPTS_SEED, EXAMS_SEED } from '@core/data';
 
@@ -26,6 +28,9 @@ export interface UpcomingExam {
   questionCount: number;
   duration: number;
   passingScore: number;
+  startDate: string | null;
+  endDate: string | null;
+  availability: ExamAvailability;
 }
 
 export interface CourseMasterySummary {
@@ -67,7 +72,6 @@ export class AdaptivePlanFacade {
     const enrolledCourses = COURSES_SEED.filter(c => enrolledCourseIds.includes(c.id));
 
     const masteryScores = MASTERY_SEED.filter(m => m.studentId === studentId);
-    const weakOutcomes = masteryScores.filter(m => m.score < 60);
     const totalMastery = masteryScores.length > 0
       ? Math.round(masteryScores.reduce((s, m) => s + m.score, 0) / masteryScores.length)
       : 0;
@@ -77,10 +81,19 @@ export class AdaptivePlanFacade {
     );
     const lockedContentIds = CONTENTS_SEED.filter(c => c.isLocked).map(c => c.id);
 
+    const contents = CONTENTS_SEED.filter(c => enrolledCourseIds.includes(c.courseId));
+
+    const sequence = generateStudySequence({
+      masteryScores,
+      contents,
+      completedContentIds: [...completedContentIds],
+      lockedContentIds,
+    });
+
     const now = new Date().toISOString();
     const recommendations = generateRecommendations({
       masteryScores,
-      contents: CONTENTS_SEED,
+      contents,
       completedContentIds: [...completedContentIds],
       lockedContentIds,
     }, studentId).map((r, i) => ({
@@ -118,7 +131,8 @@ export class AdaptivePlanFacade {
       .filter(e =>
         e.status === ExamStatus.PUBLISHED &&
         enrolledCourseIds.includes(e.courseId) &&
-        !attemptedExamIds.has(e.id)
+        !attemptedExamIds.has(e.id) &&
+        isExamAvailable(e) !== 'expired'
       )
       .map(e => {
         const course = COURSES_SEED.find(c => c.id === e.courseId);
@@ -129,43 +143,37 @@ export class AdaptivePlanFacade {
           questionCount: e.questionCount,
           duration: e.duration,
           passingScore: e.passingScore,
+          startDate: e.startDate ?? null,
+          endDate: e.endDate ?? null,
+          availability: isExamAvailable(e),
         };
       });
 
     const days = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
-    const scheduledTasks: ScheduledTask[] = [];
-    const sortedWeak = weakOutcomes.sort((a, b) => a.score - b.score);
+    const tasksToSchedule = sequence
+      .filter(s => s.isWeak && !s.isMastered)
+      .slice(0, 10);
 
-    for (let i = 0; i < Math.min(sortedWeak.length, 10); i++) {
-      const mastery = sortedWeak[i];
-      const outcome = OUTCOMES_SEED.find(o => o.id === mastery.outcomeId);
-      const relevantContent = CONTENTS_SEED.find(c =>
-        c.outcomeIds.includes(mastery.outcomeId) &&
-        !completedContentIds.has(c.id) &&
-        !lockedContentIds.includes(c.id)
-      );
-      if (!relevantContent) continue;
-
+    const scheduledTasks: ScheduledTask[] = tasksToSchedule.map((s, i) => {
+      const outcome = OUTCOMES_SEED.find(o => o.id === s.content.outcomeIds[0]);
       const course = COURSES_SEED.find(c => c.id === outcome?.courseId);
-      let priority: ScheduledTask['priority'] = 'low';
-      if (mastery.score < 30) priority = 'critical';
-      else if (mastery.score < 45) priority = 'high';
-      else if (mastery.score < 60) priority = 'medium';
-
-      scheduledTasks.push({
+      return {
         day: days[i % days.length],
         dayIndex: i % days.length,
-        contentId: relevantContent.id,
-        contentTitle: relevantContent.title,
+        contentId: s.content.id,
+        contentTitle: s.content.title,
         courseTitle: course?.title ?? '',
-        outcomeName: outcome?.code ?? `Kazanım #${mastery.outcomeId}`,
-        priority,
-        durationMinutes: relevantContent.durationMinutes,
-        masteryScore: mastery.score,
-      });
-    }
+        outcomeName: outcome?.code ?? `Kazanım #${s.content.outcomeIds[0]}`,
+        priority: s.priority === 'critical' ? 'critical'
+          : s.priority === 'high' ? 'high'
+          : s.priority === 'medium' ? 'medium'
+          : 'low',
+        durationMinutes: s.content.durationMinutes,
+        masteryScore: s.masteryScore,
+      };
+    });
 
-    const totalContents = CONTENTS_SEED.filter(c => enrolledCourseIds.includes(c.courseId)).length;
+    const totalContents = contents.length;
     const completedContents = completedContentIds.size;
     const weeklyProgress = totalContents > 0 ? Math.round((completedContents / totalContents) * 100) : 0;
     const studyHours = scheduledTasks.reduce((s, t) => s + t.durationMinutes, 0) / 60;

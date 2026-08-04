@@ -205,17 +205,28 @@ import { RecommendationReasonCardComponent } from '@shared/components/recommenda
             } @else {
               <div class="space-y-3">
                 @for (exam of info.upcomingExams; track exam.examId) {
-                  <div class="flex items-center gap-3 p-3 bg-orange-50 rounded-lg border border-orange-200">
-                    <div class="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center flex-shrink-0">
-                      <mat-icon class="text-orange-600">quiz</mat-icon>
+                  <div class="flex items-center gap-3 p-3 rounded-lg border"
+                    [class.bg-blue-50]="exam.availability === 'upcoming'"
+                    [class.border-blue-200]="exam.availability === 'upcoming'"
+                    [class.bg-amber-50]="exam.availability === 'active'"
+                    [class.border-amber-200]="exam.availability === 'active'">
+                    <div class="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                      [class.bg-blue-100]="exam.availability === 'upcoming'"
+                      [class.bg-amber-100]="exam.availability === 'active'">
+                      <mat-icon [class.text-blue-600]="exam.availability === 'upcoming'"
+                        [class.text-amber-600]="exam.availability === 'active'">quiz</mat-icon>
                     </div>
                     <div class="flex-1 min-w-0">
                       <p class="text-sm font-medium text-gray-900 truncate">{{ exam.title }}</p>
                       <p class="text-xs text-gray-500">{{ exam.courseTitle }}</p>
                     </div>
                     <div class="text-right flex-shrink-0">
-                      <p class="text-xs text-gray-500">{{ exam.questionCount }} soru</p>
-                      <p class="text-xs text-gray-400">{{ exam.duration }}dk &middot; Geçme: %{{ exam.passingScore }}</p>
+                      @if (exam.availability === 'upcoming' && exam.startDate) {
+                        <p class="text-xs font-medium text-blue-600">Yaklaşan Sınav · {{ formatDate(exam.startDate) }}</p>
+                      } @else if (exam.availability === 'active' && exam.endDate) {
+                        <p class="text-xs font-medium text-amber-600">Son Tarih · {{ formatDate(exam.endDate) }}</p>
+                      }
+                      <p class="text-xs text-gray-400">{{ exam.duration }}dk · Geçme: %{{ exam.passingScore }}</p>
                     </div>
                   </div>
                 }
@@ -284,12 +295,7 @@ export class AdaptivePlanPage implements OnInit {
   userName = computed(() => this.currentUser.user().name);
 
   dayLabels = computed(() => {
-    const data = this.d();
-    if (!data) return ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
-    const seen = new Set<string>();
-    for (const t of data.scheduledTasks) seen.add(t.day);
-    const ordered = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
-    return ordered.filter(d => seen.has(d) || true);
+    return ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
   });
 
   ngOnInit(): void {
@@ -315,5 +321,11 @@ export class AdaptivePlanPage implements OnInit {
       groups[t.day].push(t);
     }
     return groups;
+  }
+
+  formatDate(iso: string): string {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 }
