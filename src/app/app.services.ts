@@ -5,7 +5,6 @@ import { SessionService } from './core/auth/session.service';
 import { AuditService } from './core/observability/audit.service';
 import { NotificationService } from './core/observability/notification.service';
 import { OptimisticService } from './core/optimistic/optimistic.service';
-import { ActivityStreamService } from './core/realtime/activity-stream.service';
 import { EntityStore } from './core/state/entity.store';
 import { EventBusService } from './core/state/event-bus.service';
 import { ConflictResolverService } from './core/storage/conflict-resolver.service';
@@ -21,12 +20,10 @@ import { SessionFacade } from './features/exam-session/data-access/session.facad
 import { ExamsFacade } from './features/exams/data-access/exams.facade';
 import { GradingFacade } from './features/grading/data-access/grading.facade';
 import { ItemAnalysisFacade } from './features/item-analysis/data-access/item-analysis.facade';
-import { LearningFacade } from './features/learning/data-access/learning.facade';
 import { OutcomesFacade } from './features/outcomes/data-access/outcomes.facade';
 import { ParticipantFacade } from './features/participant-edit/data-access/participant.facade';
 import { QuestionBankFacade } from './features/questions/data-access/question-bank.facade';
-import { StudentAnalyticsFacade } from './features/student-analytics/data-access/student-analytics.facade';
-import { AdaptivePlanFacade } from './features/adaptive-plan/adaptive-plan.facade';
+import { StudentDashboardFacade } from './features/student-dashboard/student-dashboard.facade';
 
 export const APP_SERVICES = [
   MockApiService,
@@ -36,7 +33,6 @@ export const APP_SERVICES = [
   AuditService,
   NotificationService,
   OptimisticService,
-  ActivityStreamService,
   EntityStore,
   EventBusService,
   ConflictResolverService,
@@ -52,10 +48,8 @@ export const APP_SERVICES = [
   ExamsFacade,
   GradingFacade,
   ItemAnalysisFacade,
-  LearningFacade,
-  AdaptivePlanFacade,
   OutcomesFacade,
   ParticipantFacade,
   QuestionBankFacade,
-  StudentAnalyticsFacade,
+  StudentDashboardFacade,
 ];

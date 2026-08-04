@@ -5,10 +5,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { AdaptivePlanFacade, WeeklyPlanData, ScheduledTask } from './adaptive-plan.facade';
+import { StudentDashboardFacade } from '../student-dashboard/student-dashboard.facade';
 import { CurrentUserService } from '@core/auth/current-user.service';
 import { ErrorStateComponent, KpiCardComponent } from '@shared/components';
 import { RecommendationReasonCardComponent } from '@shared/components/recommendation-reason-card/recommendation-reason-card.component';
+import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/student-dashboard.model';
 
 @Component({
   selector: 'app-adaptive-plan-page',
@@ -49,7 +50,7 @@ import { RecommendationReasonCardComponent } from '@shared/components/recommenda
         <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <app-kpi-card
             borderClass="border-emerald-500" iconBgClass="bg-emerald-100" iconColorClass="text-emerald-600"
-            icon="psychology" label="Genel Başarım" [value]="info.totalMastery + '%'" />
+            icon="psychology" label="Genel Başarım" [value]="info.overallMastery + '%'" />
           <app-kpi-card
             borderClass="border-blue-500" iconBgClass="bg-blue-100" iconColorClass="text-blue-600"
             icon="checklist" label="İçerik Tamamlama" [value]="info.completedContents + '/' + info.totalContents" />
@@ -154,11 +155,11 @@ import { RecommendationReasonCardComponent } from '@shared/components/recommenda
         </div>
 
         <!-- Courses Mastery -->
-        @if (info.courses.length > 0) {
+        @if (info.courseMastery.length > 0) {
           <div>
             <h2 class="text-lg font-semibold text-gray-900 mb-3">Kurs Başarım Durumu</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              @for (course of info.courses; track course.courseId) {
+              @for (course of info.courseMastery; track course.courseId) {
                 <mat-card appearance="outlined" class="hover:shadow-md transition-shadow">
                   <div class="p-4">
                     <h3 class="font-semibold text-gray-900 truncate mb-3">{{ course.courseTitle }}</h3>
@@ -268,11 +269,11 @@ import { RecommendationReasonCardComponent } from '@shared/components/recommenda
                 </mat-progress-bar>
                 <div class="flex items-center justify-between text-sm pt-2">
                   <span class="text-gray-600">Genel Başarım</span>
-                  <span class="font-medium">%{{ info.totalMastery }}</span>
+                  <span class="font-medium">%{{ info.overallMastery }}</span>
                 </div>
                 <mat-progress-bar
-                  [value]="info.totalMastery"
-                  [color]="info.totalMastery >= 60 ? 'primary' : 'warn'"
+                  [value]="info.overallMastery"
+                  [color]="info.overallMastery >= 60 ? 'primary' : 'warn'"
                   class="rounded-full">
                 </mat-progress-bar>
               </div>
@@ -284,13 +285,13 @@ import { RecommendationReasonCardComponent } from '@shared/components/recommenda
   `,
 })
 export class AdaptivePlanPage implements OnInit {
-  protected facade = inject(AdaptivePlanFacade);
+  protected facade = inject(StudentDashboardFacade);
   protected currentUser = inject(CurrentUserService);
   protected readonly Math = Math;
 
   loading = signal(true);
   error = signal<string | null>(null);
-  d = signal<WeeklyPlanData | null>(null);
+  d = signal<StudentDashboardData | null>(null);
 
   userName = computed(() => this.currentUser.user().name);
 
@@ -305,7 +306,7 @@ export class AdaptivePlanPage implements OnInit {
   loadData(): void {
     this.loading.set(true);
     this.error.set(null);
-    this.facade.getWeeklyPlan().subscribe({
+    this.facade.getDashboard().subscribe({
       next: info => {
         this.d.set(info);
         this.loading.set(false);

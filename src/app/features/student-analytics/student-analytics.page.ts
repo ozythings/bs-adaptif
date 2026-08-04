@@ -1,31 +1,30 @@
-import { Component,  inject,  signal,  computed,  OnInit,  DestroyRef } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { ActivatedRoute } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
-import { catchError, finalize } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { StudentAnalyticsFacade } from './data-access/student-analytics.facade';
+import { StudentDashboardFacade } from '../student-dashboard/student-dashboard.facade';
 import { CurrentUserService } from '@core/auth/current-user.service';
 import { UserRole } from '@core/models/enums';
 import { MasteryHeatmap } from '@shared/components/mastery-heatmap/mastery-heatmap.component';
 import { ColumnChartComponent } from '@shared/components/column-chart/column-chart.component';
 import { LineChartComponent } from '@shared/components/line-chart/line-chart.component';
 import { ErrorStateComponent } from '@shared/components';
-import { Participant } from '@core/models/participant.model';
-import { MasteryScore } from '@core/models/mastery-score.model';
-import { LearningOutcome } from '@core/models/learning-outcome.model';
-import { Attempt } from '@core/models/attempt.model';
-import { Recommendation } from '@core/models/recommendation.model';
+import { KpiCardComponent } from '@shared/components';
+import { RecommendationReasonCardComponent } from '@shared/components/recommendation-reason-card/recommendation-reason-card.component';
 import { EXAMS_SEED } from '@core/data';
+import type { StudentDashboardData } from '../student-dashboard/student-dashboard.model';
 
 @Component({
   selector: 'app-student-analytics',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatIconModule, MatButtonModule, MatProgressSpinnerModule, MasteryHeatmap, ColumnChartComponent, LineChartComponent, ErrorStateComponent],
+  imports: [
+    CommonModule, RouterLink, MatIconModule, MatButtonModule, MatProgressSpinnerModule,
+    MasteryHeatmap, ColumnChartComponent, LineChartComponent, ErrorStateComponent,
+    KpiCardComponent, RecommendationReasonCardComponent
+  ],
   template: `
     <div class="space-y-6 p-4">
       @if (!isObserver()) {
@@ -38,8 +37,8 @@ import { EXAMS_SEED } from '@core/data';
         </div>
       } @else if (error(); as err) {
         <app-error-state [title]="'Veri Yüklenemedi'" [message]="err" [retryable]="true" (retry)="retry()" />
-      } @else {
-        @if (student(); as s) {
+      } @else if (d(); as info) {
+        @if (info.student; as s) {
           <div class="flex items-center gap-3">
             <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
               {{ s.firstName.charAt(0) }}{{ s.lastName.charAt(0) }}
@@ -56,25 +55,23 @@ import { EXAMS_SEED } from '@core/data';
           </div>
         }
 
+        <!-- KPI Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div class="bg-white rounded-lg shadow-sm p-4 border-l-4 border-blue-500">
-            <p class="text-sm text-gray-500">Toplam Deneme</p>
-            <p class="text-2xl font-bold">{{ totalAttempts() }}</p>
-          </div>
-          <div class="bg-white rounded-lg shadow-sm p-4 border-l-4 border-green-500">
-            <p class="text-sm text-gray-500">Ortalama Başarım</p>
-            <p class="text-2xl font-bold">{{ avgMastery() }}</p>
-          </div>
-          <div class="bg-white rounded-lg shadow-sm p-4 border-l-4 border-red-500">
-            <p class="text-sm text-gray-500">Zayıf Alanlar</p>
-            <p class="text-2xl font-bold">{{ weakOutcomes().length }}</p>
-          </div>
-          <div class="bg-white rounded-lg shadow-sm p-4 border-l-4 border-yellow-500">
-            <p class="text-sm text-gray-500">Güçlü Alanlar</p>
-            <p class="text-2xl font-bold">{{ strongOutcomes().length }}</p>
-          </div>
+          <app-kpi-card
+            borderClass="border-blue-500" iconBgClass="bg-blue-100" iconColorClass="text-blue-600"
+            icon="assignment" label="Toplam Deneme" [value]="info.totalAttempts" />
+          <app-kpi-card
+            borderClass="border-green-500" iconBgClass="bg-green-100" iconColorClass="text-green-600"
+            icon="emoji_events" label="Ortalama Başarım" [value]="info.overallMastery + '%'" />
+          <app-kpi-card
+            borderClass="border-red-500" iconBgClass="bg-red-100" iconColorClass="text-red-600"
+            icon="warning" label="Zayıf Alanlar" [value]="info.weakOutcomes.length" />
+          <app-kpi-card
+            borderClass="border-yellow-500" iconBgClass="bg-yellow-100" iconColorClass="text-yellow-600"
+            icon="star" label="Güçlü Alanlar" [value]="info.strongOutcomes.length" />
         </div>
 
+        <!-- Exam Trend Chart -->
         @if (trendLabels().length > 0) {
         <div class="bg-white rounded-lg shadow-sm p-4">
           <h2 class="text-lg font-semibold mb-3">İlerleme Trendi</h2>
@@ -87,6 +84,7 @@ import { EXAMS_SEED } from '@core/data';
         </div>
         }
 
+        <!-- Mastery Trend Chart -->
         @if (masteryTrendDatasets().length > 0) {
         <div class="bg-white rounded-lg shadow-sm p-4">
           <h2 class="text-lg font-semibold mb-3">Kazanım İlerleme Trendi</h2>
@@ -99,6 +97,7 @@ import { EXAMS_SEED } from '@core/data';
         </div>
         }
 
+        <!-- Exam History -->
         <div class="bg-white rounded-lg shadow-sm p-4">
           <h2 class="text-lg font-semibold mb-3">Sınav Geçmişi</h2>
           @if (attemptHistory().length === 0) {
@@ -121,7 +120,7 @@ import { EXAMS_SEED } from '@core/data';
                 <tbody>
                   @for (a of attemptHistory(); track a.id) {
                     <tr class="border-b border-gray-50 hover:bg-gray-50">
-                      <td class="p-2 font-medium">{{ a.examTitle }}</td>
+                      <td class="p-2 font-medium">{{ examTitle(a.examId) }}</td>
                       <td class="p-2 text-right">{{ a.totalScore }} / {{ a.maxScore }}</td>
                       <td class="p-2 text-right">
                         <span [class.text-green-600]="a.scorePercentage >= 50" [class.text-red-600]="a.scorePercentage < 50">
@@ -142,34 +141,27 @@ import { EXAMS_SEED } from '@core/data';
           }
         </div>
 
+        <!-- Mastery Heatmap -->
         <div class="bg-white rounded-lg shadow-sm p-4">
           <h2 class="text-lg font-semibold mb-3">Başarım Haritası</h2>
-          <app-mastery-heatmap [scores]="masteryScores()" [outcomes]="allOutcomes()" />
+          <app-mastery-heatmap [scores]="info.masteryScores" [outcomes]="info.outcomes" />
         </div>
 
+        <!-- Recommendations -->
         <div class="bg-white rounded-lg shadow-sm p-4">
           <h2 class="text-lg font-semibold mb-3">Öneriler</h2>
-          @if (recommendations().length === 0) {
+          @if (info.recommendations.length === 0) {
             <div class="text-center py-8 text-gray-500">
               <mat-icon class="text-5xl mb-2">inbox</mat-icon>
               <p class="text-lg">Henüz veri bulunmuyor</p>
             </div>
           } @else {
             <div class="space-y-3">
-              @for (rec of recommendations(); track rec.id) {
-                <div class="p-3 rounded-lg border" [class.bg-green-50]="rec.isApplied" [class.border-green-200]="rec.isApplied" [class.bg-gray-50]="!rec.isApplied" [class.border-gray-200]="!rec.isApplied">
-                  <div class="flex items-start justify-between">
-                    <div class="flex-1">
-                      <p class="font-medium text-sm">{{ rec.reason }}</p>
-                      <p class="text-xs text-gray-500 mt-1">
-                        {{ rec.contentType === 'content' ? 'İçerik' : 'Soru' }} #{{ rec.contentId }} | Öncelik: {{ rec.priority }}
-                      </p>
-                    </div>
-                    @if (rec.isApplied) {
-                      <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Uygulandı</span>
-                    }
-                  </div>
-                </div>
+              @for (rec of info.recommendations; track rec.contentId + '-' + rec.outcomeId) {
+                <app-recommendation-reason-card
+                  [recommendation]="rec"
+                  [outcomeName]="facade.getOutcomeName(rec.outcomeId)"
+                  [courseName]="facade.getCourseNameByOutcome(rec.outcomeId)" />
               }
             </div>
           }
@@ -180,7 +172,7 @@ import { EXAMS_SEED } from '@core/data';
 })
 export class StudentAnalyticsPage implements OnInit {
   private route = inject(ActivatedRoute);
-  private facade = inject(StudentAnalyticsFacade);
+  protected facade = inject(StudentDashboardFacade);
   private currentUser = inject(CurrentUserService);
   private destroyRef = inject(DestroyRef);
 
@@ -188,22 +180,18 @@ export class StudentAnalyticsPage implements OnInit {
 
   loading = signal(true);
   error = signal<string | null>(null);
-  student = signal<Participant | undefined>(undefined);
-  masteryScores = signal<MasteryScore[]>([]);
-  allOutcomes = signal<LearningOutcome[]>([]);
-  attempts = signal<Attempt[]>([]);
-  recommendations = signal<Recommendation[]>([]);
-  weakOutcomes = signal<LearningOutcome[]>([]);
-  strongOutcomes = signal<LearningOutcome[]>([]);
+  d = signal<StudentDashboardData | null>(null);
 
   isObserver = computed(() => this.currentUser.user().role === UserRole.OBSERVER);
 
-  attemptHistory = computed(() =>
-    this.attempts().map(a => ({
+  attemptHistory = computed(() => {
+    const info = this.d();
+    if (!info) return [];
+    return info.examAttempts.map(a => ({
       ...a,
       examTitle: EXAMS_SEED.find(e => e.id === a.examId)?.title ?? `Sınav #${a.examId}`,
-    })).sort((a, b) => new Date(b.submittedAt ?? b.updatedAt).getTime() - new Date(a.submittedAt ?? a.updatedAt).getTime())
-  );
+    })).sort((a, b) => new Date(b.submittedAt ?? b.updatedAt).getTime() - new Date(a.submittedAt ?? a.updatedAt).getTime());
+  });
 
   trendLabels = computed(() => this.attemptHistory().slice().reverse().map(a =>
     new Date(a.submittedAt ?? a.updatedAt).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' })
@@ -211,7 +199,9 @@ export class StudentAnalyticsPage implements OnInit {
   trendValues = computed(() => this.attemptHistory().slice().reverse().map(a => a.scorePercentage));
 
   masteryTrendLabels = computed(() => {
-    const scores = this.masteryScores();
+    const info = this.d();
+    if (!info) return [];
+    const scores = info.masteryScores;
     if (scores.length === 0) return [];
     const allDates = scores.flatMap(s => (s.history ?? []).map(h => h.date));
     const unique = [...new Set(allDates)].sort();
@@ -219,8 +209,10 @@ export class StudentAnalyticsPage implements OnInit {
   });
 
   masteryTrendDatasets = computed(() => {
-    const scores = this.masteryScores();
-    const outcomes = this.allOutcomes();
+    const info = this.d();
+    if (!info) return [];
+    const scores = info.masteryScores;
+    const outcomes = info.outcomes;
     const labels = this.masteryTrendLabels();
     if (scores.length === 0 || labels.length === 0) return [];
     const outcomeMap = new Map(outcomes.map(o => [o.id, o]));
@@ -242,14 +234,6 @@ export class StudentAnalyticsPage implements OnInit {
       });
   });
 
-  totalAttempts = computed(() => this.attempts().length);
-  avgMastery = computed(() => {
-    const scores = this.masteryScores();
-    if (scores.length === 0) return '-%';
-    const total = scores.reduce((sum, s) => sum + s.score, 0);
-    return Math.round(total / scores.length) + '%';
-  });
-
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (isNaN(id)) {
@@ -265,40 +249,29 @@ export class StudentAnalyticsPage implements OnInit {
     this.loadData();
   }
 
+  examTitle(examId: number): string {
+    return EXAMS_SEED.find(e => e.id === examId)?.title ?? `Sınav #${examId}`;
+  }
+
   private loadData(): void {
     this.loading.set(true);
     this.error.set(null);
 
-    this.facade.getAllOutcomes().pipe(
-      catchError(() => of([] as LearningOutcome[])),
+    this.facade.getDashboard(this.studentId).pipe(
       takeUntilDestroyed(this.destroyRef)
-    ).subscribe(outcomes => this.allOutcomes.set(outcomes));
-
-    forkJoin({
-      student: this.facade.getStudentInfo(this.studentId).pipe(catchError(() => of(undefined))),
-      mastery: this.facade.getMasteryScores(this.studentId).pipe(catchError(() => of([] as MasteryScore[]))),
-      attempts: this.facade.getAttempts(this.studentId).pipe(catchError(() => of([] as Attempt[]))),
-      recs: this.facade.getRecommendations(this.studentId).pipe(catchError(() => of([] as Recommendation[]))),
-      weak: this.facade.getWeakOutcomes(this.studentId).pipe(catchError(() => of([] as LearningOutcome[]))),
-      strong: this.facade.getStrongOutcomes(this.studentId).pipe(catchError(() => of([] as LearningOutcome[])))
-    }).pipe(
-      takeUntilDestroyed(this.destroyRef),
-      finalize(() => this.loading.set(false))
     ).subscribe({
-      next: (data) => {
-        if (!data.student) {
+      next: info => {
+        if (!info.student) {
           this.error.set('Öğrenci bulunamadı');
+          this.loading.set(false);
           return;
         }
-        this.student.set(data.student);
-        this.masteryScores.set(data.mastery);
-        this.attempts.set(data.attempts);
-        this.recommendations.set(data.recs);
-        this.weakOutcomes.set(data.weak);
-        this.strongOutcomes.set(data.strong);
+        this.d.set(info);
+        this.loading.set(false);
       },
-      error: (err) => {
+      error: err => {
         this.error.set(err.message ?? 'Veri yüklenirken hata oluştu');
+        this.loading.set(false);
       }
     });
   }

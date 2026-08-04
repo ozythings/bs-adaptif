@@ -1,4 +1,4 @@
-import { Component,  inject,  signal,  computed,  OnInit,  DestroyRef } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, NavigationEnd } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -9,18 +9,20 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { interval } from 'rxjs';
 import { filter } from 'rxjs/operators';
-import { LearningFacade, DashboardData } from './data-access/learning.facade';
+import { StudentDashboardFacade } from '../student-dashboard/student-dashboard.facade';
 import { CurrentUserService } from '@core/auth/current-user.service';
 import { UserRole } from '@core/models/enums';
 import { EventBusService } from '@core/state/event-bus.service';
 import { ExamSession } from '@core/models/exam-session.model';
 import { Recommendation } from '@core/models/recommendation.model';
-import { ActivityEvent } from '@core/realtime/activity-stream.service';
+import { AuditLogEntry } from '@core/models/audit-log-entry.model';
 import { RecommendationReasonCardComponent, ErrorStateComponent, KpiCardComponent } from '@shared/components';
 import { ColumnChartComponent } from '@shared/components/column-chart/column-chart.component';
 import { MasteryHeatmap } from '@shared/components/mastery-heatmap/mastery-heatmap.component';
 import { MasteryScore } from '@core/models/mastery-score.model';
 import { LearningOutcome } from '@core/models/learning-outcome.model';
+import { EXAMS_SEED, COURSES_SEED } from '@core/data';
+import type { StudentDashboardData } from '../student-dashboard/student-dashboard.model';
 
 @Component({
   selector: 'app-dashboard-page',
@@ -62,10 +64,10 @@ import { LearningOutcome } from '@core/models/learning-outcome.model';
           [class.xl:grid-cols-5]="isStudent()">
           <app-kpi-card
             borderClass="border-blue-500" iconBgClass="bg-blue-100" iconColorClass="text-blue-600"
-            icon="school" label="Toplam Kurs" [value]="info.totalCourses" />
+            icon="school" label="Toplam Kurs" [value]="info.courseProgress.length" />
           <app-kpi-card
             borderClass="border-green-500" iconBgClass="bg-green-100" iconColorClass="text-green-600"
-            icon="how_to_reg" label="Aktif Kayıt" [value]="info.activeEnrollments" />
+            icon="how_to_reg" label="Aktif Kayıt" [value]="activeEnrollmentCount()" />
           @if (isStudent()) {
             <app-kpi-card
               borderClass="border-purple-500" iconBgClass="bg-purple-100" iconColorClass="text-purple-600"
@@ -82,18 +84,6 @@ import { LearningOutcome } from '@core/models/learning-outcome.model';
         <!-- Charts Row -->
         @defer (on viewport) {
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- @if (info.masteryByOutcome.length > 0) {
-            <mat-card appearance="outlined" class="p-5">
-              <h2 class="text-lg font-semibold text-gray-900 mb-4">Kazanım Puanları</h2>
-              <div class="h-64">
-                <app-column-chart
-                  [labels]="masteryLabels()"
-                  [values]="masteryValues()"
-                  title="Puan"
-                  [colors]="masteryColors()" />
-              </div>
-            </mat-card>
-          } -->
           @if (isStudent() && info.courseProgress.length > 0) {
             <mat-card appearance="outlined" class="p-5">
               <h2 class="text-lg font-semibold text-gray-900 mb-4">İçerik Tamamlama</h2>
@@ -170,8 +160,8 @@ import { LearningOutcome } from '@core/models/learning-outcome.model';
                 @for (rec of recommendations(); track rec.contentId + '-' + rec.outcomeId) {
                   <app-recommendation-reason-card
                     [recommendation]="rec"
-                    [outcomeName]="getOutcomeName(rec.outcomeId)"
-                    [courseName]="getCourseName(rec.outcomeId)" />
+                    [outcomeName]="facade.getOutcomeName(rec.outcomeId)"
+                    [courseName]="facade.getCourseNameByOutcome(rec.outcomeId)" />
                 }
               </div>
             </mat-card>
@@ -188,11 +178,11 @@ import { LearningOutcome } from '@core/models/learning-outcome.model';
               <p class="text-gray-500 text-sm">Henüz sınav sonucunuz bulunmuyor</p>
             } @else {
               <div class="space-y-3">
-                @for (a of info.examAttempts; track a.attemptId) {
+                @for (a of info.examAttempts; track a.id) {
                   <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div class="flex-1 min-w-0">
-                      <p class="text-sm font-medium text-gray-900 truncate">{{ a.examTitle }}</p>
-                      <p class="text-xs text-gray-500">{{ a.courseName }}</p>
+                      <p class="text-sm font-medium text-gray-900 truncate">{{ examTitle(a.examId) }}</p>
+                      <p class="text-xs text-gray-500">{{ courseName(a.examId) }}</p>
                     </div>
                     <div class="flex items-center gap-3 ml-3">
                       <div class="text-right">
@@ -277,19 +267,26 @@ import { LearningOutcome } from '@core/models/learning-outcome.model';
           </mat-card>
         }
 
-        <!-- Activity Stream (sadece eğitmen/yöneticiler) -->
+        <!-- Son Aktiviteler (gerçek audit log) -->
         @if (!isStudent()) {
           <mat-card appearance="outlined" class="p-5">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Aktivite Akışı</h2>
-          @if (recentEvents().length === 0) {
-            <p class="text-gray-500 text-sm">Henüz aktivite yok</p>
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Son Aktiviteler</h2>
+          @if (recentAuditLogs().length === 0) {
+            <p class="text-gray-500 text-sm">Henüz aktivite kaydı yok</p>
           } @else {
             <div class="space-y-2">
-              @for (event of recentEvents(); track event.timestamp) {
+              @for (log of recentAuditLogs(); track log.id) {
                 <div class="flex items-center gap-3 py-2 px-3 hover:bg-gray-50 rounded-lg transition-colors">
-                  <div class="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0"></div>
-                  <span class="text-sm text-gray-600 flex-1">{{ event.message }}</span>
-                  <span class="text-xs text-gray-400 flex-shrink-0">{{ event.timestamp | date:'HH:mm' }}</span>
+                  <div class="w-2 h-2 rounded-full flex-shrink-0"
+                    [class.bg-green-400]="log.action === 'create'"
+                    [class.bg-blue-400]="log.action === 'view'"
+                    [class.bg-yellow-400]="log.action === 'update'"
+                    [class.bg-red-400]="log.action === 'delete'"
+                    [class.bg-gray-400]="log.action !== 'create' && log.action !== 'view' && log.action !== 'update' && log.action !== 'delete'">
+                  </div>
+                  <span class="text-sm text-gray-600 flex-1">{{ log.description }}</span>
+                  <span class="text-xs text-gray-400 flex-shrink-0">{{ log.user }}</span>
+                  <span class="text-xs text-gray-400 flex-shrink-0">{{ formatTimestamp(log.timestamp) }}</span>
                 </div>
               }
             </div>
@@ -301,14 +298,14 @@ import { LearningOutcome } from '@core/models/learning-outcome.model';
   `
 })
 export class DashboardPage implements OnInit {
-  private facade = inject(LearningFacade);
+  protected facade = inject(StudentDashboardFacade);
   protected currentUser = inject(CurrentUserService);
   private eventBus = inject(EventBusService);
   private router = inject(Router);
 
   loading = signal(true);
   error = signal<string | null>(null);
-  d = signal<DashboardData | null>(null);
+  d = signal<StudentDashboardData | null>(null);
   currentDate = new Date().toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' });
 
   private destroyRef = inject(DestroyRef);
@@ -316,7 +313,7 @@ export class DashboardPage implements OnInit {
   recommendations = signal<Recommendation[]>([]);
   activeSessions = signal<ExamSession[]>([]);
   allActiveSessions = signal<{ token: string; examId: number; examTitle: string; studentName: string; timeRemainingSeconds: number; serverTimeReference: string; durationMinutes: number }[]>([]);
-  recentEvents = signal<ActivityEvent[]>([]);
+  recentAuditLogs = signal<AuditLogEntry[]>([]);
   masteryScores = signal<MasteryScore[]>([]);
   outcomes = signal<LearningOutcome[]>([]);
 
@@ -329,6 +326,12 @@ export class DashboardPage implements OnInit {
     return 'Kullanıcı';
   });
 
+  activeEnrollmentCount = computed(() => {
+    const info = this.d();
+    if (!info) return 0;
+    return info.courseProgress.filter(cp => cp.status === 'approved').length;
+  });
+
   progressLabels = computed(() => this.d()?.courseProgress.map(cp =>
     cp.courseTitle.length > 12 ? cp.courseTitle.substring(0, 12) + '…' : cp.courseTitle
   ) ?? []);
@@ -338,19 +341,13 @@ export class DashboardPage implements OnInit {
 
   ngOnInit() {
     this.loadData();
-    this.facade.getActivityStream().pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(e => {
-      this.recentEvents.update(list => [e, ...list].slice(0, 10));
-    });
+
     this.eventBus.ofType<any>('audit').pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(e => {
-      this.recentEvents.update(list => [{
-        type: 'activity',
-        message: e?.entry?.description ?? '',
-        timestamp: new Date()
-      }, ...list].slice(0, 10));
+      if (e?.entry) {
+        this.recentAuditLogs.update(list => [e.entry, ...list].slice(0, 10));
+      }
     });
 
     if (!this.isStudent()) {
@@ -384,17 +381,25 @@ export class DashboardPage implements OnInit {
     return `${String(m).padStart(2, '0')}:${sec}`;
   }
 
+  formatTimestamp(iso: string): string {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }) + ' ' +
+           d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+  }
+
   loadData(): void {
     this.loading.set(true);
     this.error.set(null);
-    this.facade.getDashboardData().subscribe({
+    this.facade.getDashboard().subscribe({
       next: info => {
         this.d.set(info);
         this.activeSessions.set(this.facade.getActiveSessions());
         this.allActiveSessions.set(this.facade.getAllActiveSessions());
-        this.recommendations.set(this.facade.getRecommendations());
-        this.masteryScores.set(this.facade.getAllMasteryScores());
-        this.outcomes.set(this.facade.getAllOutcomes());
+        this.recommendations.set(info.recommendations);
+        this.masteryScores.set(info.masteryScores);
+        this.outcomes.set(info.outcomes);
+        this.recentAuditLogs.set(this.facade.getRecentAuditLogs(10));
 
         this.loading.set(false);
       },
@@ -402,11 +407,13 @@ export class DashboardPage implements OnInit {
     });
   }
 
-  getOutcomeName(outcomeId: number): string {
-    return this.facade.getOutcomeName(outcomeId);
+  examTitle(examId: number): string {
+    return EXAMS_SEED.find(e => e.id === examId)?.title ?? `Sınav #${examId}`;
   }
 
-  getCourseName(outcomeId: number): string {
-    return this.facade.getCourseNameByOutcome(outcomeId);
+  courseName(examId: number): string {
+    const exam = EXAMS_SEED.find(e => e.id === examId);
+    if (!exam) return '';
+    return COURSES_SEED.find(c => c.id === exam.courseId)?.title ?? '';
   }
 }

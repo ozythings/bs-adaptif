@@ -49,7 +49,6 @@ const ROLE_COLORS: Record<string, string> = {
   [UserRole.OBSERVER]: 'bg-gray-100 text-gray-700',
 };
 
-const ENTITIES = ['Course', 'Exam', 'Question', 'Enrollment', 'Attempt', 'Session'];
 const ACTIONS = Object.values(AuditAction);
 
 @Component({
@@ -73,16 +72,6 @@ const ACTIONS = Object.values(AuditAction);
           </mat-form-field>
 
           <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Nesne Türü</mat-label>
-            <mat-select formControlName="entity">
-              <mat-option value="">Tümü</mat-option>
-              @for (e of entities; track e) {
-                <mat-option [value]="e">{{ e }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-
-          <mat-form-field appearance="outline" class="w-full">
             <mat-label>Başlangıç</mat-label>
             <input matInput [matDatepicker]="fromPicker" formControlName="dateFrom">
             <mat-datepicker-toggle matIconSuffix [for]="fromPicker"></mat-datepicker-toggle>
@@ -96,7 +85,7 @@ const ACTIONS = Object.values(AuditAction);
             <mat-datepicker #toPicker></mat-datepicker>
           </mat-form-field>
 
-          <mat-form-field appearance="outline" class="w-full sm:col-span-2">
+          <mat-form-field appearance="outline" class="w-full">
             <mat-label>Kullanıcı Ara</mat-label>
             <input matInput formControlName="search" placeholder="Kullanıcı adı ile ara...">
           </mat-form-field>
@@ -128,11 +117,6 @@ const ACTIONS = Object.values(AuditAction);
               <td mat-cell *matCellDef="let l">
                 <span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap" [class]="actionColor(l.action)">{{ l.action | statusText }}</span>
               </td>
-            </ng-container>
-
-            <ng-container matColumnDef="entity">
-              <th mat-header-cell *matHeaderCellDef mat-sort-header>Nesne</th>
-              <td mat-cell *matCellDef="let l">{{ l.entity }} #{{ l.entityId }}</td>
             </ng-container>
 
             <ng-container matColumnDef="user">
@@ -230,7 +214,6 @@ export class AuditLogListComponent {
 
   filterForm = this.fb.group({
     action: [''],
-    entity: [''],
     dateFrom: [null as Date | null],
     dateTo: [null as Date | null],
     search: [''],
@@ -242,13 +225,11 @@ export class AuditLogListComponent {
   pageIndex = signal(0);
 
   actionTypes = ACTIONS;
-  entities = ENTITIES;
-  displayedColumns = ['timestamp', 'action', 'entity', 'user', 'description', 'detail'];
+  displayedColumns = ['timestamp', 'action', 'user', 'description', 'detail'];
 
   constructor() {
     const qp = this.route.snapshot.queryParamMap;
     if (qp.get('action')) this.filterForm.patchValue({ action: qp.get('action') });
-    if (qp.get('entity')) this.filterForm.patchValue({ entity: qp.get('entity') });
     if (qp.get('search')) this.filterForm.patchValue({ search: qp.get('search') });
     if (qp.get('dateFrom')) this.filterForm.patchValue({ dateFrom: new Date(qp.get('dateFrom')!) });
     if (qp.get('dateTo')) this.filterForm.patchValue({ dateTo: new Date(qp.get('dateTo')!) });
@@ -298,7 +279,6 @@ export class AuditLogListComponent {
       sortColumn: this.sortColumn(),
       sortDirection: this.sortDirection(),
       action: (fv.action as AuditAction) || undefined,
-      entity: fv.entity || undefined,
       search: fv.search || undefined,
       dateFrom: fv.dateFrom ? this.toDateStr(fv.dateFrom) : undefined,
       dateTo: fv.dateTo ? this.toDateStr(fv.dateTo) : undefined,
@@ -319,7 +299,6 @@ export class AuditLogListComponent {
   private syncUrl(req: AuditLogSearchRequest): void {
     const params: Record<string, string | number> = {};
     if (req.action) params['action'] = req.action;
-    if (req.entity) params['entity'] = req.entity;
     if (req.search) params['search'] = req.search;
     if (req.dateFrom) params['dateFrom'] = req.dateFrom;
     if (req.dateTo) params['dateTo'] = req.dateTo;

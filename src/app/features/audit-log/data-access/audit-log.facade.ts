@@ -13,7 +13,6 @@ export interface AuditLogSearchRequest {
   sortColumn?: string;
   sortDirection?: 'asc' | 'desc';
   action?: AuditAction | '';
-  entity?: string | '';
   search?: string;
   dateFrom?: string;
   dateTo?: string;
@@ -69,7 +68,6 @@ export class AuditLogService {
       sortDirection: request.sortDirection,
       filters: {
         ...(request.action ? { action: request.action } : {}),
-        ...(request.entity ? { entity: request.entity } : {}),
       },
       search: request.search || undefined,
     };
