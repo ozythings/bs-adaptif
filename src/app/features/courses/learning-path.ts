@@ -139,7 +139,7 @@ const FORMAT_LABELS: Record<ContentFormat, string> = {
         @if (isStudent()) {
         <div class="lg:w-80 lg:flex-shrink-0 mt-4 lg:mt-0">
           <mat-card appearance="outlined" class="p-4">
-            <h2 class="text-lg font-semibold text-gray-900 mb-3">Kazanım Ustalık Puanları</h2>
+            <h2 class="text-lg font-semibold text-gray-900 mb-3">Kazanım Başarım Puanları</h2>
             <div class="grid grid-cols-1 gap-3">
               @for (ms of p.courseMasteryScores; track ms.outcomeId) {
                 <div class="border rounded-lg p-3">

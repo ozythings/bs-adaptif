@@ -14,6 +14,7 @@ import { OfflineQueueService } from './core/storage/offline-queue.service';
 import { StorageService } from './core/storage/storage.service';
 import { AuditLogService } from './features/audit-log/data-access/audit-log.facade';
 import { CohortAnalyticsFacade } from './features/cohort-analytics/data-access/cohort-analytics.facade';
+import { CohortManagementFacade } from './features/cohort-management/cohort-management.facade';
 import { CoursesFacade } from './features/courses/data-access/courses.facade';
 import { ExamBuilderFacade } from './features/exam-builder/data-access/exam-builder.facade';
 import { SessionFacade } from './features/exam-session/data-access/session.facade';
@@ -44,6 +45,7 @@ export const APP_SERVICES = [
   StorageService,
   AuditLogService,
   CohortAnalyticsFacade,
+  CohortManagementFacade,
   CoursesFacade,
   ExamBuilderFacade,
   SessionFacade,

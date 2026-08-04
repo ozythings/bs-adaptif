@@ -31,7 +31,7 @@ export class StudentAnalyticsFacade {
 
   getMasteryScores(studentId: number): Observable<MasteryScore[]> {
     if (!this.validateAccess(studentId)) return of([]);
-    this.audit.log({ action: AuditAction.VIEW, entity: 'MasteryScore', entityId: studentId, description: 'Öğrenci ustalık puanları görüntülendi' });
+    this.audit.log({ action: AuditAction.VIEW, entity: 'MasteryScore', entityId: studentId, description: 'Öğrenci başarım puanları görüntülendi' });
     return this.mockApi.get(MASTERY_SEED.filter(s => s.studentId === studentId));
   }
 

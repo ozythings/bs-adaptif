@@ -58,7 +58,7 @@ let nextId = 1000;
 
 function genId(): number { return nextId++; }
 function genVK(): { version: number; createdAt: string; updatedAt: string } {
-  return { version: 1, createdAt: '2024-01-01T10:00:00Z', updatedAt: '2024-01-01T10:00:00Z' };
+  return { version: 1, createdAt: '2026-01-01T10:00:00Z', updatedAt: '2026-01-01T10:00:00Z' };
 }
 
 const clampRate = (n: number) => Math.max(0, Math.min(1, n));
@@ -107,8 +107,8 @@ export function generateSeeds() {
     email: s.email,
     phone: s.phone,
     expertise: s.expertise,
-    createdAt: '2024-01-15T10:00:00Z',
-    updatedAt: '2024-01-15T10:00:00Z',
+    createdAt: '2026-01-15T10:00:00Z',
+    updatedAt: '2026-01-15T10:00:00Z',
   }));
 
   const courses: Course[] = COURSE_SPECS.map((s, i) => ({
@@ -122,8 +122,8 @@ export function generateSeeds() {
     status: s.status,
     passingScore: s.passingScore,
     version: 1,
-    createdAt: s.status === CourseStatus.COMPLETED ? '2023-12-20T10:00:00Z' : `2024-0${s.instructorId}-01T10:00:00Z`, // reasonable
-    updatedAt: s.status === CourseStatus.COMPLETED ? '2024-02-20T17:00:00Z' : `2024-0${s.instructorId}-01T10:00:00Z`,
+    createdAt: s.status === CourseStatus.COMPLETED ? '2026-01-01T10:00:00Z' : '2026-01-15T10:00:00Z',
+    updatedAt: s.status === CourseStatus.COMPLETED ? '2026-02-20T17:00:00Z' : '2026-01-15T10:00:00Z',
   }));
 
   const outcomeIdMap = new Map<number, number>();
@@ -142,8 +142,8 @@ export function generateSeeds() {
       status: s.status,
       isActive: true,
       version: 1,
-      createdAt: '2024-01-01T10:00:00Z',
-      updatedAt: '2024-01-01T10:00:00Z',
+      createdAt: '2026-01-01T10:00:00Z',
+      updatedAt: '2026-01-01T10:00:00Z',
     };
   });
 
@@ -199,8 +199,8 @@ export function generateSeeds() {
     questionVersionIds: null,
     startDate: s.startDate,
     endDate: s.endDate,
-    createdAt: '2024-03-15T10:00:00Z',
-    updatedAt: s.status === ExamStatus.ARCHIVED ? '2024-03-20T17:00:00Z' : '2024-03-15T10:00:00Z',
+    createdAt: '2026-03-15T10:00:00Z',
+    updatedAt: s.status === ExamStatus.ARCHIVED ? '2026-04-20T17:00:00Z' : '2026-03-15T10:00:00Z',
   }));
 
   const blueprints: ExamBlueprint[] = BLUEPRINT_SPECS.map((s, i) => {
@@ -229,8 +229,8 @@ export function generateSeeds() {
       status: violations.length > 0 ? BlueprintStatus.VIOLATED : BlueprintStatus.READY,
       summary,
       version: 1,
-      createdAt: '2024-03-01T10:00:00Z',
-      updatedAt: '2024-03-05T10:00:00Z',
+      createdAt: '2026-03-01T10:00:00Z',
+      updatedAt: '2026-03-05T10:00:00Z',
     };
   });
 
@@ -250,8 +250,8 @@ export function generateSeeds() {
     sortOrder: s.sortOrder,
     url: s.url,
     version: 1,
-    createdAt: '2024-01-01T10:00:00Z',
-    updatedAt: '2024-01-01T10:00:00Z',
+    createdAt: '2026-01-01T10:00:00Z',
+    updatedAt: '2026-01-01T10:00:00Z',
   }));
 
   const rubrics: Rubric[] = RUBRIC_SPECS.map((s, i) => ({
@@ -267,11 +267,9 @@ export function generateSeeds() {
     } as RubricCriterion)),
     status: RubricStatus.ACTIVE,
     version: 1,
-    createdAt: '2024-01-01T10:00:00Z',
-    updatedAt: '2024-01-01T10:00:00Z',
-  }));
-
-  const participants: Participant[] = PARTICIPANT_SPECS.map((s, i) => ({
+    createdAt: '2026-01-01T10:00:00Z',
+    updatedAt: '2026-01-01T10:00:00Z',
+  }));  const participants: Participant[] = PARTICIPANT_SPECS.map((s, i) => ({
     id: i + 1,
     schoolNumber: s.schoolNumber,
     firstName: s.firstName,
@@ -279,8 +277,8 @@ export function generateSeeds() {
     email: s.email,
     phone: s.phone,
     birthDate: s.birthDate,
-    createdAt: '2024-01-10T10:00:00Z',
-    updatedAt: '2024-01-10T10:00:00Z',
+    createdAt: '2026-01-10T10:00:00Z',
+    updatedAt: '2026-01-10T10:00:00Z',
   }));
 
   const cohorts: Cohort[] = COHORT_SPECS.map((s, i) => ({
@@ -290,8 +288,8 @@ export function generateSeeds() {
     termId: s.termId,
     studentIds: s.studentIds,
     version: 1,
-    createdAt: '2024-01-15T10:00:00Z',
-    updatedAt: '2024-01-15T10:00:00Z',
+    createdAt: '2026-01-15T10:00:00Z',
+    updatedAt: '2026-01-15T10:00:00Z',
   }));
 
   // ── generated / derived data ──
@@ -360,36 +358,36 @@ export function generateSeeds() {
   ];
 
   const attempts: Attempt[] = [
-    { id: 100, examId: 3, sessionToken: 'sess_102_ghi789', studentId: 5, startedAt: '2024-02-15T09:00:00Z', submittedAt: '2024-02-15T10:10:00Z', status: ResultStatus.FINALIZED, questionResponses: Q1, totalScore: 20, maxScore: 30, scorePercentage: 66.67, gradingCompletedAt: '2024-02-15T10:15:00Z', version: 1, createdAt: '2024-02-15T09:00:00Z', updatedAt: '2024-02-15T10:15:00Z' },
-    { id: 101, examId: 2, sessionToken: 'sess_101_def456', studentId: 3, startedAt: '2024-04-05T14:00:00Z', submittedAt: '2024-04-05T14:40:00Z', status: ResultStatus.FINALIZED, questionResponses: Q2, totalScore: 15, maxScore: 15, scorePercentage: 100, gradingCompletedAt: '2024-04-05T14:45:00Z', version: 1, createdAt: '2024-04-05T14:00:00Z', updatedAt: '2024-04-05T14:45:00Z' },
-    { id: 102, examId: 1, sessionToken: 'sess_100_abc123', studentId: 4, startedAt: '2024-03-20T10:00:00Z', status: ResultStatus.DRAFT, questionResponses: Q3, totalScore: 35, maxScore: 50, scorePercentage: 70, version: 1, createdAt: '2024-03-20T10:00:00Z', updatedAt: '2024-03-20T10:50:00Z' },
-    { id: 103, examId: 5, sessionToken: 'sess_104_mno345', studentId: 7, startedAt: '2024-05-05T13:00:00Z', status: ResultStatus.DRAFT, questionResponses: [
+    { id: 100, examId: 4, sessionToken: 'sess_102_ghi789', studentId: 5, startedAt: '2026-06-01T09:00:00Z', submittedAt: '2026-06-01T10:10:00Z', status: ResultStatus.FINALIZED, questionResponses: Q1, totalScore: 20, maxScore: 30, scorePercentage: 66.67, gradingCompletedAt: '2026-06-01T10:15:00Z', version: 1, createdAt: '2026-06-01T09:00:00Z', updatedAt: '2026-06-01T10:15:00Z' },
+    { id: 101, examId: 3, sessionToken: 'sess_101_def456', studentId: 3, startedAt: '2026-07-15T14:00:00Z', submittedAt: '2026-07-15T14:40:00Z', status: ResultStatus.FINALIZED, questionResponses: Q2, totalScore: 15, maxScore: 15, scorePercentage: 100, gradingCompletedAt: '2026-07-15T14:45:00Z', version: 1, createdAt: '2026-07-15T14:00:00Z', updatedAt: '2026-07-15T14:45:00Z' },
+    { id: 102, examId: 2, sessionToken: 'sess_100_abc123', studentId: 4, startedAt: '2026-07-20T10:00:00Z', status: ResultStatus.DRAFT, questionResponses: Q3, totalScore: 35, maxScore: 50, scorePercentage: 70, version: 1, createdAt: '2026-07-20T10:00:00Z', updatedAt: '2026-07-20T10:50:00Z' },
+    { id: 103, examId: 5, sessionToken: 'sess_104_mno345', studentId: 7, startedAt: '2026-08-01T13:00:00Z', status: ResultStatus.DRAFT, questionResponses: [
       { questionId: 7, answer: '0', isCorrect: true, autoScore: 5, maxScore: 5 },
       { questionId: 8, answer: '0', isCorrect: true, autoScore: 10, maxScore: 10 },
-    ], totalScore: 15, maxScore: 15, scorePercentage: 100, version: 1, createdAt: '2024-05-05T13:00:00Z', updatedAt: '2024-05-05T13:25:00Z' },
-    { id: 104, examId: 1, sessionToken: 'sess_103_jkl012', studentId: 2, startedAt: '2024-03-21T11:00:00Z', status: ResultStatus.DRAFT, questionResponses: [
+    ], totalScore: 15, maxScore: 15, scorePercentage: 100, version: 1, createdAt: '2026-08-01T13:00:00Z', updatedAt: '2026-08-01T13:25:00Z' },
+    { id: 104, examId: 2, sessionToken: 'sess_103_jkl012', studentId: 2, startedAt: '2026-08-03T11:00:00Z', status: ResultStatus.DRAFT, questionResponses: [
       { questionId: 1, answer: '1', isCorrect: true, autoScore: 5, maxScore: 5 },
       { questionId: 2, answer: '', isCorrect: false, autoScore: 0, maxScore: 5 },
-    ], totalScore: 5, maxScore: 50, scorePercentage: 10, version: 1, createdAt: '2024-03-21T11:00:00Z', updatedAt: '2024-03-21T11:00:00Z' },
-    { id: 105, examId: 6, sessionToken: 'sess_105_pqr678', studentId: 1, startedAt: '2024-03-22T09:00:00Z', status: ResultStatus.DRAFT, questionResponses: [
+    ], totalScore: 5, maxScore: 50, scorePercentage: 10, version: 1, createdAt: '2026-08-03T11:00:00Z', updatedAt: '2026-08-03T11:00:00Z' },
+    { id: 105, examId: 7, sessionToken: 'sess_105_pqr678', studentId: 1, startedAt: '2026-08-05T09:00:00Z', status: ResultStatus.DRAFT, questionResponses: [
       { questionId: 9, answer: '0', isCorrect: true, autoScore: 10, maxScore: 10 },
       { questionId: 10, answer: '', isCorrect: false, autoScore: 0, maxScore: 5 },
-    ], totalScore: 10, maxScore: 40, scorePercentage: 25, version: 1, createdAt: '2024-03-22T09:00:00Z', updatedAt: '2024-03-22T09:00:00Z' },
+    ], totalScore: 10, maxScore: 40, scorePercentage: 25, version: 1, createdAt: '2026-08-05T09:00:00Z', updatedAt: '2026-08-05T09:00:00Z' },
   ];
 
-  // mastery
+  // mastery — lastAssessedAt around 05/08/26
   const masteryScores: MasteryScore[] = [
-    { id: 100, studentId: 1, outcomeId: 100, masteryLevel: MasteryLevel.ADVANCED, score: 92, recentAnswers: [1, 1, 1, 0, 1], difficultyWeightedAverage: 0.88, difficultyBreakdown: breakdownFor(92), repeatCount: 2, lastAssessedAt: '2024-03-15T10:00:00Z', calculatedAt: '2024-03-15T10:00:00Z', history: historyFor(92, '2024-03-15T10:00:00Z'), version: 1, createdAt: '2024-03-15T10:00:00Z', updatedAt: '2024-03-15T10:00:00Z' },
-    { id: 101, studentId: 1, outcomeId: 101, masteryLevel: MasteryLevel.PROFICIENT, score: 78, recentAnswers: [1, 0, 1, 1, 1], difficultyWeightedAverage: 0.75, difficultyBreakdown: breakdownFor(78), repeatCount: 3, lastAssessedAt: '2024-03-15T10:00:00Z', calculatedAt: '2024-03-15T10:00:00Z', history: historyFor(78, '2024-03-15T10:00:00Z'), version: 1, createdAt: '2024-03-15T10:00:00Z', updatedAt: '2024-03-15T10:00:00Z' },
-    { id: 102, studentId: 1, outcomeId: 102, masteryLevel: MasteryLevel.NOVICE, score: 35, recentAnswers: [0, 1, 0, 0], difficultyWeightedAverage: 0.3, difficultyBreakdown: breakdownFor(35), repeatCount: 1, lastAssessedAt: '2024-03-10T10:00:00Z', calculatedAt: '2024-03-10T10:00:00Z', history: historyFor(35, '2024-03-10T10:00:00Z'), version: 1, createdAt: '2024-03-10T10:00:00Z', updatedAt: '2024-03-10T10:00:00Z' },
-    { id: 103, studentId: 2, outcomeId: 100, masteryLevel: MasteryLevel.EMERGING, score: 55, recentAnswers: [1, 0, 1, 0], difficultyWeightedAverage: 0.5, difficultyBreakdown: breakdownFor(55), repeatCount: 2, lastAssessedAt: '2024-03-20T10:00:00Z', calculatedAt: '2024-03-20T10:00:00Z', history: historyFor(55, '2024-03-20T10:00:00Z'), version: 1, createdAt: '2024-03-20T10:00:00Z', updatedAt: '2024-03-20T10:00:00Z' },
-    { id: 104, studentId: 2, outcomeId: 103, masteryLevel: MasteryLevel.NOVICE, score: 25, recentAnswers: [0, 0, 1], difficultyWeightedAverage: 0.22, difficultyBreakdown: breakdownFor(25), repeatCount: 1, lastAssessedAt: '2024-03-18T10:00:00Z', calculatedAt: '2024-03-18T10:00:00Z', history: historyFor(25, '2024-03-18T10:00:00Z'), version: 1, createdAt: '2024-03-18T10:00:00Z', updatedAt: '2024-03-18T10:00:00Z' },
-    { id: 105, studentId: 4, outcomeId: 106, masteryLevel: MasteryLevel.PROFICIENT, score: 82, recentAnswers: [1, 1, 1, 1, 0], difficultyWeightedAverage: 0.8, difficultyBreakdown: breakdownFor(82), repeatCount: 4, lastAssessedAt: '2024-04-01T10:00:00Z', calculatedAt: '2024-04-01T10:00:00Z', history: historyFor(82, '2024-04-01T10:00:00Z'), version: 1, createdAt: '2024-04-01T10:00:00Z', updatedAt: '2024-04-01T10:00:00Z' },
-    { id: 106, studentId: 4, outcomeId: 107, masteryLevel: MasteryLevel.ADVANCED, score: 95, recentAnswers: [1, 1, 1, 1], difficultyWeightedAverage: 0.92, difficultyBreakdown: breakdownFor(95), repeatCount: 2, lastAssessedAt: '2024-04-05T10:00:00Z', calculatedAt: '2024-04-05T10:00:00Z', history: historyFor(95, '2024-04-05T10:00:00Z'), version: 1, createdAt: '2024-04-05T10:00:00Z', updatedAt: '2024-04-05T10:00:00Z' },
-    { id: 107, studentId: 4, outcomeId: 108, masteryLevel: MasteryLevel.EMERGING, score: 48, recentAnswers: [0, 1, 0, 1, 0], difficultyWeightedAverage: 0.45, difficultyBreakdown: breakdownFor(48), repeatCount: 3, lastAssessedAt: '2024-04-10T10:00:00Z', calculatedAt: '2024-04-10T10:00:00Z', history: historyFor(48, '2024-04-10T10:00:00Z'), version: 1, createdAt: '2024-04-10T10:00:00Z', updatedAt: '2024-04-10T10:00:00Z' },
-    { id: 108, studentId: 5, outcomeId: 109, masteryLevel: MasteryLevel.PROFICIENT, score: 85, recentAnswers: [1, 1, 0, 1], difficultyWeightedAverage: 0.82, difficultyBreakdown: breakdownFor(85), repeatCount: 1, lastAssessedAt: '2024-02-10T10:00:00Z', calculatedAt: '2024-02-10T10:00:00Z', history: historyFor(85, '2024-02-10T10:00:00Z'), version: 1, createdAt: '2024-02-10T10:00:00Z', updatedAt: '2024-02-10T10:00:00Z' },
-    { id: 109, studentId: 5, outcomeId: 110, masteryLevel: MasteryLevel.EMERGING, score: 45, recentAnswers: [0, 1, 0], difficultyWeightedAverage: 0.4, difficultyBreakdown: breakdownFor(45), repeatCount: 2, lastAssessedAt: '2024-02-15T10:00:00Z', calculatedAt: '2024-02-15T10:00:00Z', history: historyFor(45, '2024-02-15T10:00:00Z'), version: 1, createdAt: '2024-02-15T10:00:00Z', updatedAt: '2024-02-15T10:00:00Z' },
-    { id: 110, studentId: 7, outcomeId: 114, masteryLevel: MasteryLevel.PROFICIENT, score: 72, recentAnswers: [1, 1, 0, 1], difficultyWeightedAverage: 0.7, difficultyBreakdown: breakdownFor(72), repeatCount: 2, lastAssessedAt: '2024-04-20T10:00:00Z', calculatedAt: '2024-04-20T10:00:00Z', history: historyFor(72, '2024-04-20T10:00:00Z'), version: 1, createdAt: '2024-04-20T10:00:00Z', updatedAt: '2024-04-20T10:00:00Z' },
+    { id: 100, studentId: 1, outcomeId: 100, masteryLevel: MasteryLevel.ADVANCED, score: 92, recentAnswers: [1, 1, 1, 0, 1], difficultyWeightedAverage: 0.88, difficultyBreakdown: breakdownFor(92), repeatCount: 2, lastAssessedAt: '2026-08-05T10:00:00Z', calculatedAt: '2026-08-05T10:00:00Z', history: historyFor(92, '2026-08-05T10:00:00Z'), version: 1, createdAt: '2026-08-05T10:00:00Z', updatedAt: '2026-08-05T10:00:00Z' },
+    { id: 101, studentId: 1, outcomeId: 101, masteryLevel: MasteryLevel.PROFICIENT, score: 78, recentAnswers: [1, 0, 1, 1, 1], difficultyWeightedAverage: 0.75, difficultyBreakdown: breakdownFor(78), repeatCount: 3, lastAssessedAt: '2026-08-04T10:00:00Z', calculatedAt: '2026-08-04T10:00:00Z', history: historyFor(78, '2026-08-04T10:00:00Z'), version: 1, createdAt: '2026-08-04T10:00:00Z', updatedAt: '2026-08-04T10:00:00Z' },
+    { id: 102, studentId: 1, outcomeId: 102, masteryLevel: MasteryLevel.NOVICE, score: 35, recentAnswers: [0, 1, 0, 0], difficultyWeightedAverage: 0.3, difficultyBreakdown: breakdownFor(35), repeatCount: 1, lastAssessedAt: '2026-07-28T10:00:00Z', calculatedAt: '2026-07-28T10:00:00Z', history: historyFor(35, '2026-07-28T10:00:00Z'), version: 1, createdAt: '2026-07-28T10:00:00Z', updatedAt: '2026-07-28T10:00:00Z' },
+    { id: 103, studentId: 2, outcomeId: 100, masteryLevel: MasteryLevel.EMERGING, score: 55, recentAnswers: [1, 0, 1, 0], difficultyWeightedAverage: 0.5, difficultyBreakdown: breakdownFor(55), repeatCount: 2, lastAssessedAt: '2026-08-03T10:00:00Z', calculatedAt: '2026-08-03T10:00:00Z', history: historyFor(55, '2026-08-03T10:00:00Z'), version: 1, createdAt: '2026-08-03T10:00:00Z', updatedAt: '2026-08-03T10:00:00Z' },
+    { id: 104, studentId: 2, outcomeId: 103, masteryLevel: MasteryLevel.NOVICE, score: 25, recentAnswers: [0, 0, 1], difficultyWeightedAverage: 0.22, difficultyBreakdown: breakdownFor(25), repeatCount: 1, lastAssessedAt: '2026-07-30T10:00:00Z', calculatedAt: '2026-07-30T10:00:00Z', history: historyFor(25, '2026-07-30T10:00:00Z'), version: 1, createdAt: '2026-07-30T10:00:00Z', updatedAt: '2026-07-30T10:00:00Z' },
+    { id: 105, studentId: 4, outcomeId: 106, masteryLevel: MasteryLevel.PROFICIENT, score: 82, recentAnswers: [1, 1, 1, 1, 0], difficultyWeightedAverage: 0.8, difficultyBreakdown: breakdownFor(82), repeatCount: 4, lastAssessedAt: '2026-08-01T10:00:00Z', calculatedAt: '2026-08-01T10:00:00Z', history: historyFor(82, '2026-08-01T10:00:00Z'), version: 1, createdAt: '2026-08-01T10:00:00Z', updatedAt: '2026-08-01T10:00:00Z' },
+    { id: 106, studentId: 4, outcomeId: 107, masteryLevel: MasteryLevel.ADVANCED, score: 95, recentAnswers: [1, 1, 1, 1], difficultyWeightedAverage: 0.92, difficultyBreakdown: breakdownFor(95), repeatCount: 2, lastAssessedAt: '2026-08-02T10:00:00Z', calculatedAt: '2026-08-02T10:00:00Z', history: historyFor(95, '2026-08-02T10:00:00Z'), version: 1, createdAt: '2026-08-02T10:00:00Z', updatedAt: '2026-08-02T10:00:00Z' },
+    { id: 107, studentId: 4, outcomeId: 108, masteryLevel: MasteryLevel.EMERGING, score: 48, recentAnswers: [0, 1, 0, 1, 0], difficultyWeightedAverage: 0.45, difficultyBreakdown: breakdownFor(48), repeatCount: 3, lastAssessedAt: '2026-07-25T10:00:00Z', calculatedAt: '2026-07-25T10:00:00Z', history: historyFor(48, '2026-07-25T10:00:00Z'), version: 1, createdAt: '2026-07-25T10:00:00Z', updatedAt: '2026-07-25T10:00:00Z' },
+    { id: 108, studentId: 5, outcomeId: 109, masteryLevel: MasteryLevel.PROFICIENT, score: 85, recentAnswers: [1, 1, 0, 1], difficultyWeightedAverage: 0.82, difficultyBreakdown: breakdownFor(85), repeatCount: 1, lastAssessedAt: '2026-06-15T10:00:00Z', calculatedAt: '2026-06-15T10:00:00Z', history: historyFor(85, '2026-06-15T10:00:00Z'), version: 1, createdAt: '2026-06-15T10:00:00Z', updatedAt: '2026-06-15T10:00:00Z' },
+    { id: 109, studentId: 5, outcomeId: 110, masteryLevel: MasteryLevel.EMERGING, score: 45, recentAnswers: [0, 1, 0], difficultyWeightedAverage: 0.4, difficultyBreakdown: breakdownFor(45), repeatCount: 2, lastAssessedAt: '2026-06-20T10:00:00Z', calculatedAt: '2026-06-20T10:00:00Z', history: historyFor(45, '2026-06-20T10:00:00Z'), version: 1, createdAt: '2026-06-20T10:00:00Z', updatedAt: '2026-06-20T10:00:00Z' },
+    { id: 110, studentId: 7, outcomeId: 114, masteryLevel: MasteryLevel.PROFICIENT, score: 72, recentAnswers: [1, 1, 0, 1], difficultyWeightedAverage: 0.7, difficultyBreakdown: breakdownFor(72), repeatCount: 2, lastAssessedAt: '2026-08-05T10:00:00Z', calculatedAt: '2026-08-05T10:00:00Z', history: historyFor(72, '2026-08-05T10:00:00Z'), version: 1, createdAt: '2026-08-05T10:00:00Z', updatedAt: '2026-08-05T10:00:00Z' },
   ];
 
   // generated: masteries for more students (students 2, 3, 6 across their enrolled outcomes)
@@ -412,12 +410,12 @@ export function generateSeeds() {
           difficultyWeightedAverage: (score - randInt(0, 5)) / 100,
           difficultyBreakdown: breakdownFor(score),
           repeatCount: randInt(1, 3),
-          lastAssessedAt: '2024-04-01T10:00:00Z',
-          calculatedAt: '2024-04-01T10:00:00Z',
-          history: historyFor(score, '2024-04-01T10:00:00Z'),
+          lastAssessedAt: '2026-08-05T10:00:00Z',
+          calculatedAt: '2026-08-05T10:00:00Z',
+          history: historyFor(score, '2026-08-05T10:00:00Z'),
           version: 1,
-          createdAt: '2024-04-01T10:00:00Z',
-          updatedAt: '2024-04-01T10:00:00Z',
+          createdAt: '2026-08-05T10:00:00Z',
+          updatedAt: '2026-08-05T10:00:00Z',
         });
       }
     }
@@ -447,32 +445,32 @@ export function generateSeeds() {
       const token = `sess_auto_${aid}_${sid}`;
       attempts.push({
         id: aid++, examId: exam.id, sessionToken: token,
-        studentId: sid, startedAt: '2024-04-01T10:00:00Z',
-        submittedAt: '2024-04-01T11:00:00Z',
+        studentId: sid, startedAt: '2026-08-01T10:00:00Z',
+        submittedAt: '2026-08-01T11:00:00Z',
         status: ResultStatus.FINALIZED,
         questionResponses: responses,
         totalScore: total, maxScore, scorePercentage: maxScore > 0 ? Math.round((total / maxScore) * 10000) / 100 : 0,
-        gradingCompletedAt: '2024-04-01T11:05:00Z',
+        gradingCompletedAt: '2026-08-01T11:05:00Z',
         version: 1,
-        createdAt: '2024-04-01T10:00:00Z',
-        updatedAt: '2024-04-01T11:05:00Z',
+        createdAt: '2026-08-01T10:00:00Z',
+        updatedAt: '2026-08-01T11:05:00Z',
       });
     }
   }
 
   // content completions
   const contentCompletions: ContentCompletion[] = [
-    { id: 1, studentId: 1, contentId: 100, courseId: 1, studyCount: 1, completedAt: '2024-03-05T10:00:00Z', createdAt: '2024-03-05T10:00:00Z', updatedAt: '2024-03-05T10:00:00Z' },
-    { id: 2, studentId: 1, contentId: 101, courseId: 1, studyCount: 3, completedAt: '2024-03-10T10:00:00Z', createdAt: '2024-03-10T10:00:00Z', updatedAt: '2024-03-10T10:00:00Z' },
+    { id: 1, studentId: 1, contentId: 100, courseId: 1, studyCount: 1, completedAt: '2026-04-05T10:00:00Z', createdAt: '2026-04-05T10:00:00Z', updatedAt: '2026-04-05T10:00:00Z' },
+    { id: 2, studentId: 1, contentId: 101, courseId: 1, studyCount: 3, completedAt: '2026-04-10T10:00:00Z', createdAt: '2026-04-10T10:00:00Z', updatedAt: '2026-04-10T10:00:00Z' },
   ];
 
   // recommendations
   const recommendations: Recommendation[] = [
-    { id: 100, studentId: 1, contentType: 'content', contentId: 102, outcomeId: 102, priority: 1, status: RecommendationStatus.PENDING, isApplied: false, isDismissed: false, reason: 'Kazanim puani dusuk: Direktif ve Pipe (35)', reasonDetails: [{ factor: 'mastery_score', weight: 0.6, description: 'Ustalik puani 35 - kirmizi bolge' }, { factor: 'repeat_count', weight: 0.2, description: 'Sadece 1 kez calisilmis' }, { factor: 'prerequisite', weight: 0.2, description: 'Binding konusunda yeterli (78)' }], version: 1, createdAt: '2024-03-16T10:00:00Z', updatedAt: '2024-03-16T10:00:00Z' },
-    { id: 101, studentId: 1, contentType: 'question', contentId: 3, outcomeId: 101, priority: 2, status: RecommendationStatus.PENDING, isApplied: false, isDismissed: false, reason: 'Orta zorlukta tekrar sorusu: Data Binding', reasonDetails: [{ factor: 'mastery_score', weight: 0.5, description: 'Ustalik puani 78 - iyi ama duzeltilebilir' }, { factor: 'time_elapsed', weight: 0.3, description: 'Son degerlendirme uzerinden 1 ay gecmis' }], version: 1, createdAt: '2024-03-16T10:00:00Z', updatedAt: '2024-03-16T10:00:00Z' },
-    { id: 102, studentId: 2, contentType: 'content', contentId: 104, outcomeId: 103, priority: 1, status: RecommendationStatus.PENDING, isApplied: false, isDismissed: false, reason: 'Servis ve DI konusunda eksik (25)', reasonDetails: [{ factor: 'mastery_score', weight: 0.7, description: 'Ustalik puani 25 - kritik seviye' }], version: 1, createdAt: '2024-03-21T10:00:00Z', updatedAt: '2024-03-21T10:00:00Z' },
-    { id: 103, studentId: 4, contentType: 'content', contentId: 109, outcomeId: 108, priority: 2, status: RecommendationStatus.APPLIED, isApplied: true, isDismissed: false, reason: 'Subject tiplerinde gelisim alani (48)', reasonDetails: [{ factor: 'mastery_score', weight: 0.5, description: 'Ustalik puani 48' }, { factor: 'difficulty_trend', weight: 0.3, description: 'Zor sorularda basarisizlik' }], version: 1, createdAt: '2024-04-11T10:00:00Z', updatedAt: '2024-04-11T10:00:00Z' },
-    { id: 104, studentId: 5, contentType: 'question', contentId: 15, outcomeId: 110, priority: 1, status: RecommendationStatus.PENDING, isApplied: false, isDismissed: false, reason: 'Generic tiplerde zayif (45)', reasonDetails: [{ factor: 'mastery_score', weight: 0.6, description: 'Ustalik puani 45' }, { factor: 'exam_performance', weight: 0.4, description: 'Sinavda generic sorusu yanlis' }], version: 1, createdAt: '2024-02-16T10:00:00Z', updatedAt: '2024-02-16T10:00:00Z' },
+    { id: 100, studentId: 1, contentType: 'content', contentId: 102, outcomeId: 102, priority: 1, status: RecommendationStatus.PENDING, isApplied: false, isDismissed: false, reason: 'Kazanim puani dusuk: Direktif ve Pipe (35)', reasonDetails: [{ factor: 'mastery_score', weight: 0.6, description: 'Başarım puanı 35 - kırmızı bölge' }, { factor: 'repeat_count', weight: 0.2, description: 'Sadece 1 kez calisilmis' }, { factor: 'prerequisite', weight: 0.2, description: 'Binding konusunda yeterli (78)' }], version: 1, createdAt: '2026-07-16T10:00:00Z', updatedAt: '2026-07-16T10:00:00Z' },
+    { id: 101, studentId: 1, contentType: 'question', contentId: 3, outcomeId: 101, priority: 2, status: RecommendationStatus.PENDING, isApplied: false, isDismissed: false, reason: 'Orta zorlukta tekrar sorusu: Data Binding', reasonDetails: [{ factor: 'mastery_score', weight: 0.5, description: 'Başarım puanı 78 - iyi ama düzeltilebilir' }, { factor: 'time_elapsed', weight: 0.3, description: 'Son degerlendirme uzerinden 1 ay gecmis' }], version: 1, createdAt: '2026-07-16T10:00:00Z', updatedAt: '2026-07-16T10:00:00Z' },
+    { id: 102, studentId: 2, contentType: 'content', contentId: 104, outcomeId: 103, priority: 1, status: RecommendationStatus.PENDING, isApplied: false, isDismissed: false, reason: 'Servis ve DI konusunda eksik (25)', reasonDetails: [{ factor: 'mastery_score', weight: 0.7, description: 'Başarım puanı 25 - kritik seviye' }], version: 1, createdAt: '2026-07-21T10:00:00Z', updatedAt: '2026-07-21T10:00:00Z' },
+    { id: 103, studentId: 4, contentType: 'content', contentId: 109, outcomeId: 108, priority: 2, status: RecommendationStatus.APPLIED, isApplied: true, isDismissed: false, reason: 'Subject tiplerinde gelisim alani (48)', reasonDetails: [{ factor: 'mastery_score', weight: 0.5, description: 'Başarım puanı 48' }, { factor: 'difficulty_trend', weight: 0.3, description: 'Zor sorularda basarisizlik' }], version: 1, createdAt: '2026-07-11T10:00:00Z', updatedAt: '2026-07-11T10:00:00Z' },
+    { id: 104, studentId: 5, contentType: 'question', contentId: 15, outcomeId: 110, priority: 1, status: RecommendationStatus.PENDING, isApplied: false, isDismissed: false, reason: 'Generic tiplerde zayif (45)', reasonDetails: [{ factor: 'mastery_score', weight: 0.6, description: 'Başarım puanı 45' }, { factor: 'exam_performance', weight: 0.4, description: 'Sinavda generic sorusu yanlis' }], version: 1, createdAt: '2026-06-16T10:00:00Z', updatedAt: '2026-06-16T10:00:00Z' },
   ];
 
   // item analysis
@@ -487,10 +485,10 @@ export function generateSeeds() {
         { optionKey: '3', optionValue: 'C#', selectionRate: 0.06, isCorrect: false },
       ],
       upperGroupRate: 0.95, lowerGroupRate: 0.45, sampleSize: 40, status: 'computed',
-      version: 1, calculatedAt: '2024-03-25T10:00:00Z', createdAt: '2024-03-25T10:00:00Z', updatedAt: '2024-03-25T10:00:00Z'
+      version: 1, calculatedAt: '2026-05-25T10:00:00Z', createdAt: '2026-05-25T10:00:00Z', updatedAt: '2026-05-25T10:00:00Z'
     },
     {
-      id: 101, questionId: 4, examId: 1,
+      id: 101, questionId: 4, examId: 2,
       difficultyIndex: 0.35, discriminationIndex: 0.62, pointBiserial: 0.55,
       distractorAnalysis: [
         { optionKey: '0', optionValue: 'create() fonksiyonu', selectionRate: 0.20, isCorrect: false },
@@ -499,10 +497,10 @@ export function generateSeeds() {
         { optionKey: '3', optionValue: 'Hepsi', selectionRate: 0.15, isCorrect: false },
       ],
       upperGroupRate: 0.65, lowerGroupRate: 0.10, sampleSize: 40, status: 'computed',
-      version: 1, calculatedAt: '2024-03-25T10:00:00Z', createdAt: '2024-03-25T10:00:00Z', updatedAt: '2024-03-25T10:00:00Z'
+      version: 1, calculatedAt: '2026-05-25T10:00:00Z', createdAt: '2026-05-25T10:00:00Z', updatedAt: '2026-05-25T10:00:00Z'
     },
     {
-      id: 102, questionId: 13, examId: 2,
+      id: 102, questionId: 13, examId: 3,
       difficultyIndex: 0.68, discriminationIndex: 0.38, pointBiserial: 0.32,
       distractorAnalysis: [
         { optionKey: '0', optionValue: 'Observable ve Observer', selectionRate: 0.68, isCorrect: true },
@@ -511,18 +509,18 @@ export function generateSeeds() {
         { optionKey: '3', optionValue: 'Veri deposu', selectionRate: 0.05, isCorrect: false },
       ],
       upperGroupRate: 0.88, lowerGroupRate: 0.42, sampleSize: 35, status: 'computed',
-      version: 1, calculatedAt: '2024-04-10T10:00:00Z', createdAt: '2024-04-10T10:00:00Z', updatedAt: '2024-04-10T10:00:00Z'
+      version: 1, calculatedAt: '2026-07-10T10:00:00Z', createdAt: '2026-07-10T10:00:00Z', updatedAt: '2026-07-10T10:00:00Z'
     },
   ];
 
   // answer drafts
   const answerDrafts: AnswerDraft[] = [
-    { id: 100, sessionId: 100, questionId: 1, answer: '1', version: 3, isSynced: true, syncStatus: 'synced', lastSavedAt: '2024-03-20T10:05:00Z', createdAt: '2024-03-20T10:01:00Z', updatedAt: '2024-03-20T10:05:00Z' },
-    { id: 101, sessionId: 100, questionId: 2, answer: '1', version: 1, isSynced: true, syncStatus: 'synced', lastSavedAt: '2024-03-20T10:08:00Z', createdAt: '2024-03-20T10:08:00Z', updatedAt: '2024-03-20T10:08:00Z' },
-    { id: 102, sessionId: 100, questionId: 3, answer: '0', version: 2, isSynced: true, syncStatus: 'synced', lastSavedAt: '2024-03-20T10:15:00Z', createdAt: '2024-03-20T10:12:00Z', updatedAt: '2024-03-20T10:15:00Z' },
-    { id: 103, sessionId: 103, questionId: 1, answer: '1', version: 1, isSynced: true, syncStatus: 'synced', lastSavedAt: '2024-03-21T11:05:00Z', createdAt: '2024-03-21T11:05:00Z', updatedAt: '2024-03-21T11:05:00Z' },
-    { id: 104, sessionId: 103, questionId: 2, answer: '', version: 1, isSynced: false, syncStatus: 'pending', lastSavedAt: '2024-03-21T11:15:00Z', createdAt: '2024-03-21T11:10:00Z', updatedAt: '2024-03-21T11:15:00Z' },
-    { id: 105, sessionId: 100, questionId: 12, answer: '0', version: 1, isSynced: true, syncStatus: 'synced', lastSavedAt: '2024-03-20T10:20:00Z', createdAt: '2024-03-20T10:20:00Z', updatedAt: '2024-03-20T10:20:00Z' },
+    { id: 100, sessionId: 100, questionId: 1, answer: '1', version: 3, isSynced: true, syncStatus: 'synced', lastSavedAt: '2026-07-20T10:05:00Z', createdAt: '2026-07-20T10:01:00Z', updatedAt: '2026-07-20T10:05:00Z' },
+    { id: 101, sessionId: 100, questionId: 2, answer: '1', version: 1, isSynced: true, syncStatus: 'synced', lastSavedAt: '2026-07-20T10:08:00Z', createdAt: '2026-07-20T10:08:00Z', updatedAt: '2026-07-20T10:08:00Z' },
+    { id: 102, sessionId: 100, questionId: 3, answer: '0', version: 2, isSynced: true, syncStatus: 'synced', lastSavedAt: '2026-07-20T10:15:00Z', createdAt: '2026-07-20T10:12:00Z', updatedAt: '2026-07-20T10:15:00Z' },
+    { id: 103, sessionId: 103, questionId: 1, answer: '1', version: 1, isSynced: true, syncStatus: 'synced', lastSavedAt: '2026-08-03T11:05:00Z', createdAt: '2026-08-03T11:05:00Z', updatedAt: '2026-08-03T11:05:00Z' },
+    { id: 104, sessionId: 103, questionId: 2, answer: '', version: 1, isSynced: false, syncStatus: 'pending', lastSavedAt: '2026-08-03T11:15:00Z', createdAt: '2026-08-03T11:10:00Z', updatedAt: '2026-08-03T11:15:00Z' },
+    { id: 105, sessionId: 100, questionId: 12, answer: '0', version: 1, isSynced: true, syncStatus: 'synced', lastSavedAt: '2026-07-20T10:20:00Z', createdAt: '2026-07-20T10:20:00Z', updatedAt: '2026-07-20T10:20:00Z' },
   ];
 
   // audit log entries

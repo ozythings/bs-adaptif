@@ -40,17 +40,11 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
               <input matInput formControlName="description" placeholder="Kohort açıklaması">
             </mat-form-field>
             <mat-form-field appearance="outline">
-              <mat-label>Program</mat-label>
-              <mat-select formControlName="programId">
-                <mat-option [value]="100">Program 100</mat-option>
-                <mat-option [value]="101">Program 101</mat-option>
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field appearance="outline">
               <mat-label>Dönem</mat-label>
               <mat-select formControlName="termId">
-                <mat-option [value]="100">2024 Bahar</mat-option>
-                <mat-option [value]="101">2024 Yaz</mat-option>
+                <mat-option [value]="1">2026 Bahar</mat-option>
+                <mat-option [value]="2">2026 Güz</mat-option>
+                <mat-option [value]="3">2027 Bahar</mat-option>
               </mat-select>
             </mat-form-field>
           </div>
@@ -135,8 +129,7 @@ export class CohortListComponent implements OnInit {
   form = this.fb.group({
     name: ['', Validators.required],
     description: [''],
-    programId: [100, Validators.required],
-    termId: [100, Validators.required],
+    termId: [1, Validators.required],
   });
 
   ngOnInit(): void {
@@ -160,7 +153,7 @@ export class CohortListComponent implements OnInit {
 
   openNewForm(): void {
     this.editingId.set(null);
-    this.form.reset({ name: '', description: '', programId: 100, termId: 100 });
+    this.form.reset({ name: '', description: '', termId: 1 });
     this.showForm.set(true);
   }
 
@@ -175,7 +168,6 @@ export class CohortListComponent implements OnInit {
     this.form.patchValue({
       name: cohort.name,
       description: cohort.description ?? '',
-      programId: cohort.programId,
       termId: cohort.termId,
     });
   }
@@ -183,7 +175,7 @@ export class CohortListComponent implements OnInit {
   onSubmit(): void {
     if (this.form.invalid) return;
     const editId = this.editingId();
-    const data = this.form.value as { name: string; description: string; programId: number; termId: number };
+    const data = this.form.value as { name: string; description: string; termId: number };
 
     if (editId) {
       this.facade.updateCohort(editId, { name: data.name, description: data.description }).subscribe(() => {
@@ -192,9 +184,9 @@ export class CohortListComponent implements OnInit {
         this.loadData();
       });
     } else {
-      this.facade.createCohort(data).subscribe(() => {
+      this.facade.createCohort({ ...data, programId: 100 }).subscribe(() => {
         this.showForm.set(false);
-        this.form.reset({ name: '', description: '', programId: 100, termId: 100 });
+    this.form.reset({ name: '', description: '', termId: 1 });
         this.loadData();
       });
     }

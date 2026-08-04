@@ -49,7 +49,7 @@ import { RecommendationReasonCardComponent } from '@shared/components/recommenda
         <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <app-kpi-card
             borderClass="border-emerald-500" iconBgClass="bg-emerald-100" iconColorClass="text-emerald-600"
-            icon="psychology" label="Genel Ustalık" [value]="info.totalMastery + '%'" />
+            icon="psychology" label="Genel Başarım" [value]="info.totalMastery + '%'" />
           <app-kpi-card
             borderClass="border-blue-500" iconBgClass="bg-blue-100" iconColorClass="text-blue-600"
             icon="checklist" label="İçerik Tamamlama" [value]="info.completedContents + '/' + info.totalContents" />
@@ -156,14 +156,14 @@ import { RecommendationReasonCardComponent } from '@shared/components/recommenda
         <!-- Courses Mastery -->
         @if (info.courses.length > 0) {
           <div>
-            <h2 class="text-lg font-semibold text-gray-900 mb-3">Kurs Ustalık Durumu</h2>
+            <h2 class="text-lg font-semibold text-gray-900 mb-3">Kurs Başarım Durumu</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               @for (course of info.courses; track course.courseId) {
                 <mat-card appearance="outlined" class="hover:shadow-md transition-shadow">
                   <div class="p-4">
                     <h3 class="font-semibold text-gray-900 truncate mb-3">{{ course.courseTitle }}</h3>
                     <div class="flex items-center justify-between mb-2">
-                      <span class="text-xs text-gray-500">Ustalık</span>
+                      <span class="text-xs text-gray-500">Başarım</span>
                       <span class="text-xs font-medium"
                         [class.text-green-600]="course.avgMastery >= 80"
                         [class.text-blue-600]="course.avgMastery >= 60 && course.avgMastery < 80"
@@ -267,7 +267,7 @@ import { RecommendationReasonCardComponent } from '@shared/components/recommenda
                   class="rounded-full">
                 </mat-progress-bar>
                 <div class="flex items-center justify-between text-sm pt-2">
-                  <span class="text-gray-600">Genel Ustalık</span>
+                  <span class="text-gray-600">Genel Başarım</span>
                   <span class="font-medium">%{{ info.totalMastery }}</span>
                 </div>
                 <mat-progress-bar

@@ -80,9 +80,8 @@ export const routes: Routes = [
   },
   {
     path: 'cohort-analytics',
-    loadChildren: () => import('./features/cohort-analytics/cohort-analytics.routes').then(m => m.COHORT_ANALYTICS_ROUTES),
-    canActivate: [roleGuard],
-    data: { roles: [UserRole.PLATFORM_ADMIN, UserRole.PROGRAM_MANAGER, UserRole.OBSERVER] }
+    redirectTo: 'cohorts',
+    pathMatch: 'full'
   },
   {
     path: 'item-analysis',
@@ -106,7 +105,7 @@ export const routes: Routes = [
     path: 'cohorts',
     loadChildren: () => import('./features/cohort-management/cohorts.routes').then(m => m.COHORT_ROUTES),
     canActivate: [roleGuard],
-    data: { roles: [UserRole.PROGRAM_MANAGER, UserRole.PLATFORM_ADMIN] }
+    data: { roles: [UserRole.PLATFORM_ADMIN, UserRole.PROGRAM_MANAGER, UserRole.OBSERVER] }
   },
   {
     path: 'admin/roles',

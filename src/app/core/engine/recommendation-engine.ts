@@ -61,7 +61,7 @@ function buildReasonDetails(mastery: MasteryScore, content: ContentItem): Reason
   details.push({
     factor: 'mastery_score',
     weight: isCritical ? 0.6 : 0.4,
-    description: `Ustalık puanı ${mastery.score} — ${levelLabel}`,
+    description: `Başarım puanı ${mastery.score} — ${levelLabel}`,
   });
 
   if (content.difficulty) {

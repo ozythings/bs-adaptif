@@ -69,11 +69,11 @@
             </a>
           </li>
         }
-        @if (canAccess([UserRole.PROGRAM_MANAGER, UserRole.PLATFORM_ADMIN])) {
+        @if (canAccess([UserRole.PROGRAM_MANAGER, UserRole.PLATFORM_ADMIN, UserRole.OBSERVER])) {
           <li>
-            <a routerLink="/cohorts" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Kohort Yönetimi">
-              <mat-icon>group_add</mat-icon>
-              <span>Kohort Yönetimi</span>
+            <a routerLink="/cohorts" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Cohort Analizi">
+              <mat-icon>groups</mat-icon>
+              <span>Cohort Analizi</span>
             </a>
           </li>
         }
@@ -82,14 +82,6 @@
             <a routerLink="/grading" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Değerlendirme">
               <mat-icon>rate_review</mat-icon>
               <span>Değerlendirme</span>
-            </a>
-          </li>
-        }
-        @if (canAccess([UserRole.PLATFORM_ADMIN, UserRole.PROGRAM_MANAGER, UserRole.OBSERVER])) {
-          <li>
-            <a routerLink="/cohort-analytics" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Cohort Analizi">
-              <mat-icon>groups</mat-icon>
-              <span>Cohort Analizi</span>
             </a>
           </li>
         }
@@ -220,17 +212,9 @@
                 </a>
               </li>
             }
-            @if (canAccess([UserRole.PROGRAM_MANAGER, UserRole.PLATFORM_ADMIN])) {
+            @if (canAccess([UserRole.PROGRAM_MANAGER, UserRole.PLATFORM_ADMIN, UserRole.OBSERVER])) {
               <li>
-                <a routerLink="/cohorts" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50" (click)="toggleMenu()" aria-label="Kohort Yönetimi">
-                  <mat-icon>group_add</mat-icon>
-                  <span>Kohort Yönetimi</span>
-                </a>
-              </li>
-            }
-            @if (canAccess([UserRole.PLATFORM_ADMIN, UserRole.PROGRAM_MANAGER, UserRole.OBSERVER])) {
-              <li>
-                <a routerLink="/cohort-analytics" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50" (click)="toggleMenu()" aria-label="Cohort Analizi">
+                <a routerLink="/cohorts" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50" (click)="toggleMenu()" aria-label="Cohort Analizi">
                   <mat-icon>groups</mat-icon>
                   <span>Cohort Analizi</span>
                 </a>

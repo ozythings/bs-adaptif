@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatTableModule } from '@angular/material/table';
@@ -11,6 +11,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
+import { MatSortModule, Sort } from '@angular/material/sort';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { ConfirmDialogComponent } from '@shared/components';
 import { Term } from '@core/models/term.model';
 
@@ -41,6 +43,8 @@ let nextId = 4;
     MatSlideToggleModule,
     MatDatepickerModule,
     MatNativeDateModule,
+    MatSortModule,
+    MatPaginatorModule,
   ],
   template: `
     <div class="space-y-4">
@@ -87,27 +91,38 @@ let nextId = 4;
       }
 
       <mat-card class="overflow-x-auto">
-        @if (terms().length === 0) {
+        <div class="p-4">
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Dönem Ara</mat-label>
+            <input matInput [value]="searchTerm()" (input)="onSearch($any($event.target).value)" placeholder="İsim veya tarih ile ara...">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+        </div>
+        @if (filteredTerms().length === 0) {
           <div class="text-center p-8 text-gray-500">
             <mat-icon class="text-4xl mb-2">event</mat-icon>
-            <p>Henüz dönem bulunmuyor</p>
+            <p>{{ terms().length === 0 ? 'Henüz dönem bulunmuyor' : 'Sonuç bulunamadı' }}</p>
           </div>
         } @else {
-          <table mat-table [dataSource]="terms()" class="w-full">
+          <table mat-table matSort [dataSource]="paginatedTerms()" (matSortChange)="onSort($event)" class="w-full">
+            <ng-container matColumnDef="id">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header class="w-16">ID</th>
+              <td mat-cell *matCellDef="let t">{{ t.id }}</td>
+            </ng-container>
             <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef>Dönem Adı</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Dönem Adı</th>
               <td mat-cell *matCellDef="let t">{{ t.name }}</td>
             </ng-container>
             <ng-container matColumnDef="startDate">
-              <th mat-header-cell *matHeaderCellDef>Başlangıç</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Başlangıç</th>
               <td mat-cell *matCellDef="let t">{{ t.startDate }}</td>
             </ng-container>
             <ng-container matColumnDef="endDate">
-              <th mat-header-cell *matHeaderCellDef>Bitiş</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Bitiş</th>
               <td mat-cell *matCellDef="let t">{{ t.endDate }}</td>
             </ng-container>
             <ng-container matColumnDef="isActive">
-              <th mat-header-cell *matHeaderCellDef>Durum</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Durum</th>
               <td mat-cell *matCellDef="let t">
                 @if (t.isActive) {
                   <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
@@ -134,6 +149,14 @@ let nextId = 4;
             <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
             <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
           </table>
+          <mat-paginator
+            [pageSize]="pageSize()"
+            [pageSizeOptions]="[5, 10, 25]"
+            [length]="filteredTerms().length"
+            [pageIndex]="pageIndex()"
+            (page)="onPage($event)"
+            showFirstLastButtons>
+          </mat-paginator>
         }
       </mat-card>
     </div>
@@ -144,14 +167,50 @@ export class TermListComponent {
   private dialog = inject(MatDialog);
 
   terms = signal<Term[]>([
-    { id: 1, name: '2024 Güz', startDate: '2024-09-15', endDate: '2025-01-15', isActive: false, createdAt: '2024-01-01', updatedAt: '2024-01-01' },
-    { id: 2, name: '2025 Bahar', startDate: '2025-02-10', endDate: '2025-06-10', isActive: false, createdAt: '2024-01-01', updatedAt: '2024-06-01' },
-    { id: 3, name: '2025 Güz', startDate: '2025-09-15', endDate: '2026-01-15', isActive: true, createdAt: '2025-01-01', updatedAt: '2025-08-01' },
+    { id: 1, name: '2026 Bahar', startDate: '2026-02-15', endDate: '2026-06-15', isActive: false, createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+    { id: 2, name: '2026 Güz', startDate: '2026-09-15', endDate: '2027-01-15', isActive: true, createdAt: '2026-01-01', updatedAt: '2026-08-01' },
+    { id: 3, name: '2027 Bahar', startDate: '2027-02-10', endDate: '2027-06-10', isActive: false, createdAt: '2026-01-01', updatedAt: '2026-01-01' },
   ]);
 
   showForm = signal(false);
   editingId = signal<number | null>(null);
-  displayedColumns = ['name', 'startDate', 'endDate', 'isActive', 'actions'];
+  displayedColumns = ['id', 'name', 'startDate', 'endDate', 'isActive', 'actions'];
+
+  searchTerm = signal('');
+  sortColumn = signal<string>('id');
+  sortDirection = signal<'asc' | 'desc' | ''>('asc');
+  pageSize = signal(10);
+  pageIndex = signal(0);
+
+  filteredTerms = computed(() => {
+    let result = [...this.terms()];
+    const search = this.searchTerm().toLowerCase();
+    if (search) {
+      result = result.filter(t =>
+        t.name.toLowerCase().includes(search) ||
+        t.startDate.includes(search) ||
+        t.endDate.includes(search)
+      );
+    }
+    const col = this.sortColumn();
+    const dir = this.sortDirection();
+    if (dir) {
+      result.sort((a, b) => {
+        let va: any, vb: any;
+        if (col === 'isActive') { va = a.isActive ? 1 : 0; vb = b.isActive ? 1 : 0; }
+        else { va = (a as any)[col]; vb = (b as any)[col]; }
+        if (va < vb) return dir === 'asc' ? -1 : 1;
+        if (va > vb) return dir === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    return result;
+  });
+
+  paginatedTerms = computed(() => {
+    const start = this.pageIndex() * this.pageSize();
+    return this.filteredTerms().slice(start, start + this.pageSize());
+  });
 
   termForm = this.fb.group({
     name: ['', Validators.required],
@@ -230,5 +289,20 @@ export class TermListComponent {
   cancelForm(): void {
     this.showForm.set(false);
     this.editingId.set(null);
+  }
+
+  onSearch(value: string): void {
+    this.searchTerm.set(value);
+    this.pageIndex.set(0);
+  }
+
+  onSort(sort: Sort): void {
+    this.sortColumn.set(sort.active);
+    this.sortDirection.set(sort.direction);
+  }
+
+  onPage(event: PageEvent): void {
+    this.pageIndex.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
   }
 }

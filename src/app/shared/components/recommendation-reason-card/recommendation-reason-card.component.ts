@@ -4,7 +4,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { Recommendation } from '@core/models/recommendation.model';
 
 const FACTOR_LABELS: Record<string, string> = {
-  mastery_score: 'Ustalık Puanı',
+  mastery_score: 'Başarım Puanı',
   repeat_count: 'Tekrar Sayısı',
   prerequisite: 'Önkoşul',
   difficulty: 'Zorluk',

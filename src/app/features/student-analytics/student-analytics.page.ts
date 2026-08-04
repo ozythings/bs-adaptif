@@ -62,7 +62,7 @@ import { EXAMS_SEED } from '@core/data';
             <p class="text-2xl font-bold">{{ totalAttempts() }}</p>
           </div>
           <div class="bg-white rounded-lg shadow-sm p-4 border-l-4 border-green-500">
-            <p class="text-sm text-gray-500">Ortalama Ustalık</p>
+            <p class="text-sm text-gray-500">Ortalama Başarım</p>
             <p class="text-2xl font-bold">{{ avgMastery() }}</p>
           </div>
           <div class="bg-white rounded-lg shadow-sm p-4 border-l-4 border-red-500">
@@ -143,7 +143,7 @@ import { EXAMS_SEED } from '@core/data';
         </div>
 
         <div class="bg-white rounded-lg shadow-sm p-4">
-          <h2 class="text-lg font-semibold mb-3">Ustalık Haritası</h2>
+          <h2 class="text-lg font-semibold mb-3">Başarım Haritası</h2>
           <app-mastery-heatmap [scores]="masteryScores()" [outcomes]="allOutcomes()" />
         </div>
 

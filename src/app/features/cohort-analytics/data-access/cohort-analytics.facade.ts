@@ -16,7 +16,7 @@ const memoizedComparison = memoizeWithKey(
     const metrics: CohortComparisonMetric[] = [];
 
     metrics.push(makeMetricFn('Öğrenci Sayısı', cohorts, c => c.studentIds.length));
-    metrics.push(makeMetricFn('Ortalama Ustalık (%)', cohorts, c => {
+    metrics.push(makeMetricFn('Ortalama Başarım (%)', cohorts, c => {
       const attempts = ATTEMPTS_SEED.filter(a => c.studentIds.includes(a.studentId) && a.status === ResultStatus.FINALIZED);
       if (!attempts.length) return 0;
       return Math.round(attempts.reduce((s, a) => s + a.scorePercentage, 0) / attempts.length * 100) / 100;

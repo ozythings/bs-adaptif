@@ -1,4 +1,4 @@
-import { Component,  inject,  signal,  DestroyRef,  OnInit,  viewChild,  TemplateRef } from '@angular/core';
+import { Component,  inject,  signal,  computed,  DestroyRef,  OnInit,  viewChild,  TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -14,6 +14,9 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { MatSortModule, Sort } from '@angular/material/sort';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
 import { ExamsFacade, ExamListItem, ExamFilter, isExamAvailable, ExamAvailability } from './data-access/exams.facade';
 import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components';
 import { CurrentUserService } from '@core/auth/current-user.service';
@@ -24,7 +27,7 @@ import { StatusTextPipe } from '@shared/pipes';
 @Component({
   selector: 'app-exam-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, ReactiveFormsModule, MatIconModule, MatButtonModule, MatTableModule, MatProgressSpinnerModule, MatPaginatorModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTooltipModule, MatDialogModule, ErrorStateComponent, ConfirmDialogComponent, StatusTextPipe],
+  imports: [CommonModule, RouterLink, ReactiveFormsModule, MatIconModule, MatButtonModule, MatTableModule, MatProgressSpinnerModule, MatPaginatorModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTooltipModule, MatDialogModule, MatSortModule, MatDatepickerModule, MatNativeDateModule, ErrorStateComponent, ConfirmDialogComponent, StatusTextPipe],
   template: `
     <div class="space-y-4">
       <div class="flex items-center justify-between">
@@ -79,28 +82,40 @@ import { StatusTextPipe } from '@shared/pipes';
             <p>Sınav bulunamadı</p>
           </div>
         } @else {
-          <table mat-table [dataSource]="exams()" class="w-full">
+          <table mat-table matSort [dataSource]="sortedExams()" class="w-full" (matSortChange)="onSort($event)">
+            <ng-container matColumnDef="id">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header class="w-16">ID</th>
+              <td mat-cell *matCellDef="let item">{{ item.exam.id }}</td>
+            </ng-container>
             <ng-container matColumnDef="title">
-              <th mat-header-cell *matHeaderCellDef>Sınav</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Sınav</th>
               <td mat-cell *matCellDef="let item">
                 <span class="font-medium">{{ item.exam.title }}</span>
                 <span class="text-sm text-gray-500 ml-2">{{ item.courseName }}</span>
               </td>
             </ng-container>
+            <ng-container matColumnDef="startDate">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Başlangıç</th>
+              <td mat-cell *matCellDef="let item">{{ item.exam.startDate ? formatDate(item.exam.startDate) : '—' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="endDate">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Bitiş</th>
+              <td mat-cell *matCellDef="let item">{{ item.exam.endDate ? formatDate(item.exam.endDate) : '—' }}</td>
+            </ng-container>
             <ng-container matColumnDef="duration">
-              <th mat-header-cell *matHeaderCellDef>Süre</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Süre</th>
               <td mat-cell *matCellDef="let item">{{ item.exam.duration }} dk</td>
             </ng-container>
             <ng-container matColumnDef="questionCount">
-              <th mat-header-cell *matHeaderCellDef>Soru</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Soru</th>
               <td mat-cell *matCellDef="let item">{{ item.exam.questionCount }}</td>
             </ng-container>
             <ng-container matColumnDef="passingScore">
-              <th mat-header-cell *matHeaderCellDef>Geçme</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Geçme</th>
               <td mat-cell *matCellDef="let item">%{{ item.exam.passingScore }}</td>
             </ng-container>
             <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Durum</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Durum</th>
               <td mat-cell *matCellDef="let item">
                 <span class="px-2 py-1 rounded-full text-xs font-medium"
                   [class.bg-green-100]="item.exam.status === 'published'"
@@ -217,11 +232,15 @@ import { StatusTextPipe } from '@shared/pipes';
           <div class="flex gap-3">
             <mat-form-field appearance="outline" class="flex-1">
               <mat-label>Başlangıç Tarihi</mat-label>
-              <input matInput type="date" formControlName="startDate">
+              <input matInput [matDatepicker]="startPicker" formControlName="startDate">
+              <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+              <mat-datepicker #startPicker></mat-datepicker>
             </mat-form-field>
             <mat-form-field appearance="outline" class="flex-1">
               <mat-label>Bitiş Tarihi</mat-label>
-              <input matInput type="date" formControlName="endDate">
+              <input matInput [matDatepicker]="endPicker" formControlName="endDate">
+              <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
+              <mat-datepicker #endPicker></mat-datepicker>
             </mat-form-field>
           </div>
         </mat-dialog-content>
@@ -261,11 +280,15 @@ import { StatusTextPipe } from '@shared/pipes';
           <div class="flex gap-3">
             <mat-form-field appearance="outline" class="flex-1">
               <mat-label>Başlangıç Tarihi</mat-label>
-              <input matInput type="date" formControlName="startDate">
+              <input matInput [matDatepicker]="editStartPicker" formControlName="startDate">
+              <mat-datepicker-toggle matIconSuffix [for]="editStartPicker"></mat-datepicker-toggle>
+              <mat-datepicker #editStartPicker></mat-datepicker>
             </mat-form-field>
             <mat-form-field appearance="outline" class="flex-1">
               <mat-label>Bitiş Tarihi</mat-label>
-              <input matInput type="date" formControlName="endDate">
+              <input matInput [matDatepicker]="editEndPicker" formControlName="endDate">
+              <mat-datepicker-toggle matIconSuffix [for]="editEndPicker"></mat-datepicker-toggle>
+              <mat-datepicker #editEndPicker></mat-datepicker>
             </mat-form-field>
           </div>
         </mat-dialog-content>
@@ -307,8 +330,8 @@ export class ExamListPage implements OnInit {
     courseId: [null as number | null, Validators.required],
     duration: [60, [Validators.required, Validators.min(5), Validators.max(180)]],
     passingScore: [70, [Validators.required, Validators.min(0), Validators.max(100)]],
-    startDate: [null as string | null],
-    endDate: [null as string | null],
+    startDate: [null as Date | null],
+    endDate: [null as Date | null],
   });
 
   editForm = this.fb.group({
@@ -316,13 +339,45 @@ export class ExamListPage implements OnInit {
     courseId: [null as number | null, Validators.required],
     duration: [60, [Validators.required, Validators.min(5), Validators.max(180)]],
     passingScore: [70, [Validators.required, Validators.min(0), Validators.max(100)]],
-    startDate: [null as string | null],
-    endDate: [null as string | null],
+    startDate: [null as Date | null],
+    endDate: [null as Date | null],
   });
 
   editExamId: number | null = null;
 
-  displayedColumns = ['title', 'duration', 'questionCount', 'passingScore', 'status', 'actions'];
+  displayedColumns = ['id', 'title', 'startDate', 'endDate', 'duration', 'questionCount', 'passingScore', 'status', 'actions'];
+
+  sortActive = signal('');
+  sortDirection = signal<'asc' | 'desc' | ''>('');
+
+  sortedExams = computed(() => {
+    const data = [...this.exams()];
+    const active = this.sortActive();
+    const dir = this.sortDirection();
+    if (!active || !dir) return data;
+
+    const accessor = (item: ExamListItem): any => {
+      switch (active) {
+        case 'id': return item.exam.id;
+        case 'title': return item.exam.title.toLowerCase();
+        case 'startDate': return item.exam.startDate ?? '';
+        case 'endDate': return item.exam.endDate ?? '';
+        case 'duration': return item.exam.duration;
+        case 'questionCount': return item.exam.questionCount;
+        case 'passingScore': return item.exam.passingScore;
+        case 'status': return item.exam.status;
+        default: return '';
+      }
+    };
+
+    data.sort((a, b) => {
+      const va = accessor(a);
+      const vb = accessor(b);
+      const cmp = va < vb ? -1 : va > vb ? 1 : 0;
+      return dir === 'asc' ? cmp : -cmp;
+    });
+    return data;
+  });
 
   get isObserver() { return this.currentUser.user().role === UserRole.OBSERVER; }
   get isStudent() { return this.currentUser.user().role === UserRole.STUDENT; }
@@ -391,6 +446,11 @@ export class ExamListPage implements OnInit {
     this.loadData();
   }
 
+  onSort(sort: Sort): void {
+    this.sortActive.set(sort.active);
+    this.sortDirection.set(sort.direction);
+  }
+
   startExam(examId: number): void {
     this.facade.startExam(examId);
   }
@@ -409,8 +469,8 @@ export class ExamListPage implements OnInit {
       courseId: exam.courseId,
       duration: exam.duration,
       passingScore: exam.passingScore,
-      startDate: exam.startDate ? exam.startDate.substring(0, 10) : null,
-      endDate: exam.endDate ? exam.endDate.substring(0, 10) : null,
+      startDate: exam.startDate ? new Date(exam.startDate) : null,
+      endDate: exam.endDate ? new Date(exam.endDate) : null,
     });
     const tpl = this.editDialogTpl();
     if (!tpl) return;
@@ -423,7 +483,7 @@ export class ExamListPage implements OnInit {
   createExam(): void {
     if (this.createForm.invalid) return;
     const v = this.createForm.value;
-    this.facade.createExam(v.title!, v.courseId!, v.duration!, v.passingScore!, v.startDate || null, v.endDate || null);
+    this.facade.createExam(v.title!, v.courseId!, v.duration!, v.passingScore!, v.startDate ? this.toDateString(v.startDate) : null, v.endDate ? this.toDateString(v.endDate) : null);
     this.loadData();
     this.dialog.closeAll();
   }
@@ -436,11 +496,18 @@ export class ExamListPage implements OnInit {
       courseId: v.courseId!,
       duration: v.duration!,
       passingScore: v.passingScore!,
-      startDate: v.startDate || null,
-      endDate: v.endDate || null,
+      startDate: v.startDate ? this.toDateString(v.startDate) : null,
+      endDate: v.endDate ? this.toDateString(v.endDate) : null,
     });
     this.loadData();
     this.dialog.closeAll();
+  }
+
+  private toDateString(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   }
 
   getAvailability(exam: any): ExamAvailability {
