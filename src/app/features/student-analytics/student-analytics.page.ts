@@ -13,6 +13,7 @@ import { CurrentUserService } from '@core/auth/current-user.service';
 import { UserRole } from '@core/models/enums';
 import { MasteryHeatmap } from '@shared/components/mastery-heatmap/mastery-heatmap.component';
 import { ColumnChartComponent } from '@shared/components/column-chart/column-chart.component';
+import { LineChartComponent } from '@shared/components/line-chart/line-chart.component';
 import { ErrorStateComponent } from '@shared/components';
 import { Participant } from '@core/models/participant.model';
 import { MasteryScore } from '@core/models/mastery-score.model';
@@ -24,7 +25,7 @@ import { EXAMS_SEED } from '@core/data';
 @Component({
   selector: 'app-student-analytics',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatIconModule, MatButtonModule, MatProgressSpinnerModule, MasteryHeatmap, ColumnChartComponent, ErrorStateComponent],
+  imports: [CommonModule, RouterLink, MatIconModule, MatButtonModule, MatProgressSpinnerModule, MasteryHeatmap, ColumnChartComponent, LineChartComponent, ErrorStateComponent],
   template: `
     <div class="space-y-6 p-4">
       @if (!isObserver()) {
@@ -82,6 +83,18 @@ import { EXAMS_SEED } from '@core/data';
               [labels]="trendLabels()"
               [values]="trendValues()"
               title="Sınav Başarı Yüzdesi" />
+          </div>
+        </div>
+        }
+
+        @if (masteryTrendDatasets().length > 0) {
+        <div class="bg-white rounded-lg shadow-sm p-4">
+          <h2 class="text-lg font-semibold mb-3">Kazanım İlerleme Trendi</h2>
+          <div class="h-72">
+            <app-line-chart
+              [labels]="masteryTrendLabels()"
+              [datasets]="masteryTrendDatasets()"
+              title="Kazanım Puanı" />
           </div>
         </div>
         }
@@ -196,6 +209,38 @@ export class StudentAnalyticsPage implements OnInit {
     new Date(a.submittedAt ?? a.updatedAt).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' })
   ));
   trendValues = computed(() => this.attemptHistory().slice().reverse().map(a => a.scorePercentage));
+
+  masteryTrendLabels = computed(() => {
+    const scores = this.masteryScores();
+    if (scores.length === 0) return [];
+    const allDates = scores.flatMap(s => (s.history ?? []).map(h => h.date));
+    const unique = [...new Set(allDates)].sort();
+    return unique.map(d => new Date(d).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }));
+  });
+
+  masteryTrendDatasets = computed(() => {
+    const scores = this.masteryScores();
+    const outcomes = this.allOutcomes();
+    const labels = this.masteryTrendLabels();
+    if (scores.length === 0 || labels.length === 0) return [];
+    const outcomeMap = new Map(outcomes.map(o => [o.id, o]));
+    return scores
+      .filter(s => s.history && s.history.length > 1)
+      .map(s => {
+        const outcome = outcomeMap.get(s.outcomeId);
+        const dateToScore = new Map(s.history.map(h => [h.date, h.score]));
+        const allDates = [...new Set(s.history.map(h => h.date))].sort();
+        const dateToIndex = new Map(allDates.map((d, i) => [d, i]));
+        const values = labels.map((_, i) => {
+          const matchDate = allDates.find(d => dateToIndex.get(d) === i);
+          return matchDate ? (dateToScore.get(matchDate) ?? 0) : 0;
+        });
+        return {
+          label: outcome ? `${outcome.code} - ${outcome.name}` : `Kazanım #${s.outcomeId}`,
+          values,
+        };
+      });
+  });
 
   totalAttempts = computed(() => this.attempts().length);
   avgMastery = computed(() => {

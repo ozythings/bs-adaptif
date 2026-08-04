@@ -1,4 +1,5 @@
 export * from './column-chart/column-chart.component';
+export * from './line-chart/line-chart.component';
 export * from './confirm-dialog/confirm-dialog.component';
 export * from './error-state/error-state.component';
 export * from './exam-timer/exam-timer.component';

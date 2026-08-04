@@ -13,6 +13,7 @@ import { NotificationService } from '@core/observability/notification.service';
              [class.bg-green-600]="toast.type === 'success'"
              [class.bg-red-600]="toast.type === 'error'"
              [class.bg-blue-600]="toast.type === 'info'"
+             [class.bg-amber-500]="toast.type === 'warning'"
              (click)="notificationService.remove(toast.id)">
           {{ toast.message }}
         </div>

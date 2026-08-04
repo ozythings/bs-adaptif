@@ -9,69 +9,93 @@ import { LearningOutcome } from '@core/models/learning-outcome.model';
   imports: [CommonModule],
   template: `
     @defer (on viewport) {
-      <div class="overflow-hidden border border-gray-300">
+      <div class="overflow-hidden border border-gray-200 rounded-lg">
         <div class="overflow-x-auto">
           <table class="w-full text-sm border-collapse">
             <thead>
-              <tr class="border-b border-gray-100">
-                <th class="text-left py-3 px-4 font-semibold text-gray-900 text-xs uppercase tracking-wide">Kod</th>
-                <th class="text-left py-3 px-4 font-semibold text-gray-900 text-xs uppercase tracking-wide">Kazanım</th>
-                <th class="text-center py-3 px-4 font-semibold text-gray-900 text-xs uppercase tracking-wide">Puan</th>
-                <th class="text-center py-3 px-4 font-semibold text-gray-900 text-xs uppercase tracking-wide">Seviye</th>
+              <tr class="border-b border-gray-200 bg-gray-50">
+                <th class="text-left py-2.5 px-3 font-semibold text-gray-700 text-xs uppercase tracking-wide sticky left-0 bg-gray-50 z-10">Kod</th>
+                <th class="text-left py-2.5 px-3 font-semibold text-gray-700 text-xs uppercase tracking-wide sticky left-[72px] bg-gray-50 z-10">Kazanım</th>
+                <th class="text-center py-2.5 px-3 font-semibold text-gray-700 text-xs uppercase tracking-wide bg-green-50">Kolay</th>
+                <th class="text-center py-2.5 px-3 font-semibold text-gray-700 text-xs uppercase tracking-wide bg-yellow-50">Orta</th>
+                <th class="text-center py-2.5 px-3 font-semibold text-gray-700 text-xs uppercase tracking-wide bg-red-50">Zor</th>
+                <th class="text-center py-2.5 px-3 font-semibold text-gray-700 text-xs uppercase tracking-wide">Puan</th>
               </tr>
             </thead>
             <tbody>
               @for (outcome of outcomes(); track outcome.id; let last = $last) {
                 @let score = scoreMap().get(outcome.id);
-                <tr
-                  [class.border-b]="!last"
-                  [class.border-gray-50]="!last"
-                >
-                  <td class="py-3 px-4">
-                    <span class="font-mono text-xs font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5">
+                @let bd = score?.difficultyBreakdown;
+                <tr [class.border-b]="!last" class="border-gray-100 hover:bg-gray-50/50">
+                  <td class="py-2 px-3 sticky left-0 bg-white z-10">
+                    <span class="font-mono text-xs font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
                       {{ outcome.code }}
                     </span>
                   </td>
-                  <td class="py-3 px-4 text-gray-700">{{ outcome.name }}</td>
-                  <td class="py-3 px-4">
-                    <div class="flex items-center justify-center gap-2 min-w-[90px] mx-auto">
-                      <span
-                        class="font-semibold text-gray-800 tabular-nums w-7 text-right"
-                        [attr.aria-label]="(score ? score.score + ' puan' : 'Veri yok')"
-                      >
-                        {{ score ? score.score : '-' }}
-                      </span>
-                      @if (score) {
-                        <div class="flex-1 h-1.5 overflow-hidden max-w-[60px]">
-                          <div
-                            class="h-full"
-                            [class]="getBarColorClass(score.score)"
-                            [style.width.%]="score.score"
-                          ></div>
-                        </div>
-                      }
-                    </div>
+                  <td class="py-2 px-3 text-gray-700 text-xs sticky left-[72px] bg-white z-10 max-w-[180px] truncate" [title]="outcome.name">
+                    {{ outcome.name }}
                   </td>
-                  <td class="py-3 px-4 text-center">
+                  @if (bd) {
+                    <td class="py-2 px-3 text-center">
+                      <span
+                        class="inline-flex items-center justify-center w-12 h-8 rounded text-xs font-bold text-white"
+                        [style.background]="getCellColor(bd.easy.successRate)"
+                        [title]="'Kolay: ' + formatRate(bd.easy)"
+                      >
+                        {{ formatPercent(bd.easy.successRate) }}
+                      </span>
+                    </td>
+                    <td class="py-2 px-3 text-center">
+                      <span
+                        class="inline-flex items-center justify-center w-12 h-8 rounded text-xs font-bold text-white"
+                        [style.background]="getCellColor(bd.medium.successRate)"
+                        [title]="'Orta: ' + formatRate(bd.medium)"
+                      >
+                        {{ formatPercent(bd.medium.successRate) }}
+                      </span>
+                    </td>
+                    <td class="py-2 px-3 text-center">
+                      <span
+                        class="inline-flex items-center justify-center w-12 h-8 rounded text-xs font-bold text-white"
+                        [style.background]="getCellColor(bd.hard.successRate)"
+                        [title]="'Zor: ' + formatRate(bd.hard)"
+                      >
+                        {{ formatPercent(bd.hard.successRate) }}
+                      </span>
+                    </td>
+                  } @else {
+                    <td class="py-2 px-3 text-center" colspan="3">
+                      @if (score) {
+                        <span
+                          class="inline-flex items-center justify-center w-12 h-8 rounded text-xs font-bold text-white mx-auto"
+                          [style.background]="getCellColor(score.score / 100)"
+                        >
+                          {{ score.score }}%
+                        </span>
+                      } @else {
+                        <span class="text-xs text-gray-400 italic">-</span>
+                      }
+                    </td>
+                  }
+                  <td class="py-2 px-3 text-center">
                     @if (score) {
                       <span
-                        class="inline-block px-2 py-1 text-xs font-medium"
-                        [class]="getBadgeColorClass(score.score)"
-                        [attr.aria-label]="getLevelLabel(score.score) + ' seviye - ' + score.score + ' puan'"
+                        class="inline-block px-2 py-0.5 text-xs font-semibold rounded"
+                        [class]="getBadgeClass(score.score)"
                       >
-                        {{ getLevelLabel(score.score) }}
+                        {{ score.score }}
                       </span>
                     } @else {
-                      <span class="text-xs text-gray-400 italic">Veri yok</span>
+                      <span class="text-xs text-gray-400">-</span>
                     }
                   </td>
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="4" class="text-center py-12 text-gray-400">
-                    <div class="flex flex-col items-center gap-2">
-                      <span class="text-2xl">📋</span>
-                      <span>Henüz kazanım bulunmuyor</span>
+                  <td colspan="6" class="text-center py-10 text-gray-400">
+                    <div class="flex flex-col items-center gap-1">
+                      <span class="text-lg">📋</span>
+                      <span class="text-sm">Henüz kazanım bulunmuyor</span>
                     </div>
                   </td>
                 </tr>
@@ -79,9 +103,24 @@ import { LearningOutcome } from '@core/models/learning-outcome.model';
             </tbody>
           </table>
         </div>
+
+        @if (outcomes().length > 0) {
+          <div class="flex items-center justify-center gap-4 py-2 border-t border-gray-200 bg-gray-50 text-xs text-gray-500">
+            <span class="font-medium">Renk:</span>
+            <span class="flex items-center gap-1">
+              <span class="w-3 h-3 rounded-sm" style="background: #ef4444"></span> &lt;%40
+            </span>
+            <span class="flex items-center gap-1">
+              <span class="w-3 h-3 rounded-sm" style="background: #f59e0b"></span> %40–69
+            </span>
+            <span class="flex items-center gap-1">
+              <span class="w-3 h-3 rounded-sm" style="background: #22c55e"></span> %70+
+            </span>
+          </div>
+        }
       </div>
     } @placeholder {
-      <div class="h-40 bg-gray-100 animate-pulse"></div>
+      <div class="h-40 bg-gray-100 animate-pulse rounded-lg"></div>
     }
   `,
 })
@@ -97,24 +136,24 @@ export class MasteryHeatmap {
     return map;
   });
 
-  getBadgeColorClass(score: number): string {
+  getCellColor(successRate: number): string {
+    if (successRate < 0.4) return '#ef4444';
+    if (successRate < 0.7) return '#f59e0b';
+    return '#22c55e';
+  }
+
+  getBadgeClass(score: number): string {
     if (score < 40) return 'bg-red-100 text-red-700';
     if (score < 60) return 'bg-orange-100 text-orange-700';
     if (score < 80) return 'bg-yellow-100 text-yellow-700';
     return 'bg-green-100 text-green-700';
   }
 
-  getBarColorClass(score: number): string {
-    if (score < 40) return 'bg-red-500';
-    if (score < 60) return 'bg-orange-500';
-    if (score < 80) return 'bg-yellow-500';
-    return 'bg-green-500';
+  formatPercent(rate: number): string {
+    return Math.round(rate * 100) + '%';
   }
 
-  getLevelLabel(score: number): string {
-    if (score < 40) return 'Acemi';
-    if (score < 60) return 'Gelişiyor';
-    if (score < 80) return 'Yeterli';
-    return 'İleri';
+  formatRate(tier: { correct: number; total: number; successRate: number }): string {
+    return `${tier.correct}/${tier.total} (${Math.round(tier.successRate * 100)}%)`;
   }
 }
