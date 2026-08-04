@@ -17,16 +17,20 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { CoursesFacade } from '../data-access/courses.facade';
 import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components';
-import { ContentFormat, ContentStatus } from '@core/models/enums';
+import { ContentFormat, ContentStatus, Difficulty } from '@core/models/enums';
 import { CurrentUserService } from '@core/auth/current-user.service';
 import { ContentItem } from '@core/models/content-item.model';
+import { NotificationService } from '@core/observability/notification.service';
 
 interface ContentFormData {
   title: string;
   description: string;
   format: ContentFormat;
+  difficulty: Difficulty;
   durationMinutes: number;
-  outcomeId: number | null;
+  outcomeIds: number[];
+  prerequisiteContentIds: number[];
+  isLocked: boolean;
   isRequired: boolean;
   sortOrder: number;
 }
@@ -89,6 +93,15 @@ interface ContentFormData {
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Zorluk</mat-label>
+                <mat-select formControlName="difficulty">
+                  <mat-option [value]="null">Belirtilmedi</mat-option>
+                  <mat-option value="easy">Kolay</mat-option>
+                  <mat-option value="medium">Orta</mat-option>
+                  <mat-option value="hard">Zor</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="w-full">
                 <mat-label>Açıklama</mat-label>
                 <input matInput formControlName="description" placeholder="İçerik açıklaması">
               </mat-form-field>
@@ -97,11 +110,18 @@ interface ContentFormData {
                 <input matInput type="number" formControlName="durationMinutes" placeholder="Örn: 15">
               </mat-form-field>
               <mat-form-field appearance="outline" class="w-full">
-                <mat-label>Kazanım</mat-label>
-                <mat-select formControlName="outcomeId">
-                  <mat-option [value]="null">Seçilmedi</mat-option>
+                <mat-label>Kazanımlar</mat-label>
+                <mat-select formControlName="outcomeIds" multiple>
                   @for (o of courseOutcomes(); track o.id) {
                     <mat-option [value]="o.id">{{ o.code }} - {{ o.name }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Önkoşul İçerikler</mat-label>
+                <mat-select formControlName="prerequisiteContentIds" multiple>
+                  @for (c of contents(); track c.id) {
+                    <mat-option [value]="c.id">{{ c.title }} ({{ c.sortOrder }})</mat-option>
                   }
                 </mat-select>
               </mat-form-field>
@@ -110,8 +130,9 @@ interface ContentFormData {
                 <input matInput type="number" formControlName="sortOrder" placeholder="Örn: 1">
               </mat-form-field>
             </div>
-            <div class="flex items-center gap-2 mb-3">
+            <div class="flex items-center gap-3 mb-3">
               <mat-checkbox formControlName="isRequired">Zorunlu içerik</mat-checkbox>
+              <mat-checkbox formControlName="isLocked">Kilitli</mat-checkbox>
             </div>
             <div class="flex gap-2">
               <button mat-raised-button color="primary" type="submit" [disabled]="contentForm.invalid">
@@ -139,6 +160,10 @@ interface ContentFormData {
                 <ng-container matColumnDef="format">
                   <th mat-header-cell *matHeaderCellDef>Format</th>
                   <td mat-cell *matCellDef="let item">{{ formatLabel(item.format) }}</td>
+                </ng-container>
+                <ng-container matColumnDef="difficulty">
+                  <th mat-header-cell *matHeaderCellDef>Zorluk</th>
+                  <td mat-cell *matCellDef="let item">{{ difficultyLabel(item.difficulty) }}</td>
                 </ng-container>
                 <ng-container matColumnDef="duration">
                   <th mat-header-cell *matHeaderCellDef>Süre</th>
@@ -192,6 +217,7 @@ export class CourseEditPage implements OnInit {
   private route = inject(ActivatedRoute);
   private currentUser = inject(CurrentUserService);
   private dialog = inject(MatDialog);
+  private notification = inject(NotificationService);
 
   loading = signal(true);
   error = signal<string | null>(null);
@@ -204,7 +230,7 @@ export class CourseEditPage implements OnInit {
 
   contentForm: FormGroup;
 
-  contentColumns = ['sortOrder', 'title', 'format', 'duration', 'required', 'actions'];
+  contentColumns = ['sortOrder', 'title', 'format', 'difficulty', 'duration', 'required', 'actions'];
 
   paginatedContents = computed(() => {
     const start = this.pageIndex() * this.pageSize();
@@ -216,8 +242,11 @@ export class CourseEditPage implements OnInit {
       title: ['', Validators.required],
       description: [''],
       format: [ContentFormat.VIDEO, Validators.required],
+      difficulty: [Difficulty.EASY],
       durationMinutes: [15, [Validators.required, Validators.min(1)]],
-      outcomeId: [null],
+      outcomeIds: [[]],
+      prerequisiteContentIds: [[]],
+      isLocked: [false],
       isRequired: [false],
       sortOrder: [1, Validators.required],
     });
@@ -254,16 +283,22 @@ export class CourseEditPage implements OnInit {
   addContent(): void {
     if (this.contentForm.invalid) return;
     const data = this.contentForm.value as ContentFormData;
+    const duplicate = this.contents().find(c => c.sortOrder === data.sortOrder);
+    if (duplicate) {
+      this.notification.show(`Sıra ${data.sortOrder} zaten "${duplicate.title}" içerikli kullanılıyor`, 'warning');
+      return;
+    }
     this.facade.addContent(this.courseId, {
       title: data.title,
       description: data.description || '',
       format: data.format,
+      difficulty: data.difficulty,
       durationMinutes: data.durationMinutes,
-      outcomeIds: data.outcomeId ? [data.outcomeId] : [],
+      outcomeIds: data.outcomeIds || [],
       courseId: this.courseId,
-      prerequisiteContentIds: [],
+      prerequisiteContentIds: data.prerequisiteContentIds || [],
       status: ContentStatus.ACTIVE,
-      isLocked: false,
+      isLocked: data.isLocked,
       isRequired: data.isRequired,
       sortOrder: data.sortOrder,
       url: undefined,
@@ -276,8 +311,11 @@ export class CourseEditPage implements OnInit {
           title: '',
           description: '',
           format: ContentFormat.VIDEO,
+          difficulty: Difficulty.EASY,
           durationMinutes: 15,
-          outcomeId: null,
+          outcomeIds: [],
+          prerequisiteContentIds: [],
+          isLocked: false,
           isRequired: false,
           sortOrder: this.contents().length + 1,
         });
@@ -335,5 +373,14 @@ export class CourseEditPage implements OnInit {
       quiz: 'Test',
     };
     return labels[format] ?? format;
+  }
+
+  difficultyLabel(difficulty?: string): string {
+    const labels: Record<string, string> = {
+      easy: 'Kolay',
+      medium: 'Orta',
+      hard: 'Zor',
+    };
+    return difficulty ? (labels[difficulty] ?? difficulty) : '-';
   }
 }

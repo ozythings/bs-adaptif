@@ -8,7 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { CoursesFacade, LearningPathData } from './data-access/courses.facade';
 import { ErrorStateComponent } from '@shared/components';
-import { ContentFormat, MasteryLevel, UserRole } from '@core/models/enums';
+import { ContentFormat, MasteryLevel, UserRole, Difficulty } from '@core/models/enums';
 import { RecommendationReasonCardComponent } from '@shared/components';
 import { NotificationService } from '@core/observability/notification.service';
 import { CurrentUserService } from '@core/auth/current-user.service';
@@ -65,7 +65,7 @@ const FORMAT_LABELS: Record<ContentFormat, string> = {
               <mat-card appearance="outlined" class="p-4">
                 <div class="flex items-start gap-4">
                   <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold">
-                    {{ c.sortOrder }}
+                     {{ $index + 1 }}
                   </div>
                   <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 flex-wrap">
@@ -74,14 +74,20 @@ const FORMAT_LABELS: Record<ContentFormat, string> = {
                       <span class="text-xs text-gray-500">{{ formatLabel(c.format) }}</span>
                       <span class="text-xs text-gray-400">&middot; {{ c.durationMinutes }} dk</span>
                       <span class="text-xs text-gray-400">&middot;</span>
-                      <span class="text-xs font-medium" [class.text-green-600]="difficultyLabel(c.format) === 'Kolay'" [class.text-orange-600]="difficultyLabel(c.format) === 'Orta'" [class.text-red-600]="difficultyLabel(c.format) === 'Zor'">{{ difficultyLabel(c.format) }}</span>
+                      <span class="text-xs font-medium"
+                        [class.text-green-600]="c.difficulty === 'easy'"
+                        [class.text-orange-600]="c.difficulty === 'medium'"
+                        [class.text-red-600]="c.difficulty === 'hard'"
+                        [class.text-gray-400]="!c.difficulty">{{ difficultyLabel(c.difficulty) }}</span>
                     </div>
                     <p class="text-sm text-gray-500 mt-1">{{ c.description }}</p>
                     <div class="flex items-center gap-2 mt-2">
                       @if (c.isLocked) {
                         <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Kilitli</span>
                       } @else if (isDone(c.id)) {
-                        @if (studyCount(c.id) > 0) {
+                        @if (isMastered(c.id)) {
+                          <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">✨ Uzmanlaşıldı</span>
+                        } @else if (studyCount(c.id) > 0) {
                           <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">✓ {{ studyCount(c.id) }} kez çalışıldı</span>
                         } @else {
                           <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Tamamlandı</span>
@@ -221,10 +227,11 @@ export class LearningPathPage implements OnInit {
     return FORMAT_LABELS[format] || '';
   }
 
-  difficultyLabel(format: ContentFormat): string {
-    return format === ContentFormat.VIDEO || format === ContentFormat.TEXT ? 'Kolay'
-      : format === ContentFormat.INTERACTIVE ? 'Orta'
-      : 'Zor';
+  difficultyLabel(difficulty?: Difficulty): string {
+    if (difficulty === Difficulty.EASY) return 'Kolay';
+    if (difficulty === Difficulty.MEDIUM) return 'Orta';
+    if (difficulty === Difficulty.HARD) return 'Zor';
+    return '';
   }
 
   getOutcomeName(outcomeId: number | undefined): string | undefined {
@@ -246,6 +253,17 @@ export class LearningPathPage implements OnInit {
   isDone(contentId: number): boolean {
     const p = this.pd();
     return p ? p.completedContentIds.has(contentId) : false;
+  }
+
+  isMastered(contentId: number): boolean {
+    const p = this.pd();
+    if (!p) return false;
+    const content = p.contents.find(c => c.id === contentId);
+    if (!content || content.outcomeIds.length === 0) return false;
+    return content.outcomeIds.every(oid => {
+      const score = p.masteryScores.find(m => m.outcomeId === oid);
+      return score && score.score >= 80;
+    });
   }
 
   studyCount(contentId: number): number {

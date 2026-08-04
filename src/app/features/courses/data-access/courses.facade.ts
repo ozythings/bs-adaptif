@@ -5,7 +5,7 @@ import { CurrentUserService } from '@core/auth/current-user.service';
 import { DataScopeService } from '@core/auth/data-scope.service';
 import { NotificationService } from '@core/observability/notification.service';
 import { AuditService } from '@core/observability/audit.service';
-import { calculateMastery, generateRecommendations } from '@core/engine';
+import { calculateMastery, generateRecommendations, generateStudySequence } from '@core/engine';
 import { COURSES_SEED, INSTRUCTORS_SEED, ENROLLMENTS_SEED, PARTICIPANTS_SEED, CONTENTS_SEED, OUTCOMES_SEED, MASTERY_SEED, CONTENT_COMPLETIONS_SEED } from '@core/data';
 import { Course } from '@core/models/course.model';
 import { Enrollment } from '@core/models/enrollment.model';
@@ -225,14 +225,14 @@ export class CoursesFacade {
     }
 
     const user = this.currentUser.user();
-    const contents = CONTENTS_SEED
+    const courseContents = CONTENTS_SEED
       .filter(c => c.courseId === courseId)
       .sort((a, b) => a.sortOrder - b.sortOrder);
 
     if (user.role !== UserRole.STUDENT) {
       return this.mockApi.get({
         course,
-        contents,
+        contents: courseContents,
         masteryScores: [],
         completedContentIds: new Set<number>(),
         studyCounts: new Map<number, number>(),
@@ -247,7 +247,7 @@ export class CoursesFacade {
     const masteryScores = MASTERY_SEED.filter(m => m.studentId === studentId);
 
     const masteryCompleted = new Set<number>();
-    for (const content of contents) {
+    for (const content of courseContents) {
       const scores = content.outcomeIds
         .map(oid => masteryScores.find(m => m.outcomeId === oid))
         .filter((s): s is MasteryScore => !!s);
@@ -271,13 +271,40 @@ export class CoursesFacade {
       e => e.courseId === courseId && e.participantId === studentId && !e.deletedAt
     );
 
-    const lockedContentIds = contents
+    const lockedContentIds = courseContents
       .filter(c => c.isLocked || c.status !== ContentStatus.ACTIVE)
       .map(c => c.id);
 
+    const sequence = generateStudySequence({
+      masteryScores,
+      contents: courseContents,
+      completedContentIds: [...completedContentIds],
+      lockedContentIds,
+    });
+
+    const sequenceOrder = new Map<number, number>();
+    const masteredIds = new Set<number>();
+    sequence.forEach((s, i) => {
+      sequenceOrder.set(s.content.id, i);
+      if (s.isMastered) masteredIds.add(s.content.id);
+    });
+
+    const contents = [...courseContents].sort((a, b) => {
+      const aMastered = masteredIds.has(a.id);
+      const bMastered = masteredIds.has(b.id);
+      if (aMastered && !bMastered) return 1;
+      if (!aMastered && bMastered) return -1;
+      const aOrder = sequenceOrder.get(a.id);
+      const bOrder = sequenceOrder.get(b.id);
+      if (aOrder != null && bOrder != null) return aOrder - bOrder;
+      if (aOrder != null) return -1;
+      if (bOrder != null) return 1;
+      return a.sortOrder - b.sortOrder;
+    });
+
     const engineRecs = generateRecommendations({
       masteryScores,
-      contents,
+      contents: courseContents,
       completedContentIds: [...completedContentIds],
       lockedContentIds,
     }, studentId);
@@ -321,7 +348,7 @@ export class CoursesFacade {
         id: 0, studentId: sid, outcomeId,
         masteryLevel: MasteryLevel.NOSTUDYYET, score: 0,
         recentAnswers: [], difficultyWeightedAverage: 0, repeatCount: 0,
-        lastAssessedAt: '', calculatedAt: '', version: 0,
+        history: [], lastAssessedAt: '', calculatedAt: '', version: 0,
         createdAt: '', updatedAt: '',
       };
     });
@@ -392,6 +419,7 @@ export class CoursesFacade {
       existing.repeatCount = repeatCount;
       existing.lastAssessedAt = now;
       existing.calculatedAt = now;
+      existing.history = [...(existing.history ?? []), { score: result.score, date: now }];
       existing.updatedAt = now;
     } else {
       const newMastery: MasteryScore = {
@@ -405,6 +433,7 @@ export class CoursesFacade {
         repeatCount,
         lastAssessedAt: now,
         calculatedAt: now,
+        history: [{ score: result.score, date: now }],
         version: 1,
         createdAt: now,
         updatedAt: now,
@@ -451,6 +480,7 @@ export class CoursesFacade {
       title: data.title || '',
       description: data.description || '',
       format: data.format || ContentFormat.TEXT,
+      difficulty: data.difficulty,
       durationMinutes: data.durationMinutes || 10,
       outcomeIds: data.outcomeIds || [],
       courseId,

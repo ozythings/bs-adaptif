@@ -146,7 +146,7 @@ import { StatusTextPipe } from '@shared/pipes';
               <th mat-header-cell *matHeaderCellDef></th>
               <td mat-cell *matCellDef="let item">
                 <div class="flex items-center gap-2">
-                  @if (isEnrolledOrCompleted(item.enrollmentStatus)) {
+                  @if (isEnrolledOrCompleted(item.enrollmentStatus) || !isStudent()) {
                     <button mat-stroked-button color="primary" [routerLink]="['/courses', item.course.id, 'path']">
                       <mat-icon>route</mat-icon> Öğrenme Yolu
                     </button>
