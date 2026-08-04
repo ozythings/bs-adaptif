@@ -8,13 +8,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { OutcomesFacade } from './data-access/outcomes.facade';
-import { OutcomeGraphComponent } from '@shared/components/outcome-graph/outcome-graph.component';
+import { OutcomeGraphComponent, levelColorEntries } from '@shared/components/outcome-graph/outcome-graph.component';
 import { ErrorStateComponent } from '@shared/components';
 import { LearningOutcome } from '@core/models/learning-outcome.model';
 import { RouterLink } from '@angular/router';
 import { DebounceDirective } from '@shared/directives';
 import { StatusTextPipe } from '@shared/pipes';
-import { OutcomeLevel } from '@core/models/enums';
+import { OutcomeLevel, OutcomeStatus } from '@core/models/enums';
 
 @Component({
   selector: 'app-outcome-map',
@@ -60,13 +60,43 @@ import { OutcomeLevel } from '@core/models/enums';
         </div>
       </div>
 
+      @if (unpublishedCount() > 0) {
+        <div class="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 flex items-center gap-3">
+          <mat-icon class="text-amber-600">warning_amber</mat-icon>
+          <div>
+            <span class="text-sm font-medium text-amber-800">{{ unpublishedCount() }} yayında olmayan kazanım</span>
+            <span class="text-xs text-amber-600 ml-2">— grafikte soluk görünürler</span>
+          </div>
+          <button mat-stroked-button size="small" class="ml-auto !text-amber-700 !border-amber-300"
+            (click)="showUnpublished.set(!showUnpublished())">
+            @if (showUnpublished()) { Gizle } @else { Göster }
+          </button>
+        </div>
+      }
+
+      <!-- Level legend -->
+      <div class="bg-white rounded-lg shadow-sm p-3 flex flex-wrap gap-2 items-center">
+        <span class="text-xs font-medium text-gray-500 mr-2">Seviyeler:</span>
+        @for (entry of levelColorEntries; track entry.level) {
+          <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium"
+            [style.background-color]="entry.fill"
+            [style.border]="'1px solid ' + entry.stroke"
+            [style.color]="entry.stroke">
+            {{ entry.label }}
+          </span>
+        }
+        <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded text-xs text-gray-400 border border-dashed border-gray-300 ml-2">
+          ✦ Soluk = Yayında değil
+        </span>
+      </div>
+
       @if (loading()) {
         <div class="flex justify-center py-8"><mat-spinner diameter="32" /></div>
       } @else if (error()) {
         <app-error-state [title]="'Kazanımlar yüklenemedi'" [message]="error()!" (retry)="loadOutcomes()" />
       } @else if (filteredOutcomes().length > 0) {
         <app-outcome-graph
-          [outcomes]="filteredOutcomes()"
+          [outcomes]="displayOutcomes()"
           [selectedId]="selectedNodeId()"
           [focusNodeId]="focusMode() ? selectedNodeId() : null"
           (nodeSelect)="onNodeSelect($event)" />
@@ -87,7 +117,12 @@ import { OutcomeLevel } from '@core/models/enums';
             }
           </div>
           <p class="text-sm text-gray-600 mt-1">{{ node.description }}</p>
-          <p class="text-xs text-gray-400 mt-1">Seviye: {{ node.level | statusText }} | Önkoşul: {{ getPrereqNames(node).join(', ') || 'Yok' }}</p>
+          <p class="text-xs text-gray-400 mt-1">
+            Seviye: {{ node.level | statusText }}
+            | Durum: {{ node.status | statusText }}
+            @if (!node.isActive) { <span class="text-amber-600 ml-1">(Yayında değil)</span> }
+            | Önkoşul: {{ getPrereqNames(node).join(', ') || 'Yok' }}
+          </p>
         </div>
       }
     </div>
@@ -101,6 +136,7 @@ export class OutcomeMapPage implements OnInit {
   focusMode = signal(false);
   searchTerm = signal('');
   levelFilter = signal<OutcomeLevel | null>(null);
+  showUnpublished = signal(true);
   loading = signal(false);
   error = signal<string | null>(null);
 
@@ -113,6 +149,8 @@ export class OutcomeMapPage implements OnInit {
     { value: OutcomeLevel.CREATE, label: 'Oluşturma' },
   ];
 
+  protected readonly levelColorEntries = levelColorEntries;
+
   private rawOutcomes = signal<LearningOutcome[]>([]);
 
   filteredOutcomes = computed(() => {
@@ -123,6 +161,15 @@ export class OutcomeMapPage implements OnInit {
       (!level || o.level === level)
     );
   });
+
+  displayOutcomes = computed(() => {
+    if (this.showUnpublished()) return this.filteredOutcomes();
+    return this.filteredOutcomes().filter(o => o.isActive);
+  });
+
+  unpublishedCount = computed(() =>
+    this.rawOutcomes().filter(o => !o.isActive).length
+  );
 
   ngOnInit() {
     this.loadOutcomes();

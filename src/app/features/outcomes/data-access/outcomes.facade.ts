@@ -6,6 +6,7 @@ import { OUTCOMES_SEED, COURSES_SEED } from '@core/data';
 import { NotificationService } from '@core/observability/notification.service';
 import { AuditService } from '@core/observability/audit.service';
 import { AuditAction } from '@core/models/enums';
+import { hasCycle } from '@shared/utils/cycle-detector';
 export class OutcomesFacade {
   private mockApi = inject(MockApiService);
   private notification = inject(NotificationService);
@@ -25,20 +26,8 @@ export class OutcomesFacade {
     return this.mockApi.get(this.rawOutcomes().find(o => o.id === id));
   }
 
-  hasCycle(outcomeId: number, prerequisiteId: number): boolean {
-    const visited = new Set<number>();
-    const stack = [prerequisiteId];
-    while (stack.length > 0) {
-      const current = stack.pop()!;
-      if (current === outcomeId) return true;
-      if (visited.has(current)) continue;
-      visited.add(current);
-      const node = this.rawOutcomes().find(o => o.id === current);
-      if (node) {
-        stack.push(...node.prerequisiteIds);
-      }
-    }
-    return false;
+  detectCycle(outcomeId: number, prerequisiteId: number): boolean {
+    return hasCycle(this.rawOutcomes(), outcomeId, prerequisiteId);
   }
 
   create(data: Omit<LearningOutcome, 'id' | 'createdAt' | 'updatedAt'>): Observable<LearningOutcome> {
@@ -54,7 +43,7 @@ export class OutcomesFacade {
           this.notification.show(`Önkoşul kazanım "${prereqOutcome.code}" henüz yayında değil`, 'error');
           return this.mockApi.simulateError();
         }
-        if (this.hasCycle(newId, prereq)) {
+        if (this.detectCycle(newId, prereq)) {
           this.notification.show('Döngüsel önkoşul ilişkisi tespit edildi', 'error');
           return this.mockApi.simulateError();
         }
@@ -89,7 +78,7 @@ export class OutcomesFacade {
           this.notification.show(`Önkoşul kazanım "${prereqOutcome.code}" henüz yayında değil`, 'error');
           return this.mockApi.simulateError();
         }
-        if (this.hasCycle(id, prereq)) {
+        if (this.detectCycle(id, prereq)) {
           this.notification.show('Döngüsel önkoşul ilişkisi tespit edildi', 'error');
           return this.mockApi.simulateError();
         }
