@@ -53,7 +53,7 @@
           </a>
         </li>
         }
-        @if (canAccess([UserRole.STUDENT])) {
+        @if (user().role === UserRole.STUDENT) {
           <li>
             <a routerLink="/my-plan" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Çalışma Planım">
               <mat-icon>event_note</mat-icon>
@@ -188,7 +188,7 @@
               </a>
             </li>
             }
-            @if (canAccess([UserRole.STUDENT])) {
+            @if (user().role === UserRole.STUDENT) {
               <li>
                 <a routerLink="/my-plan" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50" (click)="toggleMenu()" aria-label="Çalışma Planım">
                   <mat-icon>event_note</mat-icon>
