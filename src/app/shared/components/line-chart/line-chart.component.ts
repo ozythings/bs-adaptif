@@ -1,7 +1,8 @@
 import { Component, input, effect, ElementRef, inject, viewChild } from '@angular/core';
 import { Chart, registerables } from 'chart.js';
+import zoomPlugin from 'chartjs-plugin-zoom';
 
-Chart.register(...registerables);
+Chart.register(...registerables, zoomPlugin);
 
 @Component({
   selector: 'app-line-chart',
@@ -57,6 +58,17 @@ export class LineChartComponent {
               tooltip: {
                 callbacks: {
                   label: (ctx) => ` ${ctx.dataset.label}: %${ctx.parsed.y}`
+                }
+              },
+              zoom: {
+                zoom: {
+                  wheel: { enabled: true },
+                  pinch: { enabled: true },
+                  mode: 'x',
+                },
+                pan: {
+                  enabled: true,
+                  mode: 'x',
                 }
               }
             },
