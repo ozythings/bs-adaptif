@@ -46,7 +46,12 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
               <p class="text-sm text-gray-500">{{ roleLabel() }}</p>
             </div>
           </div>
-          <div class="text-right">
+          <div class="flex items-center gap-3">
+            @if (isStudent()) {
+              <a [routerLink]="['/student', studentId(), 'analytics']" mat-stroked-button color="primary" class="!text-sm">
+                <mat-icon>analytics</mat-icon> Analizlerim
+              </a>
+            }
             <span class="text-sm text-gray-500">{{ currentDate }}</span>
           </div>
         </div>
@@ -338,6 +343,7 @@ export class DashboardPage implements OnInit {
   progressValues = computed(() => this.d()?.courseProgress.map(cp => cp.completedContents) ?? []);
 
   isStudent = computed(() => this.currentUser.user().role === UserRole.STUDENT);
+  studentId = computed(() => this.currentUser.user().studentId);
 
   ngOnInit() {
     this.loadData();
