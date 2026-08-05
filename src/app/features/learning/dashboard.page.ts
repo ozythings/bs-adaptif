@@ -272,7 +272,7 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
           </mat-card>
         }
 
-        <!-- Son Aktiviteler (gerçek audit log) -->
+        <!-- son aktiviteler -->
         @if (!isStudent()) {
           <mat-card appearance="outlined" class="p-5">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Son Aktiviteler</h2>
@@ -352,7 +352,7 @@ export class DashboardPage implements OnInit {
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(e => {
       if (e?.entry) {
-        this.recentAuditLogs.update(list => [e.entry, ...list].slice(0, 10));
+        this.recentAuditLogs.update(list => [e.entry, ...list].slice(0, 5));
       }
     });
 
@@ -405,7 +405,7 @@ export class DashboardPage implements OnInit {
         this.recommendations.set(info.recommendations);
         this.masteryScores.set(info.masteryScores);
         this.outcomes.set(info.outcomes);
-        this.recentAuditLogs.set(this.facade.getRecentAuditLogs(10));
+        this.recentAuditLogs.set(this.facade.getRecentAuditLogs(5));
 
         this.loading.set(false);
       },

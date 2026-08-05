@@ -38,7 +38,7 @@ export class StudentDashboardFacade {
       action: AuditAction.VIEW,
       entity: 'StudentDashboard',
       entityId: resolvedId,
-      description: 'Öğrenci dashboard verileri görüntülendi',
+      description: 'Dashboard verileri görüntülendi',
     });
 
     const masteryScores = MASTERY_SEED.filter(m => m.studentId === resolvedId);
