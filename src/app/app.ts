@@ -1,4 +1,4 @@
-import { Component,  inject,  signal } from '@angular/core';
+import { Component,  inject,  signal,  computed } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatSidenavModule } from '@angular/material/sidenav';
@@ -32,6 +32,12 @@ export class App {
   readonly user = this.currentUserService.user;
 
   readonly UserRole = UserRole;
+
+  readonly userInitials = computed(() => {
+    const parts = this.user().name.split(' ').filter(Boolean);
+    if (parts.length >= 2) return parts[0][0] + parts[1][0];
+    return parts[0]?.[0] ?? '';
+  });
 
   toggleMenu(): void {
     this.menuOpen.update(v => !v);

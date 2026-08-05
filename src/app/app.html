@@ -282,9 +282,10 @@
             <p class="text-xs text-gray-500">{{ getRoleLabel(user().role) }}</p>
           </div>
           <button mat-button routerLink="/switch-role" class="flex items-center gap-2">
-            <mat-icon>account_circle</mat-icon>
-            <span class="hidden sm:inline">{{ user().name }}</span>
-            <mat-icon>arrow_drop_down</mat-icon>
+            <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xs font-bold shrink-0">
+              {{ userInitials() }}
+            </div>
+            <mat-icon class="p-1 order-2">arrow_drop_down</mat-icon>
           </button>
         </div>
       </div>
