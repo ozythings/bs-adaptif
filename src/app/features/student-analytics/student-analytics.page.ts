@@ -1,9 +1,10 @@
-import { Component, inject, signal, computed, OnInit, DestroyRef } from '@angular/core';
+import { Component, inject, signal, computed, effect, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { StudentDashboardFacade } from '../student-dashboard/student-dashboard.facade';
 import { CurrentUserService } from '@core/auth/current-user.service';
@@ -21,7 +22,7 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
   selector: 'app-student-analytics',
   standalone: true,
   imports: [
-    CommonModule, RouterLink, MatIconModule, MatButtonModule, MatProgressSpinnerModule,
+    CommonModule, RouterLink, MatIconModule, MatButtonModule, MatProgressSpinnerModule, MatPaginatorModule,
     MasteryHeatmap, ColumnChartComponent, LineChartComponent, ErrorStateComponent,
     KpiCardComponent, RecommendationReasonCardComponent
   ],
@@ -60,7 +61,7 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
           <app-kpi-card
             [clickable]="true" (click)="toggleDetail('attempts')"
             borderClass="border-blue-500" iconBgClass="bg-blue-100" iconColorClass="text-blue-600"
-            icon="assignment" label="Toplam Deneme" [value]="info.totalAttempts" />
+            icon="assignment" label="Girilen Sınavlar" [value]="info.totalAttempts" />
           <app-kpi-card
             [clickable]="true" (click)="toggleDetail('mastery')"
             borderClass="border-green-500" iconBgClass="bg-green-100" iconColorClass="text-green-600"
@@ -90,13 +91,16 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
                   <p class="text-gray-500 text-sm">Zayıf alan bulunmuyor.</p>
                 } @else {
                   <div class="space-y-2">
-                    @for (o of info.weakOutcomes; track o.id) {
+                    @for (o of paginatedWeak(); track o.id) {
                       <div class="flex items-center justify-between p-2 bg-red-50 rounded-lg">
                         <span class="text-sm font-medium text-gray-900">{{ o.code }} - {{ o.name }}</span>
                         <span class="text-sm text-red-600 font-medium">%{{ getMasteryScore(o.id) }}</span>
                       </div>
                     }
                   </div>
+                  @if (info.weakOutcomes.length > 5) {
+                    <mat-paginator [pageSize]="pageSize()" [pageSizeOptions]="[5, 10, 20]" [length]="panelLength()" [pageIndex]="pageIndex()" (page)="onPage($event)" showFirstLastButtons />
+                  }
                 }
               }
               @case ('strong') {
@@ -104,13 +108,16 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
                   <p class="text-gray-500 text-sm">Güçlü alan bulunmuyor.</p>
                 } @else {
                   <div class="space-y-2">
-                    @for (o of info.strongOutcomes; track o.id) {
+                    @for (o of paginatedStrong(); track o.id) {
                       <div class="flex items-center justify-between p-2 bg-green-50 rounded-lg">
                         <span class="text-sm font-medium text-gray-900">{{ o.code }} - {{ o.name }}</span>
                         <span class="text-sm text-green-600 font-medium">%{{ getMasteryScore(o.id) }}</span>
                       </div>
                     }
                   </div>
+                  @if (info.strongOutcomes.length > 5) {
+                    <mat-paginator [pageSize]="pageSize()" [pageSizeOptions]="[5, 10, 20]" [length]="panelLength()" [pageIndex]="pageIndex()" (page)="onPage($event)" showFirstLastButtons />
+                  }
                 }
               }
               @case ('mastery') {
@@ -118,7 +125,7 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
                   <p class="text-gray-500 text-sm">Başarım verisi bulunmuyor.</p>
                 } @else {
                   <div class="space-y-2">
-                    @for (ms of info.masteryScores; track ms.outcomeId) {
+                    @for (ms of paginatedMastery(); track ms.outcomeId) {
                       <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
                         <span class="text-sm text-gray-900">{{ outcomeName(ms.outcomeId) }}</span>
                         <span class="text-sm font-medium"
@@ -131,6 +138,9 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
                       </div>
                     }
                   </div>
+                  @if (info.masteryScores.length > 5) {
+                    <mat-paginator [pageSize]="pageSize()" [pageSizeOptions]="[5, 10, 20]" [length]="panelLength()" [pageIndex]="pageIndex()" (page)="onPage($event)" showFirstLastButtons />
+                  }
                 }
               }
               @case ('attempts') {
@@ -148,7 +158,7 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
                         </tr>
                       </thead>
                       <tbody>
-                        @for (a of attemptHistory(); track a.id) {
+                        @for (a of paginatedAttempts(); track a.id) {
                           <tr class="border-b border-gray-50">
                             <td class="p-2 font-medium">{{ examTitle(a.examId) }}</td>
                             <td class="p-2 text-right">{{ a.totalScore }} / {{ a.maxScore }}</td>
@@ -163,6 +173,9 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
                       </tbody>
                     </table>
                   </div>
+                  @if (attemptHistory().length > 5) {
+                    <mat-paginator [pageSize]="pageSize()" [pageSizeOptions]="[5, 10, 20]" [length]="panelLength()" [pageIndex]="pageIndex()" (page)="onPage($event)" showFirstLastButtons />
+                  }
                 }
               }
             }
@@ -280,16 +293,62 @@ export class StudentAnalyticsPage implements OnInit {
   error = signal<string | null>(null);
   d = signal<StudentDashboardData | null>(null);
   expandedKpi = signal<string | null>(null);
+  pageSize = signal(5);
+  pageIndex = signal(0);
 
   isObserver = computed(() => this.currentUser.user().role === UserRole.OBSERVER);
+
+  paginatedWeak = computed(() => {
+    const info = this.d();
+    if (!info) return [];
+    const start = this.pageIndex() * this.pageSize();
+    return info.weakOutcomes.slice(start, start + this.pageSize());
+  });
+  paginatedStrong = computed(() => {
+    const info = this.d();
+    if (!info) return [];
+    const start = this.pageIndex() * this.pageSize();
+    return info.strongOutcomes.slice(start, start + this.pageSize());
+  });
+  paginatedMastery = computed(() => {
+    const info = this.d();
+    if (!info) return [];
+    const start = this.pageIndex() * this.pageSize();
+    return info.masteryScores.slice(start, start + this.pageSize());
+  });
+  paginatedAttempts = computed(() => {
+    const start = this.pageIndex() * this.pageSize();
+    return this.attemptHistory().slice(start, start + this.pageSize());
+  });
+  panelLength = computed(() => {
+    const kpi = this.expandedKpi();
+    const info = this.d();
+    if (!info || !kpi) return 0;
+    if (kpi === 'weak') return info.weakOutcomes.length;
+    if (kpi === 'strong') return info.strongOutcomes.length;
+    if (kpi === 'mastery') return info.masteryScores.length;
+    return this.attemptHistory().length;
+  });
+
+  constructor() {
+    effect(() => {
+      this.expandedKpi();
+      this.pageIndex.set(0);
+    });
+  }
 
   toggleDetail(key: string): void {
     this.expandedKpi.set(this.expandedKpi() === key ? null : key);
   }
 
+  onPage(event: PageEvent): void {
+    this.pageIndex.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
+  }
+
   kpiTitle(key: string): string {
     const titles: Record<string, string> = {
-      attempts: 'Sınav Denemeleri',
+      attempts: 'Sınavlar',
       mastery: 'Kazanım Puanları',
       weak: 'Zayıf Alanlar',
       strong: 'Güçlü Alanlar',

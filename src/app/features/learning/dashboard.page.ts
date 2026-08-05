@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit, DestroyRef } from '@angular/core';
+import { Component, inject, signal, computed, effect, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink, NavigationEnd } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { interval } from 'rxjs';
 import { filter } from 'rxjs/operators';
@@ -29,7 +30,7 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
   standalone: true,
   imports: [
     CommonModule, RouterLink, MatCardModule, MatIconModule, MatButtonModule,
-    MatProgressSpinnerModule, MatProgressBarModule,
+    MatProgressSpinnerModule, MatProgressBarModule, MatPaginatorModule,
     RecommendationReasonCardComponent, ErrorStateComponent, ColumnChartComponent, MasteryHeatmap, KpiCardComponent
   ],
   template: `
@@ -103,7 +104,7 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
             @switch (kpi) {
               @case ('courses') {
                 <div class="space-y-2">
-                  @for (cp of info.courseProgress; track cp.courseId) {
+                  @for (cp of paginatedCourses(); track cp.courseId) {
                     <div class="flex items-center justify-between p-2 bg-blue-50 rounded-lg">
                       <span class="text-sm font-medium text-gray-900">{{ cp.courseTitle }}</span>
                       <span class="text-xs px-2 py-0.5 rounded-full"
@@ -118,37 +119,42 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
                     </div>
                   }
                 </div>
+                @if (filteredCourses().length > 5) {
+                  <mat-paginator [pageSize]="pageSize()" [pageSizeOptions]="[5, 10, 20]" [length]="panelLength()" [pageIndex]="pageIndex()" (page)="onPage($event)" showFirstLastButtons />
+                }
               }
               @case ('enrollments') {
-                @if (activeEnrollmentCount() === 0) {
+                @if (filteredEnrolled().length === 0) {
                   <p class="text-gray-500 text-sm">Aktif kayıt bulunmuyor.</p>
                 } @else {
                   <div class="space-y-2">
-                    @for (cp of info.courseProgress; track cp.courseId) {
-                      @if (cp.status === 'approved') {
-                        <div class="flex items-center justify-between p-2 bg-green-50 rounded-lg">
-                          <span class="text-sm font-medium text-gray-900">{{ cp.courseTitle }}</span>
-                          <span class="text-sm text-green-600 font-medium">%{{ cp.progressPercent }}</span>
-                        </div>
-                      }
+                    @for (cp of paginatedEnrolled(); track cp.courseId) {
+                      <div class="flex items-center justify-between p-2 bg-green-50 rounded-lg">
+                        <span class="text-sm font-medium text-gray-900">{{ cp.courseTitle }}</span>
+                        <span class="text-sm text-green-600 font-medium">%{{ cp.progressPercent }}</span>
+                      </div>
                     }
                   </div>
+                  @if (filteredEnrolled().length > 5) {
+                    <mat-paginator [pageSize]="pageSize()" [pageSizeOptions]="[5, 10, 20]" [length]="panelLength()" [pageIndex]="pageIndex()" (page)="onPage($event)" showFirstLastButtons />
+                  }
                 }
               }
               @case ('completed') {
-                @if (info.completedContents === 0) {
+                @if (filteredCompleted().length === 0) {
                   <p class="text-gray-500 text-sm">Henüz içerik tamamlanmadı.</p>
                 } @else {
                   <div class="space-y-2">
-                    @for (cp of info.courseProgress; track cp.courseId) {
-                      @if (cp.completedContents > 0) {
-                        <div class="flex items-center justify-between p-2 bg-purple-50 rounded-lg">
-                          <span class="text-sm font-medium text-gray-900">{{ cp.courseTitle }}</span>
-                          <span class="text-sm text-purple-600 font-medium">{{ cp.completedContents }}/{{ cp.totalContents }} içerik</span>
-                        </div>
-                      }
+                    @for (cp of paginatedCompleted(); track cp.courseId) {
+                      <div class="flex items-center justify-between p-2 bg-purple-50 rounded-lg">
+                        <span class="text-sm font-medium text-gray-900">{{ cp.courseTitle }}</span>
+                        <span class="text-sm text-purple-600 font-medium">{{ cp.completedContents }}/{{ cp.totalContents }} içerik</span>
+                      </div>
                     }
                   </div>
+                  @if (filteredCompleted().length > 5) {
+                    <mat-paginator [pageSize]="pageSize()" [pageSizeOptions]="[5, 10, 20]" [length]="panelLength()" [pageIndex]="pageIndex()" (page)="onPage($event)" showFirstLastButtons />
+                  }
                 }
               }
               @case ('exams') {
@@ -156,7 +162,7 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
                   <p class="text-gray-500 text-sm">Henüz sınav denemesi bulunmuyor.</p>
                 } @else {
                   <div class="space-y-2">
-                    @for (a of info.examAttempts; track a.id) {
+                    @for (a of paginatedAttempts(); track a.id) {
                       <div class="flex items-center justify-between p-2 bg-orange-50 rounded-lg">
                         <div class="flex-1 min-w-0">
                           <p class="text-sm font-medium text-gray-900 truncate">{{ examTitle(a.examId) }}</p>
@@ -170,6 +176,9 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
                       </div>
                     }
                   </div>
+                  @if (info.examAttempts.length > 5) {
+                    <mat-paginator [pageSize]="pageSize()" [pageSizeOptions]="[5, 10, 20]" [length]="panelLength()" [pageIndex]="pageIndex()" (page)="onPage($event)" showFirstLastButtons />
+                  }
                 }
               }
               @case ('avgScore') {
@@ -177,7 +186,7 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
                   <p class="text-gray-500 text-sm">Henüz sınav sonucu bulunmuyor.</p>
                 } @else {
                   <div class="space-y-2">
-                    @for (a of info.examAttempts; track a.id) {
+                    @for (a of paginatedAttempts(); track a.id) {
                       <div class="flex items-center gap-3 p-2 bg-teal-50 rounded-lg">
                         <span class="text-sm text-gray-900 flex-1 truncate">{{ examTitle(a.examId) }}</span>
                         <div class="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -197,6 +206,9 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
                       </div>
                     }
                   </div>
+                  @if (info.examAttempts.length > 5) {
+                    <mat-paginator [pageSize]="pageSize()" [pageSizeOptions]="[5, 10, 20]" [length]="panelLength()" [pageIndex]="pageIndex()" (page)="onPage($event)" showFirstLastButtons />
+                  }
                 }
               }
             }
@@ -429,6 +441,8 @@ export class DashboardPage implements OnInit {
   error = signal<string | null>(null);
   d = signal<StudentDashboardData | null>(null);
   expandedKpi = signal<string | null>(null);
+  pageSize = signal(5);
+  pageIndex = signal(0);
   currentDate = new Date().toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' });
 
   private destroyRef = inject(DestroyRef);
@@ -455,6 +469,38 @@ export class DashboardPage implements OnInit {
     return info.courseProgress.filter(cp => cp.status === 'approved').length;
   });
 
+  filteredCourses = computed(() => this.d()?.courseProgress ?? []);
+  filteredEnrolled = computed(() => this.filteredCourses().filter(c => c.status === 'approved'));
+  filteredCompleted = computed(() => this.filteredCourses().filter(c => c.completedContents > 0));
+
+  paginatedCourses = computed(() => {
+    const start = this.pageIndex() * this.pageSize();
+    return this.filteredCourses().slice(start, start + this.pageSize());
+  });
+  paginatedEnrolled = computed(() => {
+    const start = this.pageIndex() * this.pageSize();
+    return this.filteredEnrolled().slice(start, start + this.pageSize());
+  });
+  paginatedCompleted = computed(() => {
+    const start = this.pageIndex() * this.pageSize();
+    return this.filteredCompleted().slice(start, start + this.pageSize());
+  });
+  paginatedAttempts = computed(() => {
+    const info = this.d();
+    if (!info) return [];
+    const start = this.pageIndex() * this.pageSize();
+    return info.examAttempts.slice(start, start + this.pageSize());
+  });
+  panelLength = computed(() => {
+    const kpi = this.expandedKpi();
+    const info = this.d();
+    if (!info || !kpi) return 0;
+    if (kpi === 'courses') return this.filteredCourses().length;
+    if (kpi === 'enrollments') return this.filteredEnrolled().length;
+    if (kpi === 'completed') return this.filteredCompleted().length;
+    return info.examAttempts.length;
+  });
+
   progressLabels = computed(() => this.d()?.courseProgress.map(cp =>
     cp.courseTitle.length > 12 ? cp.courseTitle.substring(0, 12) + '…' : cp.courseTitle
   ) ?? []);
@@ -463,8 +509,20 @@ export class DashboardPage implements OnInit {
   isStudent = computed(() => this.currentUser.user().role === UserRole.STUDENT);
   studentId = computed(() => this.currentUser.user().studentId);
 
+  constructor() {
+    effect(() => {
+      this.expandedKpi();
+      this.pageIndex.set(0);
+    });
+  }
+
   toggleDetail(key: string): void {
     this.expandedKpi.set(this.expandedKpi() === key ? null : key);
+  }
+
+  onPage(event: PageEvent): void {
+    this.pageIndex.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
   }
 
   kpiTitle(key: string): string {

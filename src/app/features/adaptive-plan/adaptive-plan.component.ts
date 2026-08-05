@@ -1,14 +1,16 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, effect, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { StudentDashboardFacade } from '../student-dashboard/student-dashboard.facade';
 import { CurrentUserService } from '@core/auth/current-user.service';
 import { ErrorStateComponent, KpiCardComponent } from '@shared/components';
 import { RecommendationReasonCardComponent } from '@shared/components/recommendation-reason-card/recommendation-reason-card.component';
+import { getMasteryColor, isWeak } from '@shared/utils/mastery-helpers';
 import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/student-dashboard.model';
 
 @Component({
@@ -16,7 +18,7 @@ import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/s
   standalone: true,
   imports: [
     CommonModule, MatCardModule, MatIconModule, MatButtonModule,
-    MatProgressSpinnerModule, MatProgressBarModule,
+    MatProgressSpinnerModule, MatProgressBarModule, MatPaginatorModule,
     ErrorStateComponent, KpiCardComponent, RecommendationReasonCardComponent,
   ],
   template: `
@@ -50,17 +52,178 @@ import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/s
         <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <app-kpi-card
             borderClass="border-emerald-500" iconBgClass="bg-emerald-100" iconColorClass="text-emerald-600"
-            icon="psychology" label="Genel Başarım" [value]="info.overallMastery + '%'" />
+            icon="psychology" label="Genel Başarım" [value]="info.overallMastery + '%'"
+            [clickable]="true" (click)="toggleDetail('mastery')" />
           <app-kpi-card
             borderClass="border-blue-500" iconBgClass="bg-blue-100" iconColorClass="text-blue-600"
-            icon="checklist" label="İçerik Tamamlama" [value]="info.completedContents + '/' + info.totalContents" />
+            icon="checklist" label="İçerik Tamamlama" [value]="info.completedContents + '/' + info.totalContents"
+            [clickable]="true" (click)="toggleDetail('completed')" />
           <app-kpi-card
             borderClass="border-purple-500" iconBgClass="bg-purple-100" iconColorClass="text-purple-600"
-            icon="schedule" label="Planlanan Çalışma" [value]="info.studyHours.toFixed(1) + ' saat'" />
+            icon="schedule" label="Planlanan Çalışma" [value]="info.studyHours.toFixed(1) + ' saat'"
+            [clickable]="true" (click)="toggleDetail('tasks')" />
           <app-kpi-card
             borderClass="border-orange-500" iconBgClass="bg-orange-100" iconColorClass="text-orange-600"
-            icon="quiz" label="Yaklaşan Sınav" [value]="info.upcomingExams.length" />
+            icon="quiz" label="Yaklaşan Sınav" [value]="info.upcomingExams.length"
+            [clickable]="true" (click)="toggleDetail('exams')" />
         </div>
+
+        <!-- KPI Expand Detail Panel -->
+        @if (expandedKpi(); as kpi) {
+          <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="font-semibold text-gray-900">
+                {{ kpi === 'mastery' ? 'Başarım Puanları' : kpi === 'completed' ? 'Tamamlanan İçerikler' : kpi === 'tasks' ? 'Çalışma Planı' : 'Yaklaşan Sınavlar' }}
+              </h3>
+              <button mat-icon-button (click)="expandedKpi.set(null)">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+
+            @switch (kpi) {
+              @case ('mastery') {
+                @if (info.masteryScores.length === 0) {
+                  <p class="text-gray-500 text-sm py-4">Henüz değerlendirilmemiş kazanım bulunmuyor.</p>
+                } @else {
+                  <div class="space-y-2">
+                    @for (ms of paginatedMastery(); track ms.outcomeId) {
+                      <div class="flex items-center justify-between p-3 rounded-lg bg-gray-50">
+                        <div>
+                          <p class="text-sm font-medium text-gray-900">{{ outcomeName(ms.outcomeId) }}</p>
+                        </div>
+                        <span class="text-sm font-bold px-3 py-1 rounded-full"
+                          [class.text-green-700]="ms.score >= 80"
+                          [class.bg-green-100]="ms.score >= 80"
+                          [class.text-blue-700]="ms.score >= 60 && ms.score < 80"
+                          [class.bg-blue-100]="ms.score >= 60 && ms.score < 80"
+                          [class.text-yellow-700]="ms.score >= 40 && ms.score < 60"
+                          [class.bg-yellow-100]="ms.score >= 40 && ms.score < 60"
+                          [class.text-red-700]="ms.score < 40"
+                          [class.bg-red-100]="ms.score < 40">
+                          %{{ ms.score }}
+                        </span>
+                      </div>
+                    }
+                  </div>
+                  @if (info.masteryScores.length > 5) {
+                    <mat-paginator
+                      [pageSize]="pageSize()" [pageSizeOptions]="[5, 10, 20]"
+                      [length]="panelLength()" [pageIndex]="pageIndex()"
+                      (page)="onPage($event)" showFirstLastButtons />
+                  }
+                }
+              }
+
+              @case ('completed') {
+                @if (completedCourses().length === 0) {
+                  <p class="text-gray-500 text-sm py-4">Henüz içerik tamamlanmadı.</p>
+                } @else {
+                  <div class="space-y-2">
+                    @for (cp of paginatedCompleted(); track cp.courseId) {
+                      <div class="flex items-center justify-between p-3 rounded-lg bg-purple-50">
+                        <div>
+                          <p class="text-sm font-medium text-gray-900">{{ cp.courseTitle }}</p>
+                        </div>
+                        <span class="text-sm text-purple-700 font-medium">{{ cp.completedContents }}/{{ cp.totalContents }} içerik</span>
+                      </div>
+                    }
+                  </div>
+                  @if (completedCourses().length > 5) {
+                    <mat-paginator
+                      [pageSize]="pageSize()" [pageSizeOptions]="[5, 10, 20]"
+                      [length]="panelLength()" [pageIndex]="pageIndex()"
+                      (page)="onPage($event)" showFirstLastButtons />
+                  }
+                }
+              }
+
+              @case ('tasks') {
+                @if (info.scheduledTasks.length === 0) {
+                  <p class="text-gray-500 text-sm py-4">Bu hafta için planlanmış çalışma bulunmuyor.</p>
+                } @else {
+                  <div class="space-y-2">
+                    @for (task of paginatedTasks(); track task.contentId) {
+                      <div class="flex items-center gap-3 p-3 rounded-lg"
+                        [class.bg-red-50]="task.priority === 'critical'"
+                        [class.bg-yellow-50]="task.priority === 'high'"
+                        [class.bg-blue-50]="task.priority === 'medium'"
+                        [class.bg-gray-50]="task.priority === 'low'">
+                        <mat-icon class="text-lg"
+                          [class.text-red-600]="task.priority === 'critical'"
+                          [class.text-yellow-600]="task.priority === 'high'"
+                          [class.text-blue-600]="task.priority === 'medium'"
+                          [class.text-gray-500]="task.priority === 'low'">
+                          {{ task.priority === 'critical' ? 'priority_high' : task.priority === 'high' ? 'error' : 'checklist' }}
+                        </mat-icon>
+                        <div class="flex-1 min-w-0">
+                          <p class="text-sm font-medium text-gray-900 truncate">{{ task.contentTitle }}</p>
+                          <p class="text-xs text-gray-500">{{ task.courseTitle }} · {{ task.outcomeName }}</p>
+                        </div>
+                        <div class="text-right flex-shrink-0">
+                          <span class="text-xs font-medium"
+                            [class.text-red-600]="task.priority === 'critical'"
+                            [class.text-yellow-600]="task.priority === 'high'"
+                            [class.text-blue-600]="task.priority === 'medium'"
+                            [class.text-gray-500]="task.priority === 'low'">
+                            {{ task.durationMinutes }}dk
+                          </span>
+                          <p class="text-xs text-gray-400">%{{ task.masteryScore }}</p>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                  @if (info.scheduledTasks.length > 5) {
+                    <mat-paginator
+                      [pageSize]="pageSize()" [pageSizeOptions]="[5, 10, 20]"
+                      [length]="panelLength()" [pageIndex]="pageIndex()"
+                      (page)="onPage($event)" showFirstLastButtons />
+                  }
+                }
+              }
+
+              @case ('exams') {
+                @if (info.upcomingExams.length === 0) {
+                  <p class="text-gray-500 text-sm py-4">Yaklaşan sınav bulunmuyor.</p>
+                } @else {
+                  <div class="space-y-2">
+                    @for (exam of paginatedExams(); track exam.examId) {
+                      <div class="flex items-center gap-3 p-3 rounded-lg border"
+                        [class.bg-blue-50]="exam.availability === 'upcoming'"
+                        [class.border-blue-200]="exam.availability === 'upcoming'"
+                        [class.bg-amber-50]="exam.availability === 'active'"
+                        [class.border-amber-200]="exam.availability === 'active'">
+                        <div class="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
+                          [class.bg-blue-100]="exam.availability === 'upcoming'"
+                          [class.bg-amber-100]="exam.availability === 'active'">
+                          <mat-icon [class.text-blue-600]="exam.availability === 'upcoming'"
+                            [class.text-amber-600]="exam.availability === 'active'">quiz</mat-icon>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                          <p class="text-sm font-medium text-gray-900 truncate">{{ exam.title }}</p>
+                          <p class="text-xs text-gray-500">{{ exam.courseTitle }}</p>
+                        </div>
+                        <div class="text-right flex-shrink-0">
+                          @if (exam.availability === 'upcoming' && exam.startDate) {
+                            <p class="text-xs font-medium text-blue-600">Yaklaşan · {{ formatDate(exam.startDate) }}</p>
+                          } @else if (exam.availability === 'active' && exam.endDate) {
+                            <p class="text-xs font-medium text-amber-600">Son Tarih · {{ formatDate(exam.endDate) }}</p>
+                          }
+                          <p class="text-xs text-gray-400">{{ exam.duration }}dk · Geçme: %{{ exam.passingScore }}</p>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                  @if (info.upcomingExams.length > 5) {
+                    <mat-paginator
+                      [pageSize]="pageSize()" [pageSizeOptions]="[5, 10, 20]"
+                      [length]="panelLength()" [pageIndex]="pageIndex()"
+                      (page)="onPage($event)" showFirstLastButtons />
+                  }
+                }
+              }
+            }
+          </div>
+        }
 
         <!-- Weekly Plan + Recommendations -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -292,12 +455,63 @@ export class AdaptivePlanPage implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
   d = signal<StudentDashboardData | null>(null);
+  expandedKpi = signal<string | null>(null);
 
   userName = computed(() => this.currentUser.user().name);
+  pageSize = signal(5);
+  pageIndex = signal(0);
 
   dayLabels = computed(() => {
     return ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
   });
+
+  completedCourses = computed(() => {
+    const info = this.d();
+    return info ? info.courseProgress.filter(c => c.completedContents > 0) : [];
+  });
+
+  paginatedMastery = computed(() => {
+    const info = this.d();
+    if (!info) return [];
+    const start = this.pageIndex() * this.pageSize();
+    return info.masteryScores.slice(start, start + this.pageSize());
+  });
+
+  paginatedCompleted = computed(() => {
+    const start = this.pageIndex() * this.pageSize();
+    return this.completedCourses().slice(start, start + this.pageSize());
+  });
+
+  paginatedTasks = computed(() => {
+    const info = this.d();
+    if (!info) return [];
+    const start = this.pageIndex() * this.pageSize();
+    return info.scheduledTasks.slice(start, start + this.pageSize());
+  });
+
+  paginatedExams = computed(() => {
+    const info = this.d();
+    if (!info) return [];
+    const start = this.pageIndex() * this.pageSize();
+    return info.upcomingExams.slice(start, start + this.pageSize());
+  });
+
+  panelLength = computed(() => {
+    const kpi = this.expandedKpi();
+    const info = this.d();
+    if (!info || !kpi) return 0;
+    if (kpi === 'mastery') return info.masteryScores.length;
+    if (kpi === 'completed') return this.completedCourses().length;
+    if (kpi === 'tasks') return info.scheduledTasks.length;
+    return info.upcomingExams.length;
+  });
+
+  constructor() {
+    effect(() => {
+      this.expandedKpi();
+      this.pageIndex.set(0);
+    });
+  }
 
   ngOnInit(): void {
     this.loadData();
@@ -315,6 +529,15 @@ export class AdaptivePlanPage implements OnInit {
     });
   }
 
+  toggleDetail(key: string): void {
+    this.expandedKpi.set(this.expandedKpi() === key ? null : key);
+  }
+
+  onPage(event: PageEvent): void {
+    this.pageIndex.set(event.pageIndex);
+    this.pageSize.set(event.pageSize);
+  }
+
   groupByDay(tasks: ScheduledTask[]): Record<string, ScheduledTask[]> {
     const groups: Record<string, ScheduledTask[]> = {};
     for (const t of tasks) {
@@ -328,5 +551,24 @@ export class AdaptivePlanPage implements OnInit {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return '—';
     return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  outcomeName(outcomeId: number): string {
+    return this.facade.getOutcomeName(outcomeId);
+  }
+
+  getMasteryScore(outcomeId: number): number {
+    const info = this.d();
+    if (!info) return 0;
+    const ms = info.masteryScores.find(m => m.outcomeId === outcomeId);
+    return ms ? ms.score : 0;
+  }
+
+  getMasteryColorClass(score: number): string {
+    return getMasteryColor(score);
+  }
+
+  isWeakScore(score: number): boolean {
+    return isWeak(score);
   }
 }
