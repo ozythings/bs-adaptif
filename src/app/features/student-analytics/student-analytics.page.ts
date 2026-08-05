@@ -58,18 +58,116 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
         <!-- KPI Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <app-kpi-card
+            [clickable]="true" (click)="toggleDetail('attempts')"
             borderClass="border-blue-500" iconBgClass="bg-blue-100" iconColorClass="text-blue-600"
             icon="assignment" label="Toplam Deneme" [value]="info.totalAttempts" />
           <app-kpi-card
+            [clickable]="true" (click)="toggleDetail('mastery')"
             borderClass="border-green-500" iconBgClass="bg-green-100" iconColorClass="text-green-600"
             icon="emoji_events" label="Ortalama Başarım" [value]="info.overallMastery + '%'" />
           <app-kpi-card
+            [clickable]="true" (click)="toggleDetail('weak')"
             borderClass="border-red-500" iconBgClass="bg-red-100" iconColorClass="text-red-600"
             icon="warning" label="Zayıf Alanlar" [value]="info.weakOutcomes.length" />
           <app-kpi-card
+            [clickable]="true" (click)="toggleDetail('strong')"
             borderClass="border-yellow-500" iconBgClass="bg-yellow-100" iconColorClass="text-yellow-600"
             icon="star" label="Güçlü Alanlar" [value]="info.strongOutcomes.length" />
         </div>
+
+        <!-- KPI Detail Panel -->
+        @if (expandedKpi(); as kpi) {
+          <div class="bg-white rounded-lg shadow-sm p-4">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-semibold text-gray-900">{{ kpiTitle(kpi) }}</h3>
+              <button mat-icon-button (click)="expandedKpi.set(null)">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+            @switch (kpi) {
+              @case ('weak') {
+                @if (info.weakOutcomes.length === 0) {
+                  <p class="text-gray-500 text-sm">Zayıf alan bulunmuyor.</p>
+                } @else {
+                  <div class="space-y-2">
+                    @for (o of info.weakOutcomes; track o.id) {
+                      <div class="flex items-center justify-between p-2 bg-red-50 rounded-lg">
+                        <span class="text-sm font-medium text-gray-900">{{ o.code }} - {{ o.name }}</span>
+                        <span class="text-sm text-red-600 font-medium">%{{ getMasteryScore(o.id) }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+              }
+              @case ('strong') {
+                @if (info.strongOutcomes.length === 0) {
+                  <p class="text-gray-500 text-sm">Güçlü alan bulunmuyor.</p>
+                } @else {
+                  <div class="space-y-2">
+                    @for (o of info.strongOutcomes; track o.id) {
+                      <div class="flex items-center justify-between p-2 bg-green-50 rounded-lg">
+                        <span class="text-sm font-medium text-gray-900">{{ o.code }} - {{ o.name }}</span>
+                        <span class="text-sm text-green-600 font-medium">%{{ getMasteryScore(o.id) }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+              }
+              @case ('mastery') {
+                @if (info.masteryScores.length === 0) {
+                  <p class="text-gray-500 text-sm">Başarım verisi bulunmuyor.</p>
+                } @else {
+                  <div class="space-y-2">
+                    @for (ms of info.masteryScores; track ms.outcomeId) {
+                      <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                        <span class="text-sm text-gray-900">{{ outcomeName(ms.outcomeId) }}</span>
+                        <span class="text-sm font-medium"
+                          [class.text-green-600]="ms.score >= 80"
+                          [class.text-blue-600]="ms.score >= 60 && ms.score < 80"
+                          [class.text-yellow-600]="ms.score >= 40 && ms.score < 60"
+                          [class.text-red-600]="ms.score < 40">
+                          %{{ ms.score }}
+                        </span>
+                      </div>
+                    }
+                  </div>
+                }
+              }
+              @case ('attempts') {
+                @if (attemptHistory().length === 0) {
+                  <p class="text-gray-500 text-sm">Henüz sınav denemesi bulunmuyor.</p>
+                } @else {
+                  <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                      <thead>
+                        <tr class="border-b text-left text-gray-500 text-xs">
+                          <th class="p-2">Sınav</th>
+                          <th class="p-2 text-right">Puan</th>
+                          <th class="p-2 text-right">Yüzde</th>
+                          <th class="p-2 text-right">Tarih</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (a of attemptHistory(); track a.id) {
+                          <tr class="border-b border-gray-50">
+                            <td class="p-2 font-medium">{{ examTitle(a.examId) }}</td>
+                            <td class="p-2 text-right">{{ a.totalScore }} / {{ a.maxScore }}</td>
+                            <td class="p-2 text-right">
+                              <span [class.text-green-600]="a.scorePercentage >= 50" [class.text-red-600]="a.scorePercentage < 50">
+                                %{{ a.scorePercentage }}
+                              </span>
+                            </td>
+                            <td class="p-2 text-right text-gray-500 text-xs">{{ a.submittedAt | date:'dd.MM.yyyy HH:mm' }}</td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                }
+              }
+            }
+          </div>
+        }
 
         <!-- Exam Trend Chart -->
         @if (trendLabels().length > 0) {
@@ -181,8 +279,36 @@ export class StudentAnalyticsPage implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
   d = signal<StudentDashboardData | null>(null);
+  expandedKpi = signal<string | null>(null);
 
   isObserver = computed(() => this.currentUser.user().role === UserRole.OBSERVER);
+
+  toggleDetail(key: string): void {
+    this.expandedKpi.set(this.expandedKpi() === key ? null : key);
+  }
+
+  kpiTitle(key: string): string {
+    const titles: Record<string, string> = {
+      attempts: 'Sınav Denemeleri',
+      mastery: 'Kazanım Puanları',
+      weak: 'Zayıf Alanlar',
+      strong: 'Güçlü Alanlar',
+    };
+    return titles[key] ?? '';
+  }
+
+  getMasteryScore(outcomeId: number): number {
+    const info = this.d();
+    if (!info) return 0;
+    return info.masteryScores.find(ms => ms.outcomeId === outcomeId)?.score ?? 0;
+  }
+
+  outcomeName(outcomeId: number): string {
+    const info = this.d();
+    if (!info) return '';
+    const o = info.outcomes.find(out => out.id === outcomeId);
+    return o ? `${o.code} - ${o.name}` : `Kazanım #${outcomeId}`;
+  }
 
   attemptHistory = computed(() => {
     const info = this.d();

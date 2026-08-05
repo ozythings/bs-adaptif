@@ -68,23 +68,140 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-5 gap-4"
           [class.xl:grid-cols-5]="isStudent()">
           <app-kpi-card
+            [clickable]="true" (click)="toggleDetail('courses')"
             borderClass="border-blue-500" iconBgClass="bg-blue-100" iconColorClass="text-blue-600"
             icon="school" label="Toplam Kurs" [value]="info.courseProgress.length" />
           <app-kpi-card
+            [clickable]="true" (click)="toggleDetail('enrollments')"
             borderClass="border-green-500" iconBgClass="bg-green-100" iconColorClass="text-green-600"
             icon="how_to_reg" label="Aktif Kayıt" [value]="activeEnrollmentCount()" />
           @if (isStudent()) {
             <app-kpi-card
+              [clickable]="true" (click)="toggleDetail('completed')"
               borderClass="border-purple-500" iconBgClass="bg-purple-100" iconColorClass="text-purple-600"
               icon="check_circle" label="Tamamlanan" [value]="info.completedContents" />
             <app-kpi-card
+              [clickable]="true" (click)="toggleDetail('exams')"
               borderClass="border-orange-500" iconBgClass="bg-orange-100" iconColorClass="text-orange-600"
               icon="assignment" label="Sınavlar" [value]="info.totalAttempts" />
             <app-kpi-card
+              [clickable]="true" (click)="toggleDetail('avgScore')"
               borderClass="border-teal-500" iconBgClass="bg-teal-100" iconColorClass="text-teal-600"
               icon="emoji_events" label="Ort. Sınav" [value]="info.avgExamScore + '%'" />
           }
         </div>
+
+        <!-- KPI Detail Panel -->
+        @if (expandedKpi(); as kpi) {
+          <div class="bg-white rounded-lg shadow-sm p-4">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="font-semibold text-gray-900">{{ kpiTitle(kpi) }}</h3>
+              <button mat-icon-button (click)="expandedKpi.set(null)">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+            @switch (kpi) {
+              @case ('courses') {
+                <div class="space-y-2">
+                  @for (cp of info.courseProgress; track cp.courseId) {
+                    <div class="flex items-center justify-between p-2 bg-blue-50 rounded-lg">
+                      <span class="text-sm font-medium text-gray-900">{{ cp.courseTitle }}</span>
+                      <span class="text-xs px-2 py-0.5 rounded-full"
+                        [class.bg-green-100]="cp.status === 'completed'"
+                        [class.text-green-700]="cp.status === 'completed'"
+                        [class.bg-blue-100]="cp.status === 'approved'"
+                        [class.text-blue-700]="cp.status === 'approved'"
+                        [class.bg-yellow-100]="cp.status === 'pending'"
+                        [class.text-yellow-700]="cp.status === 'pending'">
+                        {{ cp.status === 'completed' ? 'Tamamlandı' : cp.status === 'approved' ? 'Aktif' : 'Beklemede' }}
+                      </span>
+                    </div>
+                  }
+                </div>
+              }
+              @case ('enrollments') {
+                @if (activeEnrollmentCount() === 0) {
+                  <p class="text-gray-500 text-sm">Aktif kayıt bulunmuyor.</p>
+                } @else {
+                  <div class="space-y-2">
+                    @for (cp of info.courseProgress; track cp.courseId) {
+                      @if (cp.status === 'approved') {
+                        <div class="flex items-center justify-between p-2 bg-green-50 rounded-lg">
+                          <span class="text-sm font-medium text-gray-900">{{ cp.courseTitle }}</span>
+                          <span class="text-sm text-green-600 font-medium">%{{ cp.progressPercent }}</span>
+                        </div>
+                      }
+                    }
+                  </div>
+                }
+              }
+              @case ('completed') {
+                @if (info.completedContents === 0) {
+                  <p class="text-gray-500 text-sm">Henüz içerik tamamlanmadı.</p>
+                } @else {
+                  <div class="space-y-2">
+                    @for (cp of info.courseProgress; track cp.courseId) {
+                      @if (cp.completedContents > 0) {
+                        <div class="flex items-center justify-between p-2 bg-purple-50 rounded-lg">
+                          <span class="text-sm font-medium text-gray-900">{{ cp.courseTitle }}</span>
+                          <span class="text-sm text-purple-600 font-medium">{{ cp.completedContents }}/{{ cp.totalContents }} içerik</span>
+                        </div>
+                      }
+                    }
+                  </div>
+                }
+              }
+              @case ('exams') {
+                @if (info.examAttempts.length === 0) {
+                  <p class="text-gray-500 text-sm">Henüz sınav denemesi bulunmuyor.</p>
+                } @else {
+                  <div class="space-y-2">
+                    @for (a of info.examAttempts; track a.id) {
+                      <div class="flex items-center justify-between p-2 bg-orange-50 rounded-lg">
+                        <div class="flex-1 min-w-0">
+                          <p class="text-sm font-medium text-gray-900 truncate">{{ examTitle(a.examId) }}</p>
+                          <p class="text-xs text-gray-500">{{ courseName(a.examId) }}</p>
+                        </div>
+                        <span class="text-sm font-medium ml-3"
+                          [class.text-green-600]="a.scorePercentage >= 50"
+                          [class.text-red-600]="a.scorePercentage < 50">
+                          %{{ a.scorePercentage }}
+                        </span>
+                      </div>
+                    }
+                  </div>
+                }
+              }
+              @case ('avgScore') {
+                @if (info.examAttempts.length === 0) {
+                  <p class="text-gray-500 text-sm">Henüz sınav sonucu bulunmuyor.</p>
+                } @else {
+                  <div class="space-y-2">
+                    @for (a of info.examAttempts; track a.id) {
+                      <div class="flex items-center gap-3 p-2 bg-teal-50 rounded-lg">
+                        <span class="text-sm text-gray-900 flex-1 truncate">{{ examTitle(a.examId) }}</span>
+                        <div class="w-32 h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div class="h-full rounded-full"
+                            [style.width.%]="a.scorePercentage"
+                            [class.bg-green-500]="a.scorePercentage >= 70"
+                            [class.bg-orange-500]="a.scorePercentage >= 40 && a.scorePercentage < 70"
+                            [class.bg-red-500]="a.scorePercentage < 40">
+                          </div>
+                        </div>
+                        <span class="text-sm font-medium w-12 text-right"
+                          [class.text-green-600]="a.scorePercentage >= 70"
+                          [class.text-orange-600]="a.scorePercentage >= 40 && a.scorePercentage < 70"
+                          [class.text-red-600]="a.scorePercentage < 40">
+                          %{{ a.scorePercentage }}
+                        </span>
+                      </div>
+                    }
+                  </div>
+                }
+              }
+            }
+          </div>
+        }
 
         <!-- Charts Row -->
         @defer (on viewport) {
@@ -311,6 +428,7 @@ export class DashboardPage implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
   d = signal<StudentDashboardData | null>(null);
+  expandedKpi = signal<string | null>(null);
   currentDate = new Date().toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' });
 
   private destroyRef = inject(DestroyRef);
@@ -344,6 +462,21 @@ export class DashboardPage implements OnInit {
 
   isStudent = computed(() => this.currentUser.user().role === UserRole.STUDENT);
   studentId = computed(() => this.currentUser.user().studentId);
+
+  toggleDetail(key: string): void {
+    this.expandedKpi.set(this.expandedKpi() === key ? null : key);
+  }
+
+  kpiTitle(key: string): string {
+    const titles: Record<string, string> = {
+      courses: 'Kurs Listesi',
+      enrollments: 'Aktif Kayıtlar',
+      completed: 'Tamamlanan İçerikler',
+      exams: 'Sınav Sonuçları',
+      avgScore: 'Sınav Puan Dökümü',
+    };
+    return titles[key] ?? '';
+  }
 
   ngOnInit() {
     this.loadData();

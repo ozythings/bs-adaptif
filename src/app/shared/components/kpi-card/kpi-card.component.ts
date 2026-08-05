@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 
@@ -7,17 +7,20 @@ import { MatIconModule } from '@angular/material/icon';
   standalone: true,
   imports: [CommonModule, MatIconModule],
   template: `
-    <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 hover:shadow-md transition-shadow"
+    <div class="bg-white rounded-xl shadow-sm p-5 border-l-4 hover:shadow-md transition-shadow group"
       [class]="borderClass()">
       <div class="flex items-center gap-3">
         <div class="w-10 h-10 rounded-lg flex items-center justify-center"
           [class]="iconBgClass()">
           <mat-icon [class]="iconColorClass()">{{ icon() }}</mat-icon>
         </div>
-        <div>
+        <div class="flex-1">
           <p class="text-xs text-gray-500">{{ label() }}</p>
           <p class="text-2xl font-bold text-gray-900">{{ value() }}</p>
         </div>
+        @if (clickable()) {
+          <mat-icon class="text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</mat-icon>
+        }
       </div>
     </div>
   `,
@@ -29,4 +32,6 @@ export class KpiCardComponent {
   icon = input<string>('school');
   label = input<string>('');
   value = input<string | number>('');
+  clickable = input<boolean>(false);
+  click = output<void>();
 }
