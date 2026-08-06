@@ -29,9 +29,17 @@ import { StatusTextPipe } from '@shared/pipes';
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-900">Kurslar</h1>
         @if (!isStudent()) {
-          <button mat-raised-button color="primary" (click)="showForm.set(!showForm())">
-            <mat-icon>{{ showForm() ? 'close' : 'add' }}</mat-icon> {{ showForm() ? 'Kapat' : 'Kurs Ekle' }}
-          </button>
+          <div class="flex items-center gap-2">
+            @if (pendingEnrollments().length > 0) {
+              <button mat-stroked-button color="accent" (click)="showPending.set(!showPending())">
+                <mat-icon>{{ showPending() ? 'close' : 'schedule' }}</mat-icon>
+                {{ showPending() ? 'Kapat' : 'Bekleyen Kayıtlar' }} ({{ pendingEnrollments().length }})
+              </button>
+            }
+            <button mat-raised-button color="primary" (click)="showForm.set(!showForm())">
+              <mat-icon>{{ showForm() ? 'close' : 'add' }}</mat-icon> {{ showForm() ? 'Kapat' : 'Kurs Ekle' }}
+            </button>
+          </div>
         }
       </div>
 
@@ -89,6 +97,50 @@ import { StatusTextPipe } from '@shared/pipes';
           </mat-form-field>
         </div>
       </div>
+
+      @if (showPending()) {
+        <div class="bg-white rounded-lg shadow-sm p-4">
+          <h3 class="text-lg font-semibold text-gray-900 mb-3">Bekleyen Kayıt Talepleri</h3>
+          <mat-form-field appearance="outline" class="w-full mb-3">
+            <mat-label>İsme göre filtrele</mat-label>
+            <input matInput [value]="pendingSearchTerm()" [appDebounce]="300" (debouncedChange)="onPendingSearch($event)" placeholder="Öğrenci adı veya kurs adı...">
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+          @if (filteredPendingEnrollments().length === 0) {
+            <p class="text-gray-500 text-sm text-center py-4">Sonuç bulunamadı.</p>
+          } @else {
+            <div class="space-y-2">
+              @for (p of paginatedPendingEnrollments(); track p.id) {
+                <div class="flex items-center justify-between gap-3 p-3 border border-gray-200 rounded-lg">
+                  <div class="flex items-center gap-3 min-w-0">
+                    <mat-icon class="text-amber-500 shrink-0">schedule</mat-icon>
+                    <div class="min-w-0">
+                      <p class="font-medium text-gray-900 truncate">{{ p.participantName }}</p>
+                      <p class="text-sm text-gray-500 truncate">{{ p.courseName }}</p>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2 shrink-0">
+                    <button mat-stroked-button color="primary" size="small" (click)="approveEnrollment(p.id)">
+                      <mat-icon class="text-sm">check</mat-icon> Onayla
+                    </button>
+                    <button mat-stroked-button color="warn" size="small" (click)="rejectEnrollment(p.id)">
+                      <mat-icon class="text-sm">close</mat-icon> Reddet
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+            <mat-paginator
+              [length]="filteredPendingEnrollments().length"
+              [pageSize]="pendingPageSize()"
+              [pageSizeOptions]="[5, 10, 25]"
+              [pageIndex]="pendingPageIndex()"
+              (page)="onPendingPage($event)"
+              showFirstLastButtons>
+            </mat-paginator>
+          }
+        </div>
+      }
 
       <div class="bg-white rounded-lg shadow-sm overflow-x-auto">
         @if (loading()) {
@@ -170,6 +222,9 @@ import { StatusTextPipe } from '@shared/pipes';
                     <button mat-icon-button [routerLink]="['/courses', item.course.id, 'edit']" color="primary">
                       <mat-icon>edit</mat-icon>
                     </button>
+                    <button mat-icon-button [routerLink]="['/courses', item.course.id, 'details']" color="accent">
+                      <mat-icon>visibility</mat-icon>
+                    </button>
                   }
                 </div>
               </td>
@@ -188,32 +243,6 @@ import { StatusTextPipe } from '@shared/pipes';
         }
       </div>
 
-      @if (!isStudent() && pendingEnrollments().length > 0) {
-        <div class="bg-white rounded-lg shadow-sm p-4">
-          <h3 class="text-lg font-semibold text-gray-900 mb-3">Bekleyen Kayıt Talepleri</h3>
-          <div class="space-y-2">
-            @for (p of pendingEnrollments(); track p.id) {
-              <div class="flex items-center justify-between gap-3 p-3 border border-gray-200 rounded-lg">
-                <div class="flex items-center gap-3 min-w-0">
-                  <mat-icon class="text-amber-500 shrink-0">schedule</mat-icon>
-                  <div class="min-w-0">
-                    <p class="font-medium text-gray-900 truncate">{{ p.participantName }}</p>
-                    <p class="text-sm text-gray-500 truncate">{{ p.courseName }}</p>
-                  </div>
-                </div>
-                <div class="flex items-center gap-2 shrink-0">
-                  <button mat-stroked-button color="primary" size="small" (click)="approveEnrollment(p.id)">
-                    <mat-icon class="text-sm">check</mat-icon> Onayla
-                  </button>
-                  <button mat-stroked-button color="warn" size="small" (click)="rejectEnrollment(p.id)">
-                    <mat-icon class="text-sm">close</mat-icon> Reddet
-                  </button>
-                </div>
-              </div>
-            }
-          </div>
-        </div>
-      }
     </div>
   `
 })
@@ -237,6 +266,10 @@ export class CourseListPage implements OnInit {
   pageSize = signal(10);
   pageIndex = signal(0);
   showForm = signal(false);
+  showPending = signal(false);
+  pendingSearchTerm = signal('');
+  pendingPageSize = signal(5);
+  pendingPageIndex = signal(0);
   pendingEnrollments = signal<{ id: number; courseId: number; courseName: string; participantId: number; participantName: string }[]>([]);
 
   courseForm = this.fb.group({
@@ -262,6 +295,20 @@ export class CourseListPage implements OnInit {
   paginatedCourses = computed(() => {
     const start = this.pageIndex() * this.pageSize();
     return this.filteredCourses().slice(start, start + this.pageSize());
+  });
+
+  filteredPendingEnrollments = computed(() => {
+    const search = this.pendingSearchTerm().toLowerCase();
+    return this.pendingEnrollments().filter(p =>
+      !search ||
+      p.participantName.toLowerCase().includes(search) ||
+      p.courseName.toLowerCase().includes(search)
+    );
+  });
+
+  paginatedPendingEnrollments = computed(() => {
+    const start = this.pendingPageIndex() * this.pendingPageSize();
+    return this.filteredPendingEnrollments().slice(start, start + this.pendingPageSize());
   });
 
   ngOnInit() {
@@ -350,6 +397,16 @@ export class CourseListPage implements OnInit {
     this.pageSize.set(event.pageSize);
     this.pageIndex.set(event.pageIndex);
     this.syncUrl();
+  }
+
+  onPendingSearch(term: string): void {
+    this.pendingSearchTerm.set(term);
+    this.pendingPageIndex.set(0);
+  }
+
+  onPendingPage(event: PageEvent): void {
+    this.pendingPageIndex.set(event.pageIndex);
+    this.pendingPageSize.set(event.pageSize);
   }
 
   createCourse(): void {
