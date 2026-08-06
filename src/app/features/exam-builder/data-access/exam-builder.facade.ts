@@ -60,6 +60,11 @@ export class ExamBuilderFacade {
   updateConstraints(blueprintId: number, constraints: BlueprintConstraint[]): void {
     const bp = this.store.blueprints().find(b => b.id === blueprintId);
     if (!bp) return;
+    const totalPoints = constraints.reduce((s, c) => s + c.minCount * c.pointsPerQuestion, 0);
+    if (totalPoints > 100) {
+      this.notification.show('Toplam puan 100\'u aşamaz', 'error');
+      return;
+    }
     this.store.updateBlueprint(blueprintId, { constraints, version: bp.version + 1 });
     this.notification.show('Kısıtlamalar güncellendi', 'success');
   }

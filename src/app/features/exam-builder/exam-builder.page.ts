@@ -117,8 +117,8 @@ import { BlueprintStatus, QuestionType, Difficulty } from '@core/models/enums';
           </mat-card-header>
           <mat-card-content class="space-y-4 pt-4">
             <div class="flex flex-wrap items-center gap-4">
-              <span class="text-sm text-gray-600">Toplam Soru: <strong>{{ bp.summary.totalQuestions }}</strong></span>
-              <span class="text-sm text-gray-600">Toplam Puan: <strong>{{ bp.summary.totalPoints }}</strong></span>
+              <span class="text-sm text-gray-600">Toplam Soru: <strong>{{ computedTotalQuestions() }}</strong></span>
+              <span class="text-sm text-gray-600">Toplam Puan: <strong>{{ computedTotalPoints() }}</strong></span>
               <span class="px-2 py-1 rounded-full text-xs font-medium" [class]="statusClass(bp.status)">
                 {{ bp.status === BlueprintStatus.READY ? 'HAZIR' : bp.status === BlueprintStatus.VIOLATED ? 'İHLAL' : 'TASLAK' }}
               </span>
@@ -302,6 +302,16 @@ export class ExamBuilderPage implements OnInit {
   manualSelectedIds = signal<Set<number>>(new Set());
 
   selectedCount = computed(() => this.manualSelectedIds().size);
+
+  computedTotalQuestions = computed(() => this.manualSelectedIds().size);
+
+  computedTotalPoints = computed(() => {
+    const ids = this.manualSelectedIds();
+    const questions = this.examQuestions();
+    return questions
+      .filter(q => ids.has(q.id))
+      .reduce((sum, q) => sum + q.points, 0);
+  });
 
   pointDistribution = computed(() => {
     const bp = this.selectedBlueprint();

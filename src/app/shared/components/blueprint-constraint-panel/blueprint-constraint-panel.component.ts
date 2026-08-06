@@ -1,4 +1,4 @@
-import { Component,  input,  output,  signal,  computed,  inject } from '@angular/core';
+import { Component, input, output, signal, computed, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -18,6 +18,14 @@ function minMaxRangeValidator(c: AbstractControl): Record<string, boolean> | nul
     return { minMaxRange: true };
   }
   return null;
+}
+
+function totalPointsLimitValidator(existingTotal: number, maxPoints: number) {
+  return (c: AbstractControl): Record<string, boolean> | null => {
+    const min = c.get('minCount')?.value ?? 0;
+    const ppp = c.get('pointsPerQuestion')?.value ?? 0;
+    return existingTotal + min * ppp > maxPoints ? { totalPointsExceeded: true } : null;
+  };
 }
 
 @Component({
@@ -80,6 +88,9 @@ function minMaxRangeValidator(c: AbstractControl): Record<string, boolean> | nul
           </div>
           @if (constraintForm.errors?.['minMaxRange']) {
             <p class="text-sm text-red-600">Minimum, maksimumdan büyük olamaz.</p>
+          }
+          @if (constraintForm.errors?.['totalPointsExceeded']) {
+            <p class="text-sm text-red-600">Toplam puan 100'ü aşamaz. Mevcut: {{ computedTotalPoints() }}p</p>
           }
           <button mat-raised-button color="primary" size="small" type="submit" [disabled]="constraintForm.invalid">
             <mat-icon class="text-sm">add</mat-icon> Ekle
@@ -178,6 +189,21 @@ export class BlueprintConstraintPanelComponent {
     maxCount: [2, [Validators.required, Validators.min(0), Validators.max(100)]],
     pointsPerQuestion: [10, [Validators.required, Validators.min(1), Validators.max(100)]],
   }, { validators: minMaxRangeValidator });
+
+  computedTotalPoints = computed(() =>
+    this.constraints().reduce((sum, c) => sum + c.minCount * c.pointsPerQuestion, 0)
+  );
+
+  constructor() {
+    effect(() => {
+      const currentTotal = this.computedTotalPoints();
+      this.constraintForm.setValidators([
+        minMaxRangeValidator,
+        totalPointsLimitValidator(currentTotal, 100),
+      ]);
+      this.constraintForm.updateValueAndValidity();
+    });
+  }
 
   rows = computed(() => {
     return this.constraints().map(c => {
