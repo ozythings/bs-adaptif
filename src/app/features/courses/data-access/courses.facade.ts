@@ -470,6 +470,17 @@ export class CoursesFacade {
     return CONTENTS_SEED.filter(c => c.courseId === courseId && !c.deletedAt);
   }
 
+  getEnrollmentsByCourse(courseId: number): Observable<{ participant: { id: number; firstName: string; lastName: string; schoolNumber: string; email: string }; enrollment: Enrollment }[]> {
+    const items = ENROLLMENTS_SEED
+      .filter(e => e.courseId === courseId && !e.deletedAt)
+      .map(e => {
+        const p = PARTICIPANTS_SEED.find(x => x.id === e.participantId);
+        return p ? { participant: { id: p.id, firstName: p.firstName, lastName: p.lastName, schoolNumber: p.schoolNumber, email: p.email }, enrollment: e } : null;
+      })
+      .filter((e): e is { participant: { id: number; firstName: string; lastName: string; schoolNumber: string; email: string }; enrollment: Enrollment } => !!e);
+    return this.mockApi.get(items);
+  }
+
   addContent(courseId: number, data: Partial<ContentItem>): Observable<ContentItem> {
     if (!this.canManage()) {
       this.notification.show('Bu işlem için yetkiniz bulunmamaktadır', 'error');
