@@ -19,7 +19,7 @@ import { MatIconModule } from '@angular/material/icon';
           <p class="text-2xl font-bold text-gray-900">{{ value() }}</p>
         </div>
         @if (clickable()) {
-          <mat-icon class="text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</mat-icon>
+          <mat-icon class="text-gray-400 transition-transform" [style.transform]="expanded() ? 'rotate(90deg)' : 'none'">chevron_right</mat-icon>
         }
       </div>
     </div>
@@ -33,5 +33,6 @@ export class KpiCardComponent {
   label = input<string>('');
   value = input<string | number>('');
   clickable = input<boolean>(false);
+  expanded = input<boolean>(false);
   click = output<void>();
 }
