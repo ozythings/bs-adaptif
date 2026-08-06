@@ -5,16 +5,18 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { StudentDashboardFacade } from '../student-dashboard/student-dashboard.facade';
 import { CurrentUserService } from '@core/auth/current-user.service';
 import { UserRole } from '@core/models/enums';
 import { MasteryHeatmap } from '@shared/components/mastery-heatmap/mastery-heatmap.component';
-import { ColumnChartComponent } from '@shared/components/column-chart/column-chart.component';
 import { LineChartComponent } from '@shared/components/line-chart/line-chart.component';
 import { ErrorStateComponent } from '@shared/components';
 import { KpiCardComponent } from '@shared/components';
 import { RecommendationReasonCardComponent } from '@shared/components/recommendation-reason-card/recommendation-reason-card.component';
+import { DebounceDirective } from '@shared/directives';
 import { EXAMS_SEED } from '@core/data';
 import type { StudentDashboardData } from '../student-dashboard/student-dashboard.model';
 
@@ -23,7 +25,8 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
   standalone: true,
   imports: [
     CommonModule, RouterLink, MatIconModule, MatButtonModule, MatProgressSpinnerModule, MatPaginatorModule,
-    MasteryHeatmap, ColumnChartComponent, LineChartComponent, ErrorStateComponent,
+    MatFormFieldModule, MatInputModule, DebounceDirective,
+    MasteryHeatmap, LineChartComponent, ErrorStateComponent,
     KpiCardComponent, RecommendationReasonCardComponent
   ],
   template: `
@@ -59,19 +62,19 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
         <!-- KPI Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <app-kpi-card
-            [clickable]="true" (click)="toggleDetail('attempts')"
+            [clickable]="true" [expanded]="expandedKpi() === 'attempts'" (click)="toggleDetail('attempts')"
             borderClass="border-blue-500" iconBgClass="bg-blue-100" iconColorClass="text-blue-600"
             icon="assignment" label="Girilen Sınavlar" [value]="info.totalAttempts" />
           <app-kpi-card
-            [clickable]="true" (click)="toggleDetail('mastery')"
+            [clickable]="true" [expanded]="expandedKpi() === 'mastery'" (click)="toggleDetail('mastery')"
             borderClass="border-green-500" iconBgClass="bg-green-100" iconColorClass="text-green-600"
             icon="emoji_events" label="Ortalama Başarım" [value]="info.overallMastery + '%'" />
           <app-kpi-card
-            [clickable]="true" (click)="toggleDetail('weak')"
+            [clickable]="true" [expanded]="expandedKpi() === 'weak'" (click)="toggleDetail('weak')"
             borderClass="border-red-500" iconBgClass="bg-red-100" iconColorClass="text-red-600"
             icon="warning" label="Zayıf Alanlar" [value]="info.weakOutcomes.length" />
           <app-kpi-card
-            [clickable]="true" (click)="toggleDetail('strong')"
+            [clickable]="true" [expanded]="expandedKpi() === 'strong'" (click)="toggleDetail('strong')"
             borderClass="border-yellow-500" iconBgClass="bg-yellow-100" iconColorClass="text-yellow-600"
             icon="star" label="Güçlü Alanlar" [value]="info.strongOutcomes.length" />
         </div>
@@ -85,9 +88,14 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
                 <mat-icon>close</mat-icon>
               </button>
             </div>
+            <mat-form-field appearance="outline" class="w-full mb-3">
+              <mat-label>İsme göre filtrele</mat-label>
+              <input matInput [value]="kpiSearch()" [appDebounce]="300" (debouncedChange)="onKpiSearch($event)" placeholder="Kod, ad veya sınav ara...">
+              <mat-icon matSuffix>search</mat-icon>
+            </mat-form-field>
             @switch (kpi) {
               @case ('weak') {
-                @if (info.weakOutcomes.length === 0) {
+                @if (filteredWeak().length === 0) {
                   <p class="text-gray-500 text-sm">Zayıf alan bulunmuyor.</p>
                 } @else {
                   <div class="space-y-2">
@@ -98,13 +106,13 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
                       </div>
                     }
                   </div>
-                  @if (info.weakOutcomes.length > 5) {
+                  @if (filteredWeak().length > 5) {
                     <mat-paginator [pageSize]="pageSize()" [pageSizeOptions]="[5, 10, 20]" [length]="panelLength()" [pageIndex]="pageIndex()" (page)="onPage($event)" showFirstLastButtons />
                   }
                 }
               }
               @case ('strong') {
-                @if (info.strongOutcomes.length === 0) {
+                @if (filteredStrong().length === 0) {
                   <p class="text-gray-500 text-sm">Güçlü alan bulunmuyor.</p>
                 } @else {
                   <div class="space-y-2">
@@ -115,13 +123,13 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
                       </div>
                     }
                   </div>
-                  @if (info.strongOutcomes.length > 5) {
+                  @if (filteredStrong().length > 5) {
                     <mat-paginator [pageSize]="pageSize()" [pageSizeOptions]="[5, 10, 20]" [length]="panelLength()" [pageIndex]="pageIndex()" (page)="onPage($event)" showFirstLastButtons />
                   }
                 }
               }
               @case ('mastery') {
-                @if (info.masteryScores.length === 0) {
+                @if (filteredMasteryForKpi().length === 0) {
                   <p class="text-gray-500 text-sm">Başarım verisi bulunmuyor.</p>
                 } @else {
                   <div class="space-y-2">
@@ -138,42 +146,24 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
                       </div>
                     }
                   </div>
-                  @if (info.masteryScores.length > 5) {
+                  @if (filteredMasteryForKpi().length > 5) {
                     <mat-paginator [pageSize]="pageSize()" [pageSizeOptions]="[5, 10, 20]" [length]="panelLength()" [pageIndex]="pageIndex()" (page)="onPage($event)" showFirstLastButtons />
                   }
                 }
               }
               @case ('attempts') {
-                @if (attemptHistory().length === 0) {
+                @if (filteredAttemptsForKpi().length === 0) {
                   <p class="text-gray-500 text-sm">Henüz sınav denemesi bulunmuyor.</p>
                 } @else {
-                  <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                      <thead>
-                        <tr class="border-b text-left text-gray-500 text-xs">
-                          <th class="p-2">Sınav</th>
-                          <th class="p-2 text-right">Puan</th>
-                          <th class="p-2 text-right">Yüzde</th>
-                          <th class="p-2 text-right">Tarih</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (a of paginatedAttempts(); track a.id) {
-                          <tr class="border-b border-gray-50">
-                            <td class="p-2 font-medium">{{ examTitle(a.examId) }}</td>
-                            <td class="p-2 text-right">{{ a.totalScore }} / {{ a.maxScore }}</td>
-                            <td class="p-2 text-right">
-                              <span [class.text-green-600]="a.scorePercentage >= 50" [class.text-red-600]="a.scorePercentage < 50">
-                                %{{ a.scorePercentage }}
-                              </span>
-                            </td>
-                            <td class="p-2 text-right text-gray-500 text-xs">{{ a.submittedAt | date:'dd.MM.yyyy HH:mm' }}</td>
-                          </tr>
-                        }
-                      </tbody>
-                    </table>
+                  <div class="space-y-2">
+                    @for (a of paginatedAttempts(); track a.id) {
+                      <div class="flex items-center justify-between p-2 bg-blue-50 rounded-lg">
+                        <span class="text-sm font-medium text-gray-900">{{ examTitle(a.examId) }}</span>
+                        <span class="text-sm text-gray-600">{{ a.totalScore }} / {{ a.maxScore }}</span>
+                      </div>
+                    }
                   </div>
-                  @if (attemptHistory().length > 5) {
+                  @if (filteredAttemptsForKpi().length > 5) {
                     <mat-paginator [pageSize]="pageSize()" [pageSizeOptions]="[5, 10, 20]" [length]="panelLength()" [pageIndex]="pageIndex()" (page)="onPage($event)" showFirstLastButtons />
                   }
                 }
@@ -182,99 +172,83 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
           </div>
         }
 
-        <!-- Exam Trend Chart -->
-        @if (trendLabels().length > 0) {
-        <div class="bg-white rounded-lg shadow-sm p-4">
-          <h2 class="text-lg font-semibold mb-3">İlerleme Trendi</h2>
-          <div class="h-64">
-            <app-column-chart
-              [labels]="trendLabels()"
-              [values]="trendValues()"
-              title="Sınav Başarı Yüzdesi" />
-          </div>
-        </div>
-        }
-
         <!-- Mastery Trend Chart -->
         @if (masteryTrendDatasets().length > 0) {
-        <div class="bg-white rounded-lg shadow-sm p-4">
-          <h2 class="text-lg font-semibold mb-3">Kazanım İlerleme Trendi</h2>
-          <div class="h-72">
-            <app-line-chart
-              [labels]="masteryTrendLabels()"
-              [datasets]="masteryTrendDatasets()"
-              title="Kazanım Puanı" />
+        <div class="bg-white rounded-lg shadow-sm">
+          <button type="button" class="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-gray-50" (click)="expandedMasteryTrend.set(!expandedMasteryTrend())">
+            <mat-icon class="text-gray-500 text-sm transition-transform" [style.transform]="expandedMasteryTrend() ? 'rotate(90deg)' : 'none'">chevron_right</mat-icon>
+            <h2 class="text-lg font-semibold">Kazanım İlerleme Trendi</h2>
+          </button>
+          @if (expandedMasteryTrend()) {
+          <div class="px-4 pb-4">
+            <div class="h-72">
+              <app-line-chart
+                [labels]="masteryTrendLabels()"
+                [datasets]="masteryTrendDatasets()"
+                title="Kazanım Puanı" />
+            </div>
           </div>
+          }
         </div>
         }
 
-        <!-- Exam History -->
-        <div class="bg-white rounded-lg shadow-sm p-4">
-          <h2 class="text-lg font-semibold mb-3">Sınav Geçmişi</h2>
-          @if (attemptHistory().length === 0) {
-            <div class="text-center py-6 text-gray-500">
-              <mat-icon class="text-4xl mb-2">history</mat-icon>
-              <p>Henüz sınav geçmişi bulunmuyor</p>
-            </div>
-          } @else {
-            <div class="overflow-x-auto">
-              <table class="w-full text-sm">
-                <thead>
-                  <tr class="border-b text-left text-gray-500 text-xs">
-                    <th class="p-2">Sınav</th>
-                    <th class="p-2 text-right">Puan</th>
-                    <th class="p-2 text-right">Yüzde</th>
-                    <th class="p-2 text-right">Tarih</th>
-                    <th class="p-2 text-center">Durum</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (a of attemptHistory(); track a.id) {
-                    <tr class="border-b border-gray-50 hover:bg-gray-50">
-                      <td class="p-2 font-medium">{{ examTitle(a.examId) }}</td>
-                      <td class="p-2 text-right">{{ a.totalScore }} / {{ a.maxScore }}</td>
-                      <td class="p-2 text-right">
-                        <span [class.text-green-600]="a.scorePercentage >= 50" [class.text-red-600]="a.scorePercentage < 50">
-                          %{{ a.scorePercentage }}
-                        </span>
-                      </td>
-                      <td class="p-2 text-right text-gray-500 text-xs">{{ a.submittedAt | date:'dd.MM.yyyy HH:mm' }}</td>
-                      <td class="p-2 text-center">
-                        <span class="text-xs px-2 py-0.5 rounded" [class.bg-green-100]="a.status === 'finalized'" [class.text-green-700]="a.status === 'finalized'" [class.bg-gray-100]="a.status !== 'finalized'" [class.text-gray-700]="a.status !== 'finalized'">
-                          {{ a.status === 'finalized' ? 'Tamamlandı' : a.status }}
-                        </span>
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
+        <!-- Mastery Heatmap -->
+        <div class="bg-white rounded-lg shadow-sm">
+          <button type="button" class="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-gray-50" (click)="expandedMasteryHeatmap.set(!expandedMasteryHeatmap())">
+            <mat-icon class="text-gray-500 text-sm transition-transform" [style.transform]="expandedMasteryHeatmap() ? 'rotate(90deg)' : 'none'">chevron_right</mat-icon>
+            <h2 class="text-lg font-semibold">Başarım Haritası</h2>
+          </button>
+          @if (expandedMasteryHeatmap()) {
+          <div class="px-4 pb-4">
+            <mat-form-field appearance="outline" class="w-full mb-3">
+              <mat-label>Kazanım ara</mat-label>
+              <input matInput [value]="heatmapSearch()" [appDebounce]="300" (debouncedChange)="onHeatmapSearch($event)" placeholder="Kod veya ad...">
+              <mat-icon matSuffix>search</mat-icon>
+            </mat-form-field>
+            @if (filteredHeatmapOutcomes().length === 0) {
+              <p class="text-gray-500 text-sm text-center py-4">Sonuç bulunamadı.</p>
+            } @else {
+              <app-mastery-heatmap [scores]="filteredHeatmapScores()" [outcomes]="paginatedHeatmapOutcomes()" />
+              @if (filteredHeatmapOutcomes().length > 5) {
+                <mat-paginator [pageSize]="heatmapPageSize()" [pageSizeOptions]="[5, 10, 25]" [length]="filteredHeatmapOutcomes().length" [pageIndex]="heatmapPageIndex()" (page)="onHeatmapPage($event)" showFirstLastButtons />
+              }
+            }
+          </div>
           }
         </div>
 
-        <!-- Mastery Heatmap -->
-        <div class="bg-white rounded-lg shadow-sm p-4">
-          <h2 class="text-lg font-semibold mb-3">Başarım Haritası</h2>
-          <app-mastery-heatmap [scores]="info.masteryScores" [outcomes]="info.outcomes" />
-        </div>
-
         <!-- Recommendations -->
-        <div class="bg-white rounded-lg shadow-sm p-4">
-          <h2 class="text-lg font-semibold mb-3">Öneriler</h2>
-          @if (info.recommendations.length === 0) {
-            <div class="text-center py-8 text-gray-500">
-              <mat-icon class="text-5xl mb-2">inbox</mat-icon>
-              <p class="text-lg">Henüz veri bulunmuyor</p>
-            </div>
-          } @else {
-            <div class="space-y-3">
-              @for (rec of info.recommendations; track rec.contentId + '-' + rec.outcomeId) {
-                <app-recommendation-reason-card
-                  [recommendation]="rec"
-                  [outcomeName]="facade.getOutcomeName(rec.outcomeId)"
-                  [courseName]="facade.getCourseNameByOutcome(rec.outcomeId)" />
+        <div class="bg-white rounded-lg shadow-sm">
+          <button type="button" class="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-gray-50" (click)="expandedRecommendations.set(!expandedRecommendations())">
+            <mat-icon class="text-gray-500 text-sm transition-transform" [style.transform]="expandedRecommendations() ? 'rotate(90deg)' : 'none'">chevron_right</mat-icon>
+            <h2 class="text-lg font-semibold">Öneriler</h2>
+          </button>
+          @if (expandedRecommendations()) {
+          <div class="px-4 pb-4">
+            <mat-form-field appearance="outline" class="w-full mb-3">
+              <mat-label>Öneri ara</mat-label>
+              <input matInput [value]="recSearch()" [appDebounce]="300" (debouncedChange)="onRecSearch($event)" placeholder="Öneri veya kazanım adı...">
+              <mat-icon matSuffix>search</mat-icon>
+            </mat-form-field>
+            @if (filteredRecommendations().length === 0) {
+              <div class="text-center py-8 text-gray-500">
+                <mat-icon class="text-5xl mb-2">inbox</mat-icon>
+                <p class="text-lg">Sonuç bulunamadı</p>
+              </div>
+            } @else {
+              <div class="space-y-3">
+                @for (rec of paginatedRecommendations(); track rec.id) {
+                  <app-recommendation-reason-card
+                    [recommendation]="rec"
+                    [outcomeName]="facade.getOutcomeName(rec.outcomeId)"
+                    [courseName]="facade.getCourseNameByOutcome(rec.outcomeId)" />
+                }
+              </div>
+              @if (filteredRecommendations().length > 5) {
+                <mat-paginator [pageSize]="recPageSize()" [pageSizeOptions]="[5, 10, 25]" [length]="filteredRecommendations().length" [pageIndex]="recPageIndex()" (page)="onRecPage($event)" showFirstLastButtons />
               }
-            </div>
+            }
+          </div>
           }
         </div>
       }
@@ -293,47 +267,126 @@ export class StudentAnalyticsPage implements OnInit {
   error = signal<string | null>(null);
   d = signal<StudentDashboardData | null>(null);
   expandedKpi = signal<string | null>(null);
+  kpiSearch = signal('');
+  expandedMasteryTrend = signal(true);
+  expandedMasteryHeatmap = signal(true);
+  expandedRecommendations = signal(true);
   pageSize = signal(5);
   pageIndex = signal(0);
 
+  heatmapSearch = signal('');
+  heatmapPageSize = signal(5);
+  heatmapPageIndex = signal(0);
+
+  recSearch = signal('');
+  recPageSize = signal(5);
+  recPageIndex = signal(0);
+
   isObserver = computed(() => this.currentUser.user().role === UserRole.OBSERVER);
 
-  paginatedWeak = computed(() => {
+  filteredWeak = computed(() => {
     const info = this.d();
     if (!info) return [];
+    const search = this.kpiSearch().toLowerCase();
+    return info.weakOutcomes.filter(o =>
+      !search || o.code.toLowerCase().includes(search) || o.name.toLowerCase().includes(search)
+    );
+  });
+  filteredStrong = computed(() => {
+    const info = this.d();
+    if (!info) return [];
+    const search = this.kpiSearch().toLowerCase();
+    return info.strongOutcomes.filter(o =>
+      !search || o.code.toLowerCase().includes(search) || o.name.toLowerCase().includes(search)
+    );
+  });
+  filteredMasteryForKpi = computed(() => {
+    const info = this.d();
+    if (!info) return [];
+    const search = this.kpiSearch().toLowerCase();
+    return info.masteryScores.filter(ms =>
+      !search || this.outcomeName(ms.outcomeId).toLowerCase().includes(search)
+    );
+  });
+  filteredAttemptsForKpi = computed(() => {
+    const info = this.d();
+    if (!info) return [];
+    const search = this.kpiSearch().toLowerCase();
+    return info.examAttempts.filter(a =>
+      !search || this.examTitle(a.examId).toLowerCase().includes(search)
+    );
+  });
+
+  paginatedWeak = computed(() => {
     const start = this.pageIndex() * this.pageSize();
-    return info.weakOutcomes.slice(start, start + this.pageSize());
+    return this.filteredWeak().slice(start, start + this.pageSize());
   });
   paginatedStrong = computed(() => {
-    const info = this.d();
-    if (!info) return [];
     const start = this.pageIndex() * this.pageSize();
-    return info.strongOutcomes.slice(start, start + this.pageSize());
+    return this.filteredStrong().slice(start, start + this.pageSize());
   });
   paginatedMastery = computed(() => {
-    const info = this.d();
-    if (!info) return [];
     const start = this.pageIndex() * this.pageSize();
-    return info.masteryScores.slice(start, start + this.pageSize());
+    return this.filteredMasteryForKpi().slice(start, start + this.pageSize());
   });
   paginatedAttempts = computed(() => {
     const start = this.pageIndex() * this.pageSize();
-    return this.attemptHistory().slice(start, start + this.pageSize());
+    return this.filteredAttemptsForKpi().slice(start, start + this.pageSize());
   });
   panelLength = computed(() => {
     const kpi = this.expandedKpi();
+    if (!kpi) return 0;
+    if (kpi === 'weak') return this.filteredWeak().length;
+    if (kpi === 'strong') return this.filteredStrong().length;
+    if (kpi === 'mastery') return this.filteredMasteryForKpi().length;
+    if (kpi === 'attempts') return this.filteredAttemptsForKpi().length;
+    return 0;
+  });
+
+  filteredHeatmapOutcomes = computed(() => {
     const info = this.d();
-    if (!info || !kpi) return 0;
-    if (kpi === 'weak') return info.weakOutcomes.length;
-    if (kpi === 'strong') return info.strongOutcomes.length;
-    if (kpi === 'mastery') return info.masteryScores.length;
-    return this.attemptHistory().length;
+    if (!info) return [];
+    const search = this.heatmapSearch().toLowerCase();
+    return info.outcomes.filter(o =>
+      !search ||
+      o.code.toLowerCase().includes(search) ||
+      o.name.toLowerCase().includes(search)
+    );
+  });
+
+  paginatedHeatmapOutcomes = computed(() => {
+    const start = this.heatmapPageIndex() * this.heatmapPageSize();
+    return this.filteredHeatmapOutcomes().slice(start, start + this.heatmapPageSize());
+  });
+
+  filteredHeatmapScores = computed(() => {
+    const outcomeIds = new Set(this.paginatedHeatmapOutcomes().map(o => o.id));
+    const info = this.d();
+    if (!info) return [];
+    return info.masteryScores.filter(s => outcomeIds.has(s.outcomeId));
+  });
+
+  filteredRecommendations = computed(() => {
+    const info = this.d();
+    if (!info) return [];
+    const search = this.recSearch().toLowerCase();
+    return info.recommendations.filter(r =>
+      !search ||
+      r.reason.toLowerCase().includes(search) ||
+      this.facade.getOutcomeName(r.outcomeId).toLowerCase().includes(search)
+    );
+  });
+
+  paginatedRecommendations = computed(() => {
+    const start = this.recPageIndex() * this.recPageSize();
+    return this.filteredRecommendations().slice(start, start + this.recPageSize());
   });
 
   constructor() {
     effect(() => {
       this.expandedKpi();
       this.pageIndex.set(0);
+      this.kpiSearch.set('');
     });
   }
 
@@ -341,9 +394,34 @@ export class StudentAnalyticsPage implements OnInit {
     this.expandedKpi.set(this.expandedKpi() === key ? null : key);
   }
 
+  onKpiSearch(term: string): void {
+    this.kpiSearch.set(term);
+    this.pageIndex.set(0);
+  }
+
   onPage(event: PageEvent): void {
     this.pageIndex.set(event.pageIndex);
     this.pageSize.set(event.pageSize);
+  }
+
+  onHeatmapSearch(term: string): void {
+    this.heatmapSearch.set(term);
+    this.heatmapPageIndex.set(0);
+  }
+
+  onHeatmapPage(event: PageEvent): void {
+    this.heatmapPageIndex.set(event.pageIndex);
+    this.heatmapPageSize.set(event.pageSize);
+  }
+
+  onRecSearch(term: string): void {
+    this.recSearch.set(term);
+    this.recPageIndex.set(0);
+  }
+
+  onRecPage(event: PageEvent): void {
+    this.recPageIndex.set(event.pageIndex);
+    this.recPageSize.set(event.pageSize);
   }
 
   kpiTitle(key: string): string {
@@ -369,49 +447,32 @@ export class StudentAnalyticsPage implements OnInit {
     return o ? `${o.code} - ${o.name}` : `Kazanım #${outcomeId}`;
   }
 
-  attemptHistory = computed(() => {
+  rawTrendDates = computed(() => {
     const info = this.d();
     if (!info) return [];
-    return info.examAttempts.map(a => ({
-      ...a,
-      examTitle: EXAMS_SEED.find(e => e.id === a.examId)?.title ?? `Sınav #${a.examId}`,
-    })).sort((a, b) => new Date(b.submittedAt ?? b.updatedAt).getTime() - new Date(a.submittedAt ?? a.updatedAt).getTime());
+    const allDates = info.masteryScores
+      .flatMap(s => (s.history ?? []).map(h => h.date));
+    return [...new Set(allDates)].sort();
   });
 
-  trendLabels = computed(() => this.attemptHistory().slice().reverse().map(a =>
-    new Date(a.submittedAt ?? a.updatedAt).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' })
-  ));
-  trendValues = computed(() => this.attemptHistory().slice().reverse().map(a => a.scorePercentage));
-
   masteryTrendLabels = computed(() => {
-    const info = this.d();
-    if (!info) return [];
-    const scores = info.masteryScores;
-    if (scores.length === 0) return [];
-    const allDates = scores.flatMap(s => (s.history ?? []).map(h => h.date));
-    const unique = [...new Set(allDates)].sort();
-    return unique.map(d => new Date(d).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' }));
+    return this.rawTrendDates().map(d =>
+      new Date(d).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' })
+    );
   });
 
   masteryTrendDatasets = computed(() => {
     const info = this.d();
     if (!info) return [];
-    const scores = info.masteryScores;
-    const outcomes = info.outcomes;
-    const labels = this.masteryTrendLabels();
-    if (scores.length === 0 || labels.length === 0) return [];
-    const outcomeMap = new Map(outcomes.map(o => [o.id, o]));
-    return scores
-      .filter(s => s.history && s.history.length > 1)
+    const rawDates = this.rawTrendDates();
+    if (rawDates.length === 0) return [];
+    const outcomeMap = new Map(info.outcomes.map(o => [o.id, o]));
+    return info.masteryScores
+      .filter(s => s.history && s.history.length >= 1)
       .map(s => {
         const outcome = outcomeMap.get(s.outcomeId);
         const dateToScore = new Map(s.history.map(h => [h.date, h.score]));
-        const allDates = [...new Set(s.history.map(h => h.date))].sort();
-        const dateToIndex = new Map(allDates.map((d, i) => [d, i]));
-        const values = labels.map((_, i) => {
-          const matchDate = allDates.find(d => dateToIndex.get(d) === i);
-          return matchDate ? (dateToScore.get(matchDate) ?? 0) : 0;
-        });
+        const values = rawDates.map(d => dateToScore.get(d) ?? 0);
         return {
           label: outcome ? `${outcome.code} - ${outcome.name}` : `Kazanım #${s.outcomeId}`,
           values,
