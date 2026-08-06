@@ -49,6 +49,13 @@ export interface ScheduledTask {
   masteryScore: number;
 }
 
+export interface AdminEnrollment {
+  studentName: string;
+  courseTitle: string;
+  status: string;
+  enrolledAt: string;
+}
+
 export interface StudentDashboardData {
   student: Participant | undefined;
   overallMastery: number;
@@ -68,6 +75,7 @@ export interface StudentDashboardData {
   avgExamScore: number;
   weeklyProgress: number;
   studyHours: number;
+  adminEnrollments: AdminEnrollment[];
 }
 
 export interface ActiveSessionInfo {

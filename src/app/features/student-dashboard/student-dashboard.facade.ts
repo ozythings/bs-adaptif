@@ -6,7 +6,7 @@ import { AuditService } from '@core/observability/audit.service';
 import { ExamSession } from '@core/models/exam-session.model';
 import { AuditLogEntry } from '@core/models/audit-log-entry.model';
 import { SessionFacade } from '../exam-session/data-access/session.facade';
-import { ExamStatus, AuditAction } from '@core/models/enums';
+import { ExamStatus, AuditAction, UserRole } from '@core/models/enums';
 import { COURSES_SEED, ENROLLMENTS_SEED, CONTENTS_SEED, OUTCOMES_SEED, MASTERY_SEED, CONTENT_COMPLETIONS_SEED, ATTEMPTS_SEED, EXAMS_SEED, INSTRUCTORS_SEED, PARTICIPANTS_SEED } from '@core/data';
 import { generateRecommendations, generateStudySequence } from '@core/engine';
 import { isExamAvailable } from '../exams/data-access/exams.facade';
@@ -18,6 +18,7 @@ import type {
   UpcomingExam,
   ScheduledTask,
   ActiveSessionInfo,
+  AdminEnrollment,
 } from './student-dashboard.model';
 
 export class StudentDashboardFacade {
@@ -32,7 +33,9 @@ export class StudentDashboardFacade {
   }
 
   getDashboard(studentId?: number): Observable<StudentDashboardData> {
-    const resolvedId = studentId ?? this.getStudentId();
+    const user = this.currentUser.getUser();
+    const isStudent = user.role === UserRole.STUDENT;
+    const resolvedId = studentId ?? (isStudent ? this.getStudentId() : 0);
 
     this.audit.log({
       action: AuditAction.VIEW,
@@ -41,8 +44,65 @@ export class StudentDashboardFacade {
       description: 'Dashboard verileri görüntülendi',
     });
 
-    const masteryScores = MASTERY_SEED.filter(m => m.studentId === resolvedId);
     const outcomes = [...OUTCOMES_SEED];
+
+    if (!isStudent && !studentId) {
+      // Admin/Instructor view: ALL courses, ALL enrollments
+      const allEnrollments = ENROLLMENTS_SEED.filter(e => !e.deletedAt);
+
+      const adminEnrollments: AdminEnrollment[] = allEnrollments.map(e => {
+        const participant = PARTICIPANTS_SEED.find(p => p.id === e.participantId);
+        const course = COURSES_SEED.find(c => c.id === e.courseId);
+        return {
+          studentName: participant ? `${participant.firstName} ${participant.lastName}` : `Öğrenci #${e.participantId}`,
+          courseTitle: course?.title ?? `Kurs #${e.courseId}`,
+          status: e.status,
+          enrolledAt: e.enrollmentDate ?? '',
+        };
+      });
+
+      const courseProgress: CourseProgress[] = COURSES_SEED.map(course => {
+        const instructor = INSTRUCTORS_SEED.find(i => i.id === course.instructorId);
+        const total = CONTENTS_SEED.filter(c => c.courseId === course.id).length;
+        const courseEnrollments = allEnrollments.filter(e => e.courseId === course.id);
+        const approvedCount = courseEnrollments.filter(e => e.status === 'approved').length;
+        const status = approvedCount > 0 ? 'approved' : courseEnrollments.length > 0 ? 'pending' : 'none';
+        return {
+          courseId: course.id,
+          courseTitle: course.title,
+          instructorName: instructor ? `${instructor.firstName} ${instructor.lastName}` : '',
+          totalContents: total,
+          completedContents: 0,
+          progressPercent: 0,
+          status,
+        };
+      });
+
+      return this.mockApi.get<StudentDashboardData>({
+        student: undefined,
+        overallMastery: 0,
+        completedContents: 0,
+        totalContents: COURSES_SEED.reduce((sum, c) => sum + CONTENTS_SEED.filter(cnt => cnt.courseId === c.id).length, 0),
+        courseProgress,
+        courseMastery: [],
+        masteryScores: [],
+        outcomes,
+        examAttempts: [],
+        upcomingExams: [],
+        scheduledTasks: [],
+        recommendations: [],
+        weakOutcomes: [],
+        strongOutcomes: [],
+        totalAttempts: ATTEMPTS_SEED.length,
+        avgExamScore: 0,
+        weeklyProgress: 0,
+        studyHours: 0,
+        adminEnrollments,
+      });
+    }
+
+    // Student view: existing logic
+    const masteryScores = MASTERY_SEED.filter(m => m.studentId === resolvedId);
     const overallMastery = getOverallMastery(masteryScores);
     const weakOutcomes = outcomes.filter(o => masteryScores.some(m => m.outcomeId === o.id && isWeak(m.score)));
     const strongOutcomes = outcomes.filter(o => masteryScores.some(m => m.outcomeId === o.id && isStrong(m.score)));
@@ -200,6 +260,7 @@ export class StudentDashboardFacade {
       avgExamScore,
       weeklyProgress,
       studyHours,
+      adminEnrollments: [],
     });
   }
 
