@@ -435,7 +435,13 @@ export class ExamBuilderPage implements OnInit {
     if (!bp) return;
     const exam = this.facade.getExam(bp.examId);
     if (exam) {
-      this.facade.getQuestionsByCourse(exam.courseId).subscribe(data => this.examQuestions.set(data));
+      this.facade.getQuestionsByCourse(exam.courseId).subscribe(data => {
+        this.examQuestions.set(data);
+        if (exam.questionVersionIds) {
+          const ids = Object.keys(exam.questionVersionIds).map(Number);
+          this.manualSelectedIds.set(new Set(ids));
+        }
+      });
     }
   }
 
