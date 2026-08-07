@@ -7,13 +7,18 @@ import { StorageService } from '@core/storage/storage.service';
 import { EXAMS_SEED, BLUEPRINTS_SEED, QUESTIONS_SEED, EXAM_SESSIONS_SEED } from '@core/data';
 
 const SESSION_STORAGE_KEY = 'exam_sessions';
+const EXAMS_STORAGE_KEY = 'entity_exams';
+const BLUEPRINTS_STORAGE_KEY = 'entity_blueprints';
+const QUESTIONS_STORAGE_KEY = 'entity_questions';
+const DATA_VERSION_KEY = 'entity_data_version';
+const DATA_VERSION = 1;
 
 export class EntityStore {
   private storage = inject(StorageService);
 
-  readonly exams = signal<Exam[]>(EXAMS_SEED);
-  readonly blueprints = signal<ExamBlueprint[]>(BLUEPRINTS_SEED);
-  readonly questions = signal<Question[]>(QUESTIONS_SEED);
+  readonly exams = signal<Exam[]>(this.hydrateExams());
+  readonly blueprints = signal<ExamBlueprint[]>(this.hydrateBlueprints());
+  readonly questions = signal<Question[]>(this.hydrateQuestions());
   readonly sessions = signal<ExamSession[]>(this.hydrateSessions());
 
   constructor() {
@@ -32,6 +37,21 @@ export class EntityStore {
         }
       });
       this.storage.set(SESSION_STORAGE_KEY, [...merged.values()]);
+    });
+
+    effect(() => {
+      this.storage.set(DATA_VERSION_KEY, DATA_VERSION);
+      this.storage.set(EXAMS_STORAGE_KEY, this.exams());
+    });
+
+    effect(() => {
+      this.storage.set(DATA_VERSION_KEY, DATA_VERSION);
+      this.storage.set(BLUEPRINTS_STORAGE_KEY, this.blueprints());
+    });
+
+    effect(() => {
+      this.storage.set(DATA_VERSION_KEY, DATA_VERSION);
+      this.storage.set(QUESTIONS_STORAGE_KEY, this.questions());
     });
 
     if (typeof window !== 'undefined') {
@@ -56,6 +76,27 @@ export class EntityStore {
     const cached = this.storage.get<ExamSession[]>(SESSION_STORAGE_KEY);
     if (cached && cached.length > 0) return cached;
     return [...EXAM_SESSIONS_SEED];
+  }
+
+  private hydrateExams(): Exam[] {
+    if (this.storage.get<number>(DATA_VERSION_KEY) !== DATA_VERSION) return [...EXAMS_SEED];
+    const cached = this.storage.get<Exam[]>(EXAMS_STORAGE_KEY);
+    if (cached && cached.length > 0) return cached;
+    return [...EXAMS_SEED];
+  }
+
+  private hydrateBlueprints(): ExamBlueprint[] {
+    if (this.storage.get<number>(DATA_VERSION_KEY) !== DATA_VERSION) return [...BLUEPRINTS_SEED];
+    const cached = this.storage.get<ExamBlueprint[]>(BLUEPRINTS_STORAGE_KEY);
+    if (cached && cached.length > 0) return cached;
+    return [...BLUEPRINTS_SEED];
+  }
+
+  private hydrateQuestions(): Question[] {
+    if (this.storage.get<number>(DATA_VERSION_KEY) !== DATA_VERSION) return [...QUESTIONS_SEED];
+    const cached = this.storage.get<Question[]>(QUESTIONS_STORAGE_KEY);
+    if (cached && cached.length > 0) return cached;
+    return [...QUESTIONS_SEED];
   }
 
   /**
