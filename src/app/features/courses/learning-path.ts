@@ -85,10 +85,8 @@ const FORMAT_LABELS: Record<ContentFormat, string> = {
                       @if (c.isLocked) {
                         <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Kilitli</span>
                       } @else if (isDone(c.id)) {
-                        @if (isMastered(c.id)) {
-                          <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">✨ Uzmanlaşıldı</span>
-                        } @else if (studyCount(c.id) > 0) {
-                          <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">✓ {{ studyCount(c.id) }} kez çalışıldı</span>
+                        @if (studyCount(c.id) > 0) {
+                          <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">{{ studyCount(c.id) }} kez çalışıldı</span>
                         } @else {
                           <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Tamamlandı</span>
                         }
