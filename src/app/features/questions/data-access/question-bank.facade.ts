@@ -203,7 +203,7 @@ export class QuestionBankFacade {
       this.questionsSeed.update(list => list.map(q =>
         q.id === id ? {
           ...q,
-          status: QuestionVersionStatus.DRAFT,
+          status: QuestionVersionStatus.PUBLISHED,
           currentVersion: newVersion.version,
           latestVersionId: versionId,
           updatedAt: new Date().toISOString(),
