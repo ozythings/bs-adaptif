@@ -100,11 +100,13 @@ import { AutosaveIndicatorComponent } from '@shared/components/autosave-indicato
 
                 @if (q.type === QuestionType.SHORT_ANSWER || q.type === QuestionType.ESSAY) {
                   <div class="space-y-3">
-                    <textarea class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
-                              rows="4"
-                              [value]="getAnswer(q.id) || ''"
-                              (input)="onAnswer(q.id, $any($event.target).value)"
-                              placeholder="Cevabınızı yazın..."></textarea>
+                    @for (cq of [q]; track cq.id) {
+                      <textarea class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y"
+                                rows="4"
+                                [value]="getAnswer(cq.id) || ''"
+                                (input)="onAnswer(cq.id, $any($event.target).value)"
+                                placeholder="Cevabınızı yazın..."></textarea>
+                    }
                   </div>
                 } @else {
                   <div class="space-y-3">
@@ -132,8 +134,7 @@ import { AutosaveIndicatorComponent } from '@shared/components/autosave-indicato
                   <button mat-mini-fab
                           [class.mat-primary]="i === currentIndex()"
                           [class.mat-accent]="isMarked(q.id) && i !== currentIndex()"
-                          [class.border-green-500]="isAnswered(q.id) && i !== currentIndex() && !isMarked(q.id)"
-                          [class.border-2]="isAnswered(q.id) && i !== currentIndex() && !isMarked(q.id)"
+                          [style.border]="isAnswered(q.id) && i !== currentIndex() && !isMarked(q.id) ? '4px solid #eab308' : ''"
                           color="{{ i === currentIndex() ? 'primary' : (isMarked(q.id) ? 'accent' : 'basic') }}"
                           (click)="goToQuestion(i)"
                           [attr.aria-label]="'Soru ' + (i + 1) + (isAnswered(q.id) ? ' (cevaplandı)' : '') + (isMarked(q.id) ? ' (işaretli)' : '')">
@@ -281,17 +282,23 @@ export class ExamSessionPage implements OnInit {
     const s = this.session();
     if (!s) return;
     const summary = this.facade.getSubmitSummary(s.id, this.totalQuestions());
-    const unansweredMsg = summary.unanswered > 0
-      ? `\n\n⚠️ ${summary.unanswered} soru cevaplanmamış: ${summary.unansweredNums.join(', ')}`
-      : '\n\n✅ Tüm sorular cevaplandı.';
-    const markedMsg = summary.marked > 0
-      ? `\n🏁 ${summary.marked} soru işaretli.`
-      : '';
+    const messageItems: { icon: string; iconClass: string; text: string }[] = [
+      { icon: '', iconClass: '', text: `${summary.answered}/${this.totalQuestions()} soru cevaplandı.` },
+    ];
+    if (summary.unanswered > 0) {
+      messageItems.push({ icon: 'warning', iconClass: 'text-amber-500', text: `${summary.unanswered} soru cevaplanmamış: ${summary.unansweredNums.join(', ')}` });
+    } else {
+      messageItems.push({ icon: 'check_circle', iconClass: 'text-green-600', text: 'Tüm sorular cevaplandı.' });
+    }
+    if (summary.marked > 0) {
+      messageItems.push({ icon: 'flag', iconClass: 'text-yellow-500', text: `${summary.marked} soru işaretli.` });
+    }
+    messageItems.push({ icon: 'help_outline', iconClass: '', text: 'Sınavı bitirmek istediğinize emin misiniz?' });
 
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
         title: 'Sınavı Bitir',
-        message: `${summary.answered}/${this.totalQuestions()} soru cevaplandı.${unansweredMsg}${markedMsg}\n\nSınavı bitirmek istediğinize emin misiniz?`,
+        messageItems,
         confirmLabel: 'Bitir',
         cancelLabel: 'İptal',
       }
