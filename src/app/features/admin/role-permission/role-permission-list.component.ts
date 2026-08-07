@@ -88,11 +88,11 @@ const CATEGORY_START_KEYS = new Set(
                       [class.border-l-2]="isCategoryStart(perm)">
                       @if (rp.permissions[perm.key]) {
                         <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-50">
-                          <mat-icon class="text-green-600 text-base leading-none">check_circle</mat-icon>
+                          <mat-icon class="text-base leading-none" style="color: #16a34a">check_circle</mat-icon>
                         </span>
                       } @else {
                         <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50">
-                          <mat-icon class="text-gray-300 text-base leading-none">cancel</mat-icon>
+                          <mat-icon class="text-base leading-none" style="color: #d1d5db">cancel</mat-icon>
                         </span>
                       }
                     </td>
@@ -108,13 +108,13 @@ const CATEGORY_START_KEYS = new Set(
         <span class="font-medium text-gray-700">Gösterge:</span>
         <div class="flex items-center gap-1.5">
           <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-50">
-            <mat-icon class="text-green-600 text-sm leading-none">check_circle</mat-icon>
+            <mat-icon class="text-sm leading-none" style="color: #16a34a">check_circle</mat-icon>
           </span>
           <span class="text-gray-600">İzin Var</span>
         </div>
         <div class="flex items-center gap-1.5">
           <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-50">
-            <mat-icon class="text-gray-300 text-sm leading-none">cancel</mat-icon>
+            <mat-icon class="text-sm leading-none" style="color: #d1d5db">cancel</mat-icon>
           </span>
           <span class="text-gray-600">İzin Yok</span>
         </div>
