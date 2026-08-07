@@ -29,6 +29,7 @@ export interface ExamListItem {
   hasActiveSession: boolean;
   activeSessionToken: string | null;
   completedAttempt: { scorePercentage: number; totalScore: number; maxScore: number } | null;
+  submittedAttempt: boolean;
 }
 
 export interface ExamFilter {
@@ -71,6 +72,9 @@ export class ExamsFacade {
         const completedAttempt = ATTEMPTS_SEED.find(
           a => a.examId === exam.id && a.studentId === studentId && a.status === ResultStatus.FINALIZED
         );
+        const submittedAttempt = ATTEMPTS_SEED.find(
+          a => a.examId === exam.id && a.studentId === studentId && a.status === ResultStatus.DRAFT
+        );
         return {
           exam,
           courseName: this.getCourseName(exam.courseId),
@@ -79,6 +83,7 @@ export class ExamsFacade {
           completedAttempt: completedAttempt
             ? { scorePercentage: completedAttempt.scorePercentage, totalScore: completedAttempt.totalScore, maxScore: completedAttempt.maxScore }
             : null,
+          submittedAttempt: !!submittedAttempt,
         };
       });
 
@@ -136,7 +141,8 @@ export class ExamsFacade {
     const userId = this.currentUser.getUser().id;
     const studentId = this.currentUser.getUser().studentId ?? userId;
     const completedAttempt = ATTEMPTS_SEED.find(
-      a => a.examId === examId && a.studentId === studentId && a.status === ResultStatus.FINALIZED
+      a => a.examId === examId && a.studentId === studentId
+        && (a.status === ResultStatus.FINALIZED || a.status === ResultStatus.DRAFT)
     );
     if (completedAttempt) {
       this.notification.show('Bu sınavı zaten tamamladınız. Tekrar giremezsiniz.', 'error');
