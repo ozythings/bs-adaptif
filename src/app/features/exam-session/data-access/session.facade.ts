@@ -202,6 +202,7 @@ export class SessionFacade {
 
   private flushAnswer(sessionId: number, questionId: number, draftData: AnswerDraft): void {
     if (this.connectionStatus() === 'offline') {
+      this.draftStore.save(draftData);
       this.offlineQueue.enqueue({ type: 'PUT', url: '/api/drafts', body: draftData });
       this.saveStatus.set('offline');
       return;
@@ -251,26 +252,22 @@ export class SessionFacade {
     if (queue.length === 0) return;
 
     this.connectionStatus.set('reconnecting');
-    let delay = 300;
 
     for (const item of queue) {
       this.mockApi.post(item.body).subscribe({
         next: () => {
+          const draft = item.body as AnswerDraft;
+          this.draftStore.save({ ...draft, isSynced: true, syncStatus: 'synced' });
           this.offlineQueue.remove(item.id);
-          delay = 300;
+          if (this.offlineQueue.getQueue().length === 0) {
+            this.connectionStatus.set('online');
+            this.saveStatus.set('saved');
+          }
         },
         error: () => {
           this.offlineQueue.incrementRetry(item.id);
-          delay = Math.min(delay * 2, 5000);
         }
       });
-    }
-
-    if (this.offlineQueue.getQueue().length === 0) {
-      this.connectionStatus.set('online');
-      this.saveStatus.set('saved');
-    } else {
-      setTimeout(() => this.syncQueuedAnswers(), delay);
     }
   }
 
