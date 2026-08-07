@@ -247,7 +247,8 @@ export class GradingFacade {
   }
 
   getQuestionType(questionId: number): QuestionType {
-    return this.questionTypeOverrides[questionId] ?? QuestionType.MULTIPLE_CHOICE;
+    const question = this.questionsSignal().find(q => q.id === questionId);
+    return question?.type ?? QuestionType.MULTIPLE_CHOICE;
   }
 
   getRubric(questionId: number): Observable<Rubric | undefined> {
