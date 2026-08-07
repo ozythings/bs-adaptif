@@ -9,30 +9,35 @@ import { LearningOutcome } from '@core/models/learning-outcome.model';
   imports: [CommonModule],
   template: `
     @defer (on viewport) {
-      <div class="overflow-hidden border border-gray-200 rounded-lg">
+      <div class="bg-white border border-gray-200">
         <div class="overflow-x-auto">
-          <table class="w-full text-sm border-collapse">
+          <table class="w-full text-sm border-separate border-spacing-0">
             <thead>
               <tr class="border-b border-gray-200 bg-gray-50">
-                <th class="text-left py-2.5 px-3 font-semibold text-gray-700 text-xs uppercase tracking-wide sticky left-0 bg-gray-50 z-10">Kod</th>
-                <th class="text-left py-2.5 px-3 font-semibold text-gray-700 text-xs uppercase tracking-wide sticky left-[72px] bg-gray-50 z-10">Kazanım</th>
-                <th class="text-center py-2.5 px-3 font-semibold text-gray-700 text-xs uppercase tracking-wide bg-green-50">Kolay</th>
-                <th class="text-center py-2.5 px-3 font-semibold text-gray-700 text-xs uppercase tracking-wide bg-yellow-50">Orta</th>
-                <th class="text-center py-2.5 px-3 font-semibold text-gray-700 text-xs uppercase tracking-wide bg-red-50">Zor</th>
+                <th class="text-left py-2.5 px-3 font-semibold text-gray-700 text-xs uppercase tracking-wide relative md:sticky md:left-0 md:z-10 md:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]"
+                    style="background-color: #f9fafb;">Kod</th>
+                <th class="text-left py-2.5 px-3 font-semibold text-gray-700 text-xs uppercase tracking-wide relative md:sticky md:left-[72px] md:z-10 md:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]"
+                    style="background-color: #f9fafb;">Kazanım</th>
+                <th class="text-center py-2.5 px-3 font-semibold text-xs uppercase tracking-wide text-white" style="background: #22c55e">Kolay</th>
+                <th class="text-center py-2.5 px-3 font-semibold text-xs uppercase tracking-wide text-white" style="background: #f59e0b">Orta</th>
+                <th class="text-center py-2.5 px-3 font-semibold text-xs uppercase tracking-wide text-white" style="background: #ef4444">Zor</th>
                 <th class="text-center py-2.5 px-3 font-semibold text-gray-700 text-xs uppercase tracking-wide">Puan</th>
               </tr>
             </thead>
             <tbody>
-              @for (outcome of outcomes(); track outcome.id; let last = $last) {
+              @for (outcome of outcomes(); track outcome.id; let odd = $odd; let last = $last) {
                 @let score = scoreMap().get(outcome.id);
                 @let bd = score?.difficultyBreakdown;
-                <tr [class.border-b]="!last" class="border-gray-100 hover:bg-gray-50/50">
-                  <td class="py-2 px-3 sticky left-0 bg-white z-10">
+                <tr [class.border-b]="!last" class="border-gray-100 hover:bg-gray-50/50"
+                    [style.background-color]="odd ? '#f9fafb' : '#ffffff'">
+                  <td class="py-2 px-3 relative md:sticky md:left-0 md:z-10 md:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
+                      style="background-color: inherit">
                     <span class="font-mono text-xs font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
                       {{ outcome.code }}
                     </span>
                   </td>
-                  <td class="py-2 px-3 text-gray-700 text-xs sticky left-[72px] bg-white z-10 max-w-[180px] truncate" [title]="outcome.name">
+                  <td class="py-2 px-3 text-gray-700 text-xs relative md:sticky md:left-[72px] md:z-10 max-w-[180px] truncate md:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
+                      style="background-color: inherit" [title]="outcome.name">
                     {{ outcome.name }}
                   </td>
                   @if (bd) {
@@ -92,7 +97,7 @@ import { LearningOutcome } from '@core/models/learning-outcome.model';
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="6" class="text-center py-10 text-gray-400">
+                  <td colspan="6" class="text-center py-10 text-gray-400" style="background-color: #ffffff">
                     <div class="flex flex-col items-center gap-1">
                       <span class="text-lg">📋</span>
                       <span class="text-sm">Henüz kazanım bulunmuyor</span>

@@ -1,286 +1,138 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MatTableModule } from '@angular/material/table';
-import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
 import { UserRole } from '@core/models/enums';
+import { PERMISSION_CATEGORIES, ROLE_LABELS, ROLE_PERMISSIONS } from '@core/auth/permission-constants';
 
-interface PermissionCategory {
-  key: string;
-  label: string;
-  permissions: { key: string; label: string }[];
-}
-
-interface RolePermission {
-  role: UserRole;
-  label: string;
-  permissions: Record<string, boolean>;
-}
-
-const PERMISSION_CATEGORIES: PermissionCategory[] = [
-  {
-    key: 'course',
-    label: 'Kurs',
-    permissions: [
-      { key: 'course_create', label: 'Oluştur' },
-      { key: 'course_read', label: 'Görüntüle' },
-      { key: 'course_update', label: 'Güncelle' },
-      { key: 'course_delete', label: 'Sil' },
-      { key: 'course_publish', label: 'Yayınla' },
-    ],
-  },
-  {
-    key: 'exam',
-    label: 'Sınav',
-    permissions: [
-      { key: 'exam_create', label: 'Oluştur' },
-      { key: 'exam_read', label: 'Görüntüle' },
-      { key: 'exam_update', label: 'Güncelle' },
-      { key: 'exam_delete', label: 'Sil' },
-      { key: 'exam_publish', label: 'Yayınla' },
-    ],
-  },
-  {
-    key: 'question',
-    label: 'Soru',
-    permissions: [
-      { key: 'question_create', label: 'Oluştur' },
-      { key: 'question_read', label: 'Görüntüle' },
-      { key: 'question_update', label: 'Güncelle' },
-      { key: 'question_delete', label: 'Sil' },
-      { key: 'question_publish', label: 'Yayınla' },
-    ],
-  },
-  {
-    key: 'grading',
-    label: 'Notlandırma',
-    permissions: [
-      { key: 'grading_read', label: 'Görüntüle' },
-      { key: 'grading_grade', label: 'Not Ver' },
-      { key: 'grading_override', label: 'Geçersiz Kıl' },
-    ],
-  },
-  {
-    key: 'analytics',
-    label: 'Analitik',
-    permissions: [{ key: 'analytics_read', label: 'Görüntüle' }],
-  },
-  {
-    key: 'cohort',
-    label: 'Kohort',
-    permissions: [
-      { key: 'cohort_create', label: 'Oluştur' },
-      { key: 'cohort_read', label: 'Görüntüle' },
-      { key: 'cohort_update', label: 'Güncelle' },
-      { key: 'cohort_delete', label: 'Sil' },
-    ],
-  },
-  {
-    key: 'outcome',
-    label: 'Kazanım',
-    permissions: [
-      { key: 'outcome_create', label: 'Oluştur' },
-      { key: 'outcome_read', label: 'Görüntüle' },
-      { key: 'outcome_update', label: 'Güncelle' },
-      { key: 'outcome_delete', label: 'Sil' },
-    ],
-  },
-  {
-    key: 'audit',
-    label: 'Denetim',
-    permissions: [{ key: 'audit_read', label: 'Görüntüle' }],
-  },
-  {
-    key: 'system',
-    label: 'Sistem',
-    permissions: [
-      { key: 'system_manage_roles', label: 'Rolleri Yönet' },
-      { key: 'system_manage_terms', label: 'Dönemleri Yönet' },
-      { key: 'system_manage_parameters', label: 'Parametreleri Yönet' },
-    ],
-  },
-];
-
-const ROLE_LABELS: Record<UserRole, string> = {
-  [UserRole.PLATFORM_ADMIN]: 'Platform Yöneticisi',
-  [UserRole.PROGRAM_MANAGER]: 'Program Yöneticisi',
-  [UserRole.INSTRUCTOR]: 'Eğitmen',
-  [UserRole.ASSESSMENT_SPECIALIST]: 'Ölçme Uzmanı',
-  [UserRole.OBSERVER]: 'Gözlemci',
-  [UserRole.STUDENT]: 'Öğrenci',
+const ROLE_BADGE_CLASSES: Record<UserRole, string> = {
+  [UserRole.PLATFORM_ADMIN]: 'bg-red-100 text-red-700',
+  [UserRole.PROGRAM_MANAGER]: 'bg-amber-100 text-amber-700',
+  [UserRole.INSTRUCTOR]: 'bg-blue-100 text-blue-700',
+  [UserRole.ASSESSMENT_SPECIALIST]: 'bg-purple-100 text-purple-700',
+  [UserRole.OBSERVER]: 'bg-gray-100 text-gray-700',
+  [UserRole.STUDENT]: 'bg-green-100 text-green-700',
 };
 
-const ROLE_PERMISSIONS: RolePermission[] = [
-  {
-    role: UserRole.PLATFORM_ADMIN,
-    label: 'Platform Yöneticisi',
-    permissions: {
-      course_create: true, course_read: true, course_update: true, course_delete: true, course_publish: true,
-      exam_create: true, exam_read: true, exam_update: true, exam_delete: true, exam_publish: true,
-      question_create: true, question_read: true, question_update: true, question_delete: true, question_publish: true,
-      grading_read: true, grading_grade: true, grading_override: true,
-      analytics_read: true,
-      cohort_create: true, cohort_read: true, cohort_update: true, cohort_delete: true,
-      outcome_create: true, outcome_read: true, outcome_update: true, outcome_delete: true,
-      audit_read: true,
-      system_manage_roles: true, system_manage_terms: true, system_manage_parameters: true,
-    },
-  },
-  {
-    role: UserRole.PROGRAM_MANAGER,
-    label: 'Program Yöneticisi',
-    permissions: {
-      course_create: true, course_read: true, course_update: true, course_delete: false, course_publish: true,
-      exam_create: true, exam_read: true, exam_update: true, exam_delete: false, exam_publish: true,
-      question_create: false, question_read: true, question_update: false, question_delete: false, question_publish: false,
-      grading_read: true, grading_grade: false, grading_override: false,
-      analytics_read: true,
-      cohort_create: true, cohort_read: true, cohort_update: true, cohort_delete: true,
-      outcome_create: true, outcome_read: true, outcome_update: true, outcome_delete: true,
-      audit_read: false,
-      system_manage_roles: false, system_manage_terms: false, system_manage_parameters: false,
-    },
-  },
-  {
-    role: UserRole.INSTRUCTOR,
-    label: 'Eğitmen',
-    permissions: {
-      course_create: false, course_read: true, course_update: true, course_delete: false, course_publish: false,
-      exam_create: true, exam_read: true, exam_update: true, exam_delete: false, exam_publish: true,
-      question_create: true, question_read: true, question_update: true, question_delete: false, question_publish: true,
-      grading_read: true, grading_grade: true, grading_override: false,
-      analytics_read: true,
-      cohort_create: false, cohort_read: true, cohort_update: false, cohort_delete: false,
-      outcome_create: false, outcome_read: true, outcome_update: false, outcome_delete: false,
-      audit_read: false,
-      system_manage_roles: false, system_manage_terms: false, system_manage_parameters: false,
-    },
-  },
-  {
-    role: UserRole.ASSESSMENT_SPECIALIST,
-    label: 'Ölçme Uzmanı',
-    permissions: {
-      course_create: false, course_read: true, course_update: false, course_delete: false, course_publish: false,
-      exam_create: true, exam_read: true, exam_update: true, exam_delete: false, exam_publish: true,
-      question_create: true, question_read: true, question_update: true, question_delete: false, question_publish: true,
-      grading_read: true, grading_grade: true, grading_override: true,
-      analytics_read: true,
-      cohort_create: false, cohort_read: true, cohort_update: false, cohort_delete: false,
-      outcome_create: false, outcome_read: true, outcome_update: false, outcome_delete: false,
-      audit_read: false,
-      system_manage_roles: false, system_manage_terms: false, system_manage_parameters: false,
-    },
-  },
-  {
-    role: UserRole.OBSERVER,
-    label: 'Gözlemci',
-    permissions: {
-      course_create: false, course_read: true, course_update: false, course_delete: false, course_publish: false,
-      exam_create: false, exam_read: true, exam_update: false, exam_delete: false, exam_publish: false,
-      question_create: false, question_read: true, question_update: false, question_delete: false, question_publish: false,
-      grading_read: true, grading_grade: false, grading_override: false,
-      analytics_read: true,
-      cohort_create: false, cohort_read: true, cohort_update: false, cohort_delete: false,
-      outcome_create: false, outcome_read: true, outcome_update: false, outcome_delete: false,
-      audit_read: false,
-      system_manage_roles: false, system_manage_terms: false, system_manage_parameters: false,
-    },
-  },
-  {
-    role: UserRole.STUDENT,
-    label: 'Öğrenci',
-    permissions: {
-      course_create: false, course_read: true, course_update: false, course_delete: false, course_publish: false,
-      exam_create: false, exam_read: true, exam_update: false, exam_delete: false, exam_publish: false,
-      question_create: false, question_read: false, question_update: false, question_delete: false, question_publish: false,
-      grading_read: false, grading_grade: false, grading_override: false,
-      analytics_read: false,
-      cohort_create: false, cohort_read: false, cohort_update: false, cohort_delete: false,
-      outcome_create: false, outcome_read: false, outcome_update: false, outcome_delete: false,
-      audit_read: false,
-      system_manage_roles: false, system_manage_terms: false, system_manage_parameters: false,
-    },
-  },
-];
+const CATEGORY_BORDER_COLORS: Record<string, string> = {
+  course: 'border-blue-300',
+  exam: 'border-orange-300',
+  question: 'border-indigo-300',
+  grading: 'border-amber-300',
+  analytics: 'border-teal-300',
+  cohort: 'border-purple-300',
+  outcome: 'border-emerald-300',
+  audit: 'border-red-300',
+  system: 'border-slate-300',
+  student: 'border-cyan-300',
+};
 
 const FLAT_PERMISSIONS = PERMISSION_CATEGORIES.flatMap(cat =>
-  cat.permissions.map(p => ({ ...p, categoryKey: cat.key, categoryLabel: () => cat.label }))
+  cat.permissions.map(p => ({
+    ...p,
+    categoryKey: cat.key,
+    categoryLabel: cat.label,
+    categoryBorder: CATEGORY_BORDER_COLORS[cat.key] || 'border-gray-300',
+  }))
 );
 
-const DISPLAYED_COLUMNS = ['role', ...FLAT_PERMISSIONS.map(p => p.key)];
+const ROLE_PERMISSIONS_TABLE = (Object.keys(ROLE_PERMISSIONS) as UserRole[]).map(role => ({
+  role,
+  label: ROLE_LABELS[role],
+  badgeClass: ROLE_BADGE_CLASSES[role] || 'bg-gray-100 text-gray-700',
+  permissions: ROLE_PERMISSIONS[role],
+}));
+
+const CATEGORY_START_KEYS = new Set(
+  PERMISSION_CATEGORIES.map(cat => cat.permissions[0]?.key).filter(Boolean)
+);
 
 @Component({
   selector: 'app-role-permission-list',
   standalone: true,
-  imports: [CommonModule, MatTableModule, MatCardModule, MatIconModule, MatButtonModule],
+  imports: [CommonModule, MatIconModule],
   template: `
     <div class="space-y-4">
       <h1 class="text-2xl font-bold text-gray-900">Roller ve İzinler</h1>
 
-      <mat-card class="overflow-x-auto">
-        <div class="p-4">
-          <table mat-table [dataSource]="rolePermissions" class="w-full">
-            <ng-container matColumnDef="role">
-              <th mat-header-cell *matHeaderCellDef class="bg-gray-50 font-semibold whitespace-nowrap sticky left-0 z-10 bg-gray-50">Rol</th>
-              <td mat-cell *matCellDef="let rp" class="font-medium whitespace-nowrap sticky left-0 bg-white z-10">{{ rp.label }}</td>
-            </ng-container>
-
-            @for (perm of flatPermissions; track perm.key) {
-              <ng-container [matColumnDef]="perm.key">
-                <th mat-header-cell *matHeaderCellDef class="text-center bg-gray-50 whitespace-nowrap text-xs"
-                  [class.border-l-2]="isCategoryStart(perm)">
-                  <span class="block text-[10px] text-gray-400 font-normal">{{ perm.categoryLabel() }}</span>
-                  {{ perm.label }}
+      <div class="bg-white rounded-xl shadow-sm border-l-4 border-blue-500 hover:shadow-md transition-shadow">
+        <div class="p-4 overflow-x-auto">
+          <table class="w-full text-sm border-separate border-spacing-0 min-w-[800px]">
+            <thead>
+              <tr>
+                <th class="text-left py-2.5 px-3 font-semibold text-gray-700 text-xs uppercase tracking-wide relative md:sticky md:left-0 md:z-20 border-r border-gray-200 min-w-[160px] md:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.15)]"
+                    style="background-color: #f9fafb;">
+                  Rol
                 </th>
-                <td mat-cell *matCellDef="let rp" class="text-center"
-                  [class.border-l-2]="isCategoryStart(perm)">
-                  @if (rp.permissions[perm.key]) {
-                    <mat-icon class="text-green-600">check_circle</mat-icon>
-                  } @else {
-                    <mat-icon class="text-gray-300">cancel</mat-icon>
+                @for (perm of flatPermissions; track perm.key) {
+                  <th class="text-center py-2.5 px-2 font-semibold text-xs uppercase tracking-wide bg-gray-50 whitespace-nowrap"
+                    [class]="perm.categoryBorder"
+                    [class.border-l-2]="isCategoryStart(perm)">
+                    <span class="block text-[10px] text-gray-400 font-normal mb-0.5">{{ perm.categoryLabel }}</span>
+                    <span class="font-medium text-gray-600">{{ perm.label }}</span>
+                  </th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (rp of rolePermissions; track rp.role; let odd = $odd) {
+                <tr [class.bg-gray-50/30]="odd" class="border-t border-gray-100">
+                  <td class="py-2.5 px-3 whitespace-nowrap relative md:sticky md:left-0 md:z-10 border-r border-gray-100 md:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
+                      [style.background-color]="odd ? '#f9fafb' : '#ffffff'">
+                    <span class="inline-block px-2 py-0.5 rounded text-xs font-medium" [class]="rp.badgeClass">
+                      {{ rp.label }}
+                    </span>
+                  </td>
+                  @for (perm of flatPermissions; track perm.key) {
+                    <td class="py-2.5 px-2 text-center transition-colors hover:bg-blue-50/50"
+                      [class]="perm.categoryBorder"
+                      [class.border-l-2]="isCategoryStart(perm)">
+                      @if (rp.permissions[perm.key]) {
+                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-50">
+                          <mat-icon class="text-green-600 text-base leading-none">check_circle</mat-icon>
+                        </span>
+                      } @else {
+                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50">
+                          <mat-icon class="text-gray-300 text-base leading-none">cancel</mat-icon>
+                        </span>
+                      }
+                    </td>
                   }
-                </td>
-              </ng-container>
-            }
-
-            <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+                </tr>
+              }
+            </tbody>
           </table>
         </div>
-      </mat-card>
+      </div>
 
-      <mat-card class="p-4">
-        <div class="flex items-center gap-6 text-sm text-gray-500">
-          <div class="flex items-center gap-1.5">
-            <mat-icon class="text-green-600 text-base">check_circle</mat-icon>
-            <span>İzin Var</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <mat-icon class="text-gray-300 text-base">cancel</mat-icon>
-            <span>İzin Yok</span>
-          </div>
+      <div class="bg-white rounded-xl shadow-sm p-4 flex flex-wrap items-center gap-6 text-sm">
+        <span class="font-medium text-gray-700">Gösterge:</span>
+        <div class="flex items-center gap-1.5">
+          <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-50">
+            <mat-icon class="text-green-600 text-sm leading-none">check_circle</mat-icon>
+          </span>
+          <span class="text-gray-600">İzin Var</span>
         </div>
-      </mat-card>
+        <div class="flex items-center gap-1.5">
+          <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-50">
+            <mat-icon class="text-gray-300 text-sm leading-none">cancel</mat-icon>
+          </span>
+          <span class="text-gray-600">İzin Yok</span>
+        </div>
+        <div class="h-4 w-px bg-gray-200"></div>
+        @for (rp of rolePermissions; track rp.role) {
+          <span class="inline-block px-1.5 py-0.5 rounded text-[10px] font-medium" [class]="rp.badgeClass">
+            {{ rp.label }}
+          </span>
+        }
+      </div>
     </div>
   `
 })
 export class RolePermissionListComponent {
-  rolePermissions = ROLE_PERMISSIONS;
+  rolePermissions = ROLE_PERMISSIONS_TABLE;
   flatPermissions = FLAT_PERMISSIONS;
-  displayedColumns = DISPLAYED_COLUMNS;
 
-  lastCategoryKeys = new Set<string>();
-
-  constructor() {
-    const cats = PERMISSION_CATEGORIES;
-    this.lastCategoryKeys = new Set(
-      cats.map(c => c.permissions[c.permissions.length - 1].key)
-    );
-  }
-
-  isCategoryStart(perm: { key: string; categoryKey: string }): boolean {
-    const cat = PERMISSION_CATEGORIES.find(c => c.key === perm.categoryKey);
-    return cat ? cat.permissions[0].key === perm.key : false;
+  isCategoryStart(perm: { key: string }): boolean {
+    return CATEGORY_START_KEYS.has(perm.key);
   }
 }
