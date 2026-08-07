@@ -199,8 +199,8 @@ export function generateSeeds() {
     questionVersionIds: null,
     startDate: s.startDate,
     endDate: s.endDate,
-    createdAt: '2026-03-15T10:00:00Z',
-    updatedAt: s.status === ExamStatus.ARCHIVED ? '2026-04-20T17:00:00Z' : '2026-03-15T10:00:00Z',
+    createdAt: '2026-08-01T10:00:00Z',
+    updatedAt: s.status === ExamStatus.ARCHIVED ? '2026-08-12T17:00:00Z' : '2026-08-01T10:00:00Z',
   }));
 
   const blueprints: ExamBlueprint[] = BLUEPRINT_SPECS.map((s, i) => {
