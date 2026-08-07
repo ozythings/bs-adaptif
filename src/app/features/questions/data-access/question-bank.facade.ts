@@ -66,13 +66,30 @@ export class QuestionBankFacade {
   private audit = inject(AuditService);
   private currentUser = inject(CurrentUserService);
   private permission = inject(PermissionService);
+  private storage = inject(StorageService);
 
-  private questionsSeed = signal<QuestionSummary[]>(QUESTIONS_SEED.map(mapOldToSummary));
-  private versionsSeed = signal<QuestionVersion[]>(QUESTIONS_SEED.map(mapOldToVersion));
-  private questionExamMap = new Map<number, number>(QUESTIONS_SEED.map(q => [q.id, q.examId]));
+  private readonly QUESTIONS_KEY = 'qb_questions';
+  private readonly VERSIONS_KEY = 'qb_versions';
+  private readonly MAP_KEY = 'qb_exam_map';
 
-  private nextId = Math.max(...QUESTIONS_SEED.map(q => q.id)) + 1;
-  private nextVersionId = Math.max(...QUESTIONS_SEED.map(q => q.id)) + 1000;
+  private questionsSeed = signal<QuestionSummary[]>(
+    this.storage.get<QuestionSummary[]>(this.QUESTIONS_KEY) ?? QUESTIONS_SEED.map(mapOldToSummary)
+  );
+  private versionsSeed = signal<QuestionVersion[]>(
+    this.storage.get<QuestionVersion[]>(this.VERSIONS_KEY) ?? QUESTIONS_SEED.map(mapOldToVersion)
+  );
+  private questionExamMap = new Map<number, number>(
+    this.storage.get<[number, number][]>(this.MAP_KEY) ?? QUESTIONS_SEED.map(q => [q.id, q.examId])
+  );
+
+  private nextId = Math.max(...this.questionsSeed().map(q => q.id), ...QUESTIONS_SEED.map(q => q.id)) + 1;
+  private nextVersionId = Math.max(...this.versionsSeed().map(v => v.id), ...QUESTIONS_SEED.map(q => q.id)) + 1000;
+
+  private saveState(): void {
+    this.storage.set(this.QUESTIONS_KEY, this.questionsSeed());
+    this.storage.set(this.VERSIONS_KEY, this.versionsSeed());
+    this.storage.set(this.MAP_KEY, [...this.questionExamMap.entries()]);
+  }
 
   getAll(): Observable<QuestionSummary[]> {
     return this.mockApi.get([...this.questionsSeed()]);
@@ -145,6 +162,7 @@ export class QuestionBankFacade {
     };
     this.questionsSeed.update(list => [...list, summary]);
     this.versionsSeed.update(list => [...list, version]);
+    this.saveState();
     this.audit.log({ action: AuditAction.CREATE, entity: 'Question', entityId: id, description: 'Soru oluşturuldu: ' + data.stem, newValue: summary });
     this.notification.show('Soru oluşturuldu', 'success');
     return this.mockApi.post(summary);
@@ -216,6 +234,7 @@ export class QuestionBankFacade {
           tags: newVersion.tags,
         } : q
       ));
+      this.saveState();
       this.audit.log({ action: AuditAction.UPDATE, entity: 'Question', entityId: id, description: 'Yeni versiyon oluşturuldu', oldValue: existing, newValue: data });
       this.notification.show('Yeni versiyon oluşturuldu', 'success');
       return this.mockApi.get(this.questionsSeed().find(q => q.id === id));
@@ -244,6 +263,7 @@ export class QuestionBankFacade {
       };
       this.versionsSeed.update(list => list.map(v => v.id === existing.latestVersionId ? updatedVersion : v));
     }
+    this.saveState();
 
     this.audit.log({ action: AuditAction.UPDATE, entity: 'Question', entityId: id, description: 'Soru güncellendi', oldValue: existing, newValue: updated });
     this.notification.show('Soru güncellendi', 'success');
@@ -274,6 +294,7 @@ export class QuestionBankFacade {
     this.questionsSeed.update(list => list.filter(q => q.id !== id));
     this.versionsSeed.update(list => list.filter(v => v.questionId !== id));
     this.questionExamMap.delete(id);
+    this.saveState();
     this.notification.show('Soru silindi', 'success');
     return this.mockApi.delete(true);
   }
@@ -304,6 +325,7 @@ export class QuestionBankFacade {
           : v
       ));
     }
+    this.saveState();
 
     this.audit.log({ action: AuditAction.PUBLISH, entity: 'Question', entityId: id, description: 'Soru yayınlandı: ' + existing.stem, oldValue: existing, newValue: updated });
     this.notification.show('Soru yayınlandı', 'success');
@@ -333,6 +355,7 @@ export class QuestionBankFacade {
         : q
       )
     );
+    this.saveState();
 
     this.notification.show(`v${target.version} versiyonuna dönüldü`, 'success');
   }
