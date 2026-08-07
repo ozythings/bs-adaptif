@@ -327,54 +327,57 @@ export function generateSeeds() {
       durationMinutes: 60,
       timeRemainingSeconds: 2400,
       status: SessionStatus.ACTIVE,
-      questionOrder: [1, 2, 3, 4, 11, 12],
+      questionOrder: [1, 2, 3, 4, 5, 6, 7],
       currentQuestionIndex: 2,
       markedQuestions: [1],
       connectionStatus: 'online',
       version: 1,
       questionVersionIds: null,
-      questionSnapshots: questions.slice(0, 4),
+      questionSnapshots: questions.filter(q => q.examId === 1),
       createdAt: now,
       updatedAt: now,
     },
   ];
 
   // attempts (same as existing for compatibility)
+  // Attempt 100 — exam 4 (Tailwind CSS): questions 14, 15
   const Q1: QuestionResponse[] = [
-    { questionId: 5, answer: '1', isCorrect: true, autoScore: 5, maxScore: 5 },
-    { questionId: 6, answer: '1', isCorrect: true, autoScore: 10, maxScore: 10 },
-    { questionId: 15, answer: '1', isCorrect: false, autoScore: 0, maxScore: 10 },
-    { questionId: 16, answer: '0', isCorrect: true, autoScore: 5, maxScore: 5 },
-  ];
-  const Q2: QuestionResponse[] = [
-    { questionId: 13, answer: '0', isCorrect: true, autoScore: 10, maxScore: 10 },
     { questionId: 14, answer: '0', isCorrect: true, autoScore: 5, maxScore: 5 },
+    { questionId: 15, answer: '1', isCorrect: false, autoScore: 0, maxScore: 5 },
   ];
+  // Attempt 101 — exam 3 (TypeScript): questions 10, 11, 12, 13
+  const Q2: QuestionResponse[] = [
+    { questionId: 10, answer: '1', isCorrect: true, autoScore: 5, maxScore: 5 },
+    { questionId: 11, answer: '1', isCorrect: true, autoScore: 10, maxScore: 10 },
+    { questionId: 12, answer: '1', isCorrect: false, autoScore: 0, maxScore: 10 },
+    { questionId: 13, answer: '0', isCorrect: true, autoScore: 5, maxScore: 5 },
+  ];
+  // Attempt 102 — exam 2 (RxJS): questions 8, 9
   const Q3: QuestionResponse[] = [
-    { questionId: 1, answer: '1', isCorrect: true, autoScore: 5, maxScore: 5 },
-    { questionId: 2, answer: '1', isCorrect: true, autoScore: 5, maxScore: 5 },
-    { questionId: 3, answer: '0', isCorrect: true, autoScore: 10, maxScore: 10 },
-    { questionId: 4, answer: '2', isCorrect: false, autoScore: 0, maxScore: 15 },
-    { questionId: 11, answer: '0', isCorrect: true, autoScore: 5, maxScore: 5 },
-    { questionId: 12, answer: '0', isCorrect: true, autoScore: 10, maxScore: 10 },
+    { questionId: 8, answer: '0', isCorrect: true, autoScore: 10, maxScore: 10 },
+    { questionId: 9, answer: '0', isCorrect: true, autoScore: 5, maxScore: 5 },
   ];
 
   const attempts: Attempt[] = [
-    { id: 100, examId: 4, sessionToken: 'sess_102_ghi789', studentId: 5, startedAt: '2026-06-01T09:00:00Z', submittedAt: '2026-06-01T10:10:00Z', status: ResultStatus.FINALIZED, questionResponses: Q1, totalScore: 20, maxScore: 30, scorePercentage: 66.67, gradingCompletedAt: '2026-06-01T10:15:00Z', version: 1, createdAt: '2026-06-01T09:00:00Z', updatedAt: '2026-06-01T10:15:00Z' },
-    { id: 101, examId: 3, sessionToken: 'sess_101_def456', studentId: 3, startedAt: '2026-07-15T14:00:00Z', submittedAt: '2026-07-15T14:40:00Z', status: ResultStatus.FINALIZED, questionResponses: Q2, totalScore: 15, maxScore: 15, scorePercentage: 100, gradingCompletedAt: '2026-07-15T14:45:00Z', version: 1, createdAt: '2026-07-15T14:00:00Z', updatedAt: '2026-07-15T14:45:00Z' },
-    { id: 102, examId: 2, sessionToken: 'sess_100_abc123', studentId: 4, startedAt: '2026-07-20T10:00:00Z', status: ResultStatus.DRAFT, questionResponses: Q3, totalScore: 35, maxScore: 50, scorePercentage: 70, version: 1, createdAt: '2026-07-20T10:00:00Z', updatedAt: '2026-07-20T10:50:00Z' },
-    { id: 103, examId: 5, sessionToken: 'sess_104_mno345', studentId: 7, startedAt: '2026-08-01T13:00:00Z', status: ResultStatus.DRAFT, questionResponses: [
-      { questionId: 7, answer: '0', isCorrect: true, autoScore: 5, maxScore: 5 },
-      { questionId: 8, answer: '0', isCorrect: true, autoScore: 10, maxScore: 10 },
-    ], totalScore: 15, maxScore: 15, scorePercentage: 100, version: 1, createdAt: '2026-08-01T13:00:00Z', updatedAt: '2026-08-01T13:25:00Z' },
-    { id: 104, examId: 2, sessionToken: 'sess_103_jkl012', studentId: 2, startedAt: '2026-08-03T11:00:00Z', status: ResultStatus.DRAFT, questionResponses: [
-      { questionId: 1, answer: '1', isCorrect: true, autoScore: 5, maxScore: 5 },
-      { questionId: 2, answer: '', isCorrect: false, autoScore: 0, maxScore: 5 },
-    ], totalScore: 5, maxScore: 50, scorePercentage: 10, version: 1, createdAt: '2026-08-03T11:00:00Z', updatedAt: '2026-08-03T11:00:00Z' },
-    { id: 105, examId: 7, sessionToken: 'sess_105_pqr678', studentId: 1, startedAt: '2026-08-05T09:00:00Z', status: ResultStatus.DRAFT, questionResponses: [
-      { questionId: 9, answer: '0', isCorrect: true, autoScore: 10, maxScore: 10 },
-      { questionId: 10, answer: '', isCorrect: false, autoScore: 0, maxScore: 5 },
-    ], totalScore: 10, maxScore: 40, scorePercentage: 25, version: 1, createdAt: '2026-08-05T09:00:00Z', updatedAt: '2026-08-05T09:00:00Z' },
+    { id: 100, examId: 4, sessionToken: 'sess_102_ghi789', studentId: 5, startedAt: '2026-08-06T09:00:00Z', submittedAt: '2026-08-06T09:40:00Z', status: ResultStatus.FINALIZED, questionResponses: Q1, totalScore: 5, maxScore: 10, scorePercentage: 50, gradingCompletedAt: '2026-08-06T09:45:00Z', version: 1, createdAt: '2026-08-06T09:00:00Z', updatedAt: '2026-08-06T09:45:00Z' },
+    { id: 101, examId: 3, sessionToken: 'sess_101_def456', studentId: 3, startedAt: '2026-08-05T14:00:00Z', submittedAt: '2026-08-05T14:40:00Z', status: ResultStatus.FINALIZED, questionResponses: Q2, totalScore: 20, maxScore: 30, scorePercentage: 66.67, gradingCompletedAt: '2026-08-05T14:45:00Z', version: 1, createdAt: '2026-08-05T14:00:00Z', updatedAt: '2026-08-05T14:45:00Z' },
+    { id: 102, examId: 2, sessionToken: 'sess_100_abc123', studentId: 4, startedAt: '2026-08-06T10:00:00Z', submittedAt: '2026-08-06T10:30:00Z', status: ResultStatus.FINALIZED, questionResponses: Q3, totalScore: 15, maxScore: 15, scorePercentage: 100, gradingCompletedAt: '2026-08-06T10:35:00Z', version: 1, createdAt: '2026-08-06T10:00:00Z', updatedAt: '2026-08-06T10:35:00Z' },
+    { id: 103, examId: 5, sessionToken: 'sess_104_mno345', studentId: 7, startedAt: '2026-08-04T13:00:00Z', submittedAt: '2026-08-04T13:50:00Z', status: ResultStatus.FINALIZED, questionResponses: [
+      { questionId: 16, answer: '0', isCorrect: true, autoScore: 5, maxScore: 5 },
+      { questionId: 17, answer: '0', isCorrect: true, autoScore: 10, maxScore: 10 },
+      { questionId: 18, answer: '1', isCorrect: false, autoScore: 0, maxScore: 5 },
+      { questionId: 19, answer: '0', isCorrect: true, autoScore: 10, maxScore: 10 },
+    ], totalScore: 25, maxScore: 30, scorePercentage: 83.33, gradingCompletedAt: '2026-08-04T13:55:00Z', version: 1, createdAt: '2026-08-04T13:00:00Z', updatedAt: '2026-08-04T13:55:00Z' },
+    { id: 104, examId: 7, sessionToken: 'sess_103_jkl012', studentId: 2, startedAt: '2026-08-05T11:00:00Z', status: ResultStatus.DRAFT, questionResponses: [
+      { questionId: 24, answer: '0', isCorrect: true, autoScore: 5, maxScore: 5 },
+      { questionId: 25, answer: '', isCorrect: false, autoScore: 0, maxScore: 10 },
+    ], totalScore: 5, maxScore: 15, scorePercentage: 33.33, version: 1, createdAt: '2026-08-05T11:00:00Z', updatedAt: '2026-08-05T11:00:00Z' },
+    { id: 105, examId: 6, sessionToken: 'sess_105_pqr678', studentId: 1, startedAt: '2026-08-06T09:00:00Z', status: ResultStatus.DRAFT, questionResponses: [
+      { questionId: 20, answer: '0', isCorrect: true, autoScore: 10, maxScore: 10 },
+      { questionId: 21, answer: '0', isCorrect: true, autoScore: 5, maxScore: 5 },
+      { questionId: 22, answer: '', isCorrect: false, autoScore: 0, maxScore: 5 },
+      { questionId: 23, answer: '1', isCorrect: false, autoScore: 0, maxScore: 10 },
+    ], totalScore: 15, maxScore: 30, scorePercentage: 50, version: 1, createdAt: '2026-08-06T09:00:00Z', updatedAt: '2026-08-06T09:00:00Z' },
   ];
 
   // mastery — lastAssessedAt around 05/08/26
@@ -517,12 +520,10 @@ export function generateSeeds() {
 
   // answer drafts
   const answerDrafts: AnswerDraft[] = [
-    { id: 100, sessionId: 100, questionId: 1, answer: '1', version: 3, isSynced: true, syncStatus: 'synced', lastSavedAt: '2026-07-20T10:05:00Z', createdAt: '2026-07-20T10:01:00Z', updatedAt: '2026-07-20T10:05:00Z' },
-    { id: 101, sessionId: 100, questionId: 2, answer: '1', version: 1, isSynced: true, syncStatus: 'synced', lastSavedAt: '2026-07-20T10:08:00Z', createdAt: '2026-07-20T10:08:00Z', updatedAt: '2026-07-20T10:08:00Z' },
-    { id: 102, sessionId: 100, questionId: 3, answer: '0', version: 2, isSynced: true, syncStatus: 'synced', lastSavedAt: '2026-07-20T10:15:00Z', createdAt: '2026-07-20T10:12:00Z', updatedAt: '2026-07-20T10:15:00Z' },
-    { id: 103, sessionId: 103, questionId: 1, answer: '1', version: 1, isSynced: true, syncStatus: 'synced', lastSavedAt: '2026-08-03T11:05:00Z', createdAt: '2026-08-03T11:05:00Z', updatedAt: '2026-08-03T11:05:00Z' },
-    { id: 104, sessionId: 103, questionId: 2, answer: '', version: 1, isSynced: false, syncStatus: 'pending', lastSavedAt: '2026-08-03T11:15:00Z', createdAt: '2026-08-03T11:10:00Z', updatedAt: '2026-08-03T11:15:00Z' },
-    { id: 105, sessionId: 100, questionId: 12, answer: '0', version: 1, isSynced: true, syncStatus: 'synced', lastSavedAt: '2026-07-20T10:20:00Z', createdAt: '2026-07-20T10:20:00Z', updatedAt: '2026-07-20T10:20:00Z' },
+    { id: 100, sessionId: 100, questionId: 14, answer: '0', version: 3, isSynced: true, syncStatus: 'synced', lastSavedAt: '2026-08-06T09:05:00Z', createdAt: '2026-08-06T09:01:00Z', updatedAt: '2026-08-06T09:05:00Z' },
+    { id: 101, sessionId: 100, questionId: 15, answer: '1', version: 1, isSynced: false, syncStatus: 'pending', lastSavedAt: '2026-08-06T09:08:00Z', createdAt: '2026-08-06T09:08:00Z', updatedAt: '2026-08-06T09:08:00Z' },
+    { id: 103, sessionId: 103, questionId: 24, answer: '0', version: 1, isSynced: true, syncStatus: 'synced', lastSavedAt: '2026-08-05T11:05:00Z', createdAt: '2026-08-05T11:05:00Z', updatedAt: '2026-08-05T11:05:00Z' },
+    { id: 104, sessionId: 103, questionId: 25, answer: '', version: 1, isSynced: false, syncStatus: 'pending', lastSavedAt: '2026-08-05T11:15:00Z', createdAt: '2026-08-05T11:10:00Z', updatedAt: '2026-08-05T11:15:00Z' },
   ];
 
   // audit log entries
