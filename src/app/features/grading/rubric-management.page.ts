@@ -1,6 +1,6 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule, FormBuilder, Validators, FormArray, FormGroup } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTableModule } from '@angular/material/table';
@@ -13,8 +13,11 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { Rubric, RubricCriterion, RubricStatus } from '@core/models/rubric.model';
 import { QuestionType } from '@core/models/enums';
+import { Question } from '@core/models/question.model';
+import { QUESTIONS_SEED } from '@core/data';
 import { GradingFacade } from './data-access/grading.facade';
 import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components';
 
@@ -22,11 +25,12 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
   selector: 'app-rubric-management',
   standalone: true,
   imports: [
-    CommonModule, ReactiveFormsModule, MatIconModule, MatButtonModule,
+    CommonModule, FormsModule, ReactiveFormsModule, MatIconModule, MatButtonModule,
     MatTableModule, MatCardModule, MatProgressSpinnerModule, MatDialogModule,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatChipsModule,
-    MatDividerModule, MatTooltipModule, ErrorStateComponent,
+    MatDividerModule, MatTooltipModule, MatAutocompleteModule, ErrorStateComponent,
   ],
+  encapsulation: ViewEncapsulation.None,
   template: `
     <div class="space-y-4">
       <div class="flex items-center justify-between">
@@ -89,11 +93,11 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
               <th mat-header-cell *matHeaderCellDef>Durum</th>
               <td mat-cell *matCellDef="let r">
                 <span class="px-2 py-1 rounded-full text-xs font-medium"
-                  [class.bg-green-100]="r.status === 'active'"
-                  [class.text-green-700]="r.status === 'active'"
-                  [class.bg-gray-100]="r.status !== 'active'"
-                  [class.text-gray-700]="r.status !== 'active'">
-                  {{ r.status === 'active' ? 'Aktif' : 'Pasif' }}
+                  [class.bg-green-100]="r.status === RubricStatus.ACTIVE"
+                  [class.text-green-700]="r.status === RubricStatus.ACTIVE"
+                  [class.bg-gray-100]="r.status !== RubricStatus.ACTIVE"
+                  [class.text-gray-700]="r.status !== RubricStatus.ACTIVE">
+                  {{ r.status === RubricStatus.ACTIVE ? 'Aktif' : 'Pasif' }}
                 </span>
               </td>
             </ng-container>
@@ -119,11 +123,10 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
       </div>
     </div>
 
-    <!-- Create/Edit Dialog -->
     @if (editingRubric(); as rubric) {
       <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" (click)="closeEditor()">
-        <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[85vh] overflow-y-auto" (click)="$event.stopPropagation()">
-          <div class="p-6">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col" (click)="$event.stopPropagation()">
+          <div class="p-6 overflow-y-auto flex-1 min-h-0">
             <h2 class="text-xl font-semibold text-gray-900 mb-4">
               {{ isNewRubric() ? 'Yeni Rubrik' : 'Rubrik Düzenle' }}
             </h2>
@@ -140,25 +143,36 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
               <div class="grid grid-cols-2 gap-4">
                 <mat-form-field appearance="outline" class="w-full">
                   <mat-label>Soru Tipi</mat-label>
-                  <mat-select formControlName="questionType">
+                  <mat-select formControlName="questionType" (selectionChange)="onQuestionTypeChange()">
                     <mat-option [value]="''">Tümü</mat-option>
-                    <mat-option [value]="QuestionType.MULTIPLE_CHOICE">Çoktan Seçmeli</mat-option>
-                    <mat-option [value]="QuestionType.TRUE_FALSE">Doğru/Yanlış</mat-option>
                     <mat-option [value]="QuestionType.SHORT_ANSWER">Kısa Cevap</mat-option>
-                    <mat-option [value]="QuestionType.ESSAY">Kompozisyon</mat-option>
+                    <mat-option [value]="QuestionType.ESSAY">Kompozisyon (Essay)</mat-option>
                   </mat-select>
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="w-full">
-                  <mat-label>Soru ID (İsteğe Bağlı)</mat-label>
-                  <input matInput type="number" formControlName="questionId" placeholder="0 = tümü">
+                  <mat-label>Soru</mat-label>
+                  <input matInput formControlName="questionSearch" [matAutocomplete]="questionAuto"
+                    placeholder="Soru ara..." (input)="onQuestionSearch($event)">
+                  <mat-autocomplete #questionAuto="matAutocomplete" (optionSelected)="onQuestionSelected($event)">
+                    @for (q of filteredQuestions(); track q.id) {
+                      <mat-option [value]="q.id">
+                        <span class="text-sm">#{{ q.id }} — {{ q.questionText | slice:0:60 }}{{ q.questionText.length > 60 ? '...' : '' }}</span>
+                      </mat-option>
+                    }
+                  </mat-autocomplete>
+                  @if (editorForm.get('questionId')?.value && editorForm.get('questionId')?.value !== 0) {
+                    <button matSuffix mat-icon-button type="button" (click)="clearQuestion()">
+                      <mat-icon>close</mat-icon>
+                    </button>
+                  }
                 </mat-form-field>
               </div>
 
               <mat-divider></mat-divider>
 
               <div class="space-y-4">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between mt-2">
                   <h3 class="font-semibold text-gray-800">Kriterler</h3>
                   <button mat-stroked-button type="button" (click)="addCriterion()">
                     <mat-icon class="text-sm">add</mat-icon> Kriter Ekle
@@ -171,8 +185,8 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
                       <div class="flex items-center justify-between">
                         <span class="font-medium text-gray-700">Kriter {{ i + 1 }}</span>
                         @if (criteriaControls.length > 1) {
-                          <button mat-icon-button type="button" (click)="removeCriterion(i)" matTooltip="Kriteri kaldır" class="!w-7 !h-7">
-                            <mat-icon class="!text-sm !text-red-500">delete</mat-icon>
+                          <button mat-icon-button type="button" color="warn" (click)="removeCriterion(i)" matTooltip="Kriteri kaldır">
+                            <mat-icon>delete</mat-icon>
                           </button>
                         }
                       </div>
@@ -193,38 +207,38 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
                         <input matInput formControlName="description" placeholder="Kriter açıklaması">
                       </mat-form-field>
 
-                      <div class="space-y-2">
-                        <div class="flex items-center justify-between">
-                          <span class="text-sm font-medium text-gray-600">Düzeyler</span>
-                          <button mat-stroked-button type="button" (click)="addLevel(i)" size="small">
-                            <mat-icon class="text-sm">add</mat-icon> Düzey Ekle
-                          </button>
-                        </div>
+                      <mat-divider></mat-divider>
+
+                      <div class="flex items-center justify-between mt-2">
+                        <span class="text-sm font-medium text-gray-600">Düzeyler</span>
+                        <button mat-stroked-button type="button" (click)="addLevel(i)" size="small">
+                          <mat-icon class="text-sm">add</mat-icon> Düzey Ekle
+                        </button>
+                      </div>
 
                         <div formArrayName="levels" class="space-y-2">
                           @for (level of getLevelsArray(i).controls; track level; let j = $index) {
-                            <div [formGroupName]="j" class="flex items-center gap-2">
-                              <mat-form-field appearance="outline" class="flex-1">
+                            <div [formGroupName]="j" class="grid grid-cols-[1fr_80px_1fr_auto] items-start gap-2 pt-1">
+                              <mat-form-field appearance="outline" class="min-w-0">
                                 <mat-label>Ad</mat-label>
                                 <input matInput formControlName="label" placeholder="Düzey adı">
                               </mat-form-field>
-                              <mat-form-field appearance="outline" class="w-24">
+                              <mat-form-field appearance="outline" class="min-w-0">
                                 <mat-label>Puan</mat-label>
-                                <input matInput type="number" formControlName="score" min="0" max="100">
+                                <input matInput type="number" formControlName="score" min="0" [max]="getCriterionMaxPoints(i)">
                               </mat-form-field>
-                              <mat-form-field appearance="outline" class="flex-1">
+                              <mat-form-field appearance="outline" class="min-w-0">
                                 <mat-label>Açıklama</mat-label>
                                 <input matInput formControlName="description" placeholder="Düzey açıklaması">
                               </mat-form-field>
-                              @if (getLevelsArray(i).length > 1) {
-                                <button mat-icon-button type="button" (click)="removeLevel(i, j)" class="!w-7 !h-7">
-                                  <mat-icon class="!text-sm !text-red-500">close</mat-icon>
-                                </button>
-                              }
+                                @if (getLevelsArray(i).length > 1) {
+                                  <button mat-icon-button type="button" color="warn" (click)="removeLevel(i, j)" class="mt-2">
+                                    <mat-icon>close</mat-icon>
+                                  </button>
+                                }
                             </div>
                           }
                         </div>
-                      </div>
                     </div>
                   }
                 </div>
@@ -232,7 +246,7 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
             </form>
           </div>
 
-          <div class="flex justify-end gap-2 p-4 border-t">
+          <div class="flex justify-end gap-2 p-4 border-t bg-white shrink-0">
             <button mat-button type="button" (click)="closeEditor()">İptal</button>
             <button mat-raised-button color="primary" [disabled]="editorForm.invalid" (click)="saveRubric()">
               {{ isNewRubric() ? 'Oluştur' : 'Güncelle' }}
@@ -254,21 +268,26 @@ export class RubricManagementPage implements OnInit {
   editingRubric = signal<Rubric | null>(null);
   isNewRubric = signal(false);
 
+  readonly RubricStatus = RubricStatus;
   readonly QuestionType = QuestionType;
   displayedColumns = ['id', 'name', 'type', 'criteria', 'maxPoints', 'status', 'actions'];
 
-  editorForm = this.fb.group({
+  private allQuestions: Question[] = QUESTIONS_SEED as Question[];
+  filteredQuestions = signal<Question[]>([]);
+
+  editorForm: FormGroup = this.fb.group({
     name: ['', Validators.required],
     questionType: [''],
     questionId: [0],
+    questionSearch: [''],
     criteria: this.fb.array([]),
   });
 
-  get criteriaControls() {
-    return (this.editorForm.get('criteria') as any).controls as any[];
+  get criteriaControls(): FormGroup[] {
+    return (this.editorForm.get('criteria') as FormArray).controls as FormGroup[];
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.loadData();
   }
 
@@ -292,36 +311,27 @@ export class RubricManagementPage implements OnInit {
 
     if (rubric) {
       const criteriaArray = this.fb.array(
-        rubric.criteria.map(c => this.fb.group({
-          name: [c.name, Validators.required],
-          description: [c.description],
-          maxPoints: [c.maxPoints, [Validators.required, Validators.min(1)]],
-          levels: this.fb.array(
-            c.levels.map(l => this.fb.group({
-              label: [l.label, Validators.required],
-              score: [l.score, [Validators.required, Validators.min(0)]],
-              description: [l.description],
-            }))
-          ),
-        }))
+        rubric.criteria.map(c => this.createCriterionWithLevels(c))
       );
       this.editorForm = this.fb.group({
         name: [rubric.name, Validators.required],
         questionType: [rubric.questionType ?? ''],
         questionId: [rubric.questionId ?? 0],
+        questionSearch: [rubric.questionId ? this.getQuestionLabel(rubric.questionId) : ''],
         criteria: criteriaArray,
-      }) as any;
+      });
       this.editingRubric.set(rubric);
+      this.updateFilteredQuestions(rubric.questionType ?? '');
     } else {
       this.editorForm = this.fb.group({
         name: ['', Validators.required],
         questionType: [''],
         questionId: [0],
-        criteria: this.fb.array([
-          this.createCriterionForm(),
-        ]),
-      }) as any;
+        questionSearch: [''],
+        criteria: this.fb.array([this.createCriterionForm()]),
+      });
       this.editingRubric.set({} as Rubric);
+      this.updateFilteredQuestions('');
     }
   }
 
@@ -330,16 +340,31 @@ export class RubricManagementPage implements OnInit {
   }
 
   addCriterion(): void {
-    const criteria = this.editorForm.get('criteria') as any;
+    const criteria = this.editorForm.get('criteria') as FormArray;
     criteria.push(this.createCriterionForm());
   }
 
   removeCriterion(index: number): void {
-    const criteria = this.editorForm.get('criteria') as any;
+    const criteria = this.editorForm.get('criteria') as FormArray;
     criteria.removeAt(index);
   }
 
-  createCriterionForm() {
+  private createCriterionWithLevels(c: RubricCriterion): FormGroup {
+    return this.fb.group({
+      name: [c.name, Validators.required],
+      description: [c.description],
+      maxPoints: [c.maxPoints, [Validators.required, Validators.min(1)]],
+      levels: this.fb.array(
+        c.levels.map(l => this.fb.group({
+          label: [l.label, Validators.required],
+          score: [l.score, [Validators.required, Validators.min(0)]],
+          description: [l.description],
+        }))
+      ),
+    });
+  }
+
+  createCriterionForm(): FormGroup {
     return this.fb.group({
       name: ['', Validators.required],
       description: [''],
@@ -359,9 +384,9 @@ export class RubricManagementPage implements OnInit {
     });
   }
 
-  getLevelsArray(criterionIndex: number) {
-    const criteria = this.editorForm.get('criteria') as any;
-    return criteria.at(criterionIndex).get('levels') as any;
+  getLevelsArray(criterionIndex: number): FormArray {
+    const criteria = this.editorForm.get('criteria') as FormArray;
+    return criteria.at(criterionIndex).get('levels') as FormArray;
   }
 
   addLevel(criterionIndex: number): void {
@@ -376,6 +401,55 @@ export class RubricManagementPage implements OnInit {
   removeLevel(criterionIndex: number, levelIndex: number): void {
     const levels = this.getLevelsArray(criterionIndex);
     levels.removeAt(levelIndex);
+  }
+
+  getCriterionMaxPoints(criterionIndex: number): number {
+    const criteria = this.editorForm.get('criteria') as FormArray;
+    return criteria.at(criterionIndex).get('maxPoints')?.value ?? 100;
+  }
+
+  onQuestionTypeChange(): void {
+    const type = this.editorForm.get('questionType')?.value ?? '';
+    this.editorForm.patchValue({ questionId: 0, questionSearch: '' });
+    this.updateFilteredQuestions(type);
+  }
+
+  onQuestionSearch(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const query = input.value.toLowerCase();
+    const type = this.editorForm.get('questionType')?.value ?? '';
+    this.updateFilteredQuestions(type, query);
+  }
+
+  onQuestionSelected(event: any): void {
+    const questionId = event.option.value as number;
+    const question = this.allQuestions.find(q => q.id === questionId);
+    this.editorForm.patchValue({
+      questionId,
+      questionSearch: question ? `#${question.id} — ${question.questionText}` : '',
+    });
+  }
+
+  clearQuestion(): void {
+    this.editorForm.patchValue({ questionId: 0, questionSearch: '' });
+  }
+
+  private updateFilteredQuestions(type: string, query = ''): void {
+    let questions = this.allQuestions;
+    if (type) {
+      questions = questions.filter(q => q.type === type);
+    }
+    if (query) {
+      questions = questions.filter(q =>
+        q.questionText.toLowerCase().includes(query) || String(q.id).includes(query)
+      );
+    }
+    this.filteredQuestions.set(questions.slice(0, 50));
+  }
+
+  private getQuestionLabel(id: number): string {
+    const q = this.allQuestions.find(qq => qq.id === id);
+    return q ? `#${q.id} — ${q.questionText}` : '';
   }
 
   saveRubric(): void {

@@ -1,4 +1,5 @@
 import { RubricStatus } from '@core/models/rubric.model';
+import { QuestionType } from '@core/models/enums';
 
 export interface RubricLevelSpec {
   score: number;
@@ -16,51 +17,52 @@ export interface RubricCriterionSpec {
 export interface RubricSpec {
   name: string;
   questionId: number;
+  questionType?: QuestionType;
   criteria: RubricCriterionSpec[];
   status: RubricStatus;
 }
 
 export const RUBRIC_SPECS: RubricSpec[] = [
   {
-    name: 'Kisa Cevap Degerlendirme', questionId: 0,
+    name: 'Kısa Cevap Değerlendirme', questionId: 5, questionType: QuestionType.SHORT_ANSWER,
     criteria: [
       {
-        name: 'Dogru Cevap', description: 'Cevabin dogrulugu', maxPoints: 5,
+        name: 'Doğru Cevap', description: 'Cevabın doğruluğu', maxPoints: 5,
         levels: [
-          { score: 5, label: 'Mukemmel', description: 'Tam dogru cevap' },
-          { score: 3, label: 'Kismi', description: 'Kismen dogru' },
-          { score: 0, label: 'Yanlis', description: 'Yanlis cevap' },
+          { score: 5, label: 'Mükemmel', description: 'Tam doğru cevap' },
+          { score: 3, label: 'Kısmi', description: 'Kısmen doğru' },
+          { score: 0, label: 'Yanlış', description: 'Yanlış cevap' },
         ],
       },
       {
-        name: 'Aciklama', description: 'Cevabin aciklamasi', maxPoints: 3,
+        name: 'Açıklama', description: 'Cevabın açıklaması', maxPoints: 3,
         levels: [
-          { score: 3, label: 'Detayli', description: 'Detayli aciklama' },
-          { score: 1, label: 'Yuzeysel', description: 'Yuzeysel aciklama' },
-          { score: 0, label: 'Eksik', description: 'Aciklama yok' },
+          { score: 3, label: 'Detaylı', description: 'Detaylı açıklama' },
+          { score: 1, label: 'Yüzeysel', description: 'Yüzeysel açıklama' },
+          { score: 0, label: 'Eksik', description: 'Açıklama yok' },
         ],
       },
     ],
     status: RubricStatus.ACTIVE,
   },
   {
-    name: 'Essay Degerlendirme', questionId: 0,
+    name: 'Essay Değerlendirme', questionId: 6, questionType: QuestionType.ESSAY,
     criteria: [
       {
-        name: 'Icerik', description: 'Konu hakimiyeti', maxPoints: 10,
+        name: 'İçerik', description: 'Konu hakimiyeti', maxPoints: 10,
         levels: [
-          { score: 10, label: 'Kapsamli', description: 'Konuyu tum yonleriyle ele almis' },
-          { score: 6, label: 'Yeterli', description: 'Temel noktalari iceriyor' },
-          { score: 2, label: 'Zayif', description: 'Konuya yuzeysel deginmis' },
+          { score: 10, label: 'Kapsamlı', description: 'Konuyu tüm yönleriyle ele almış' },
+          { score: 6, label: 'Yeterli', description: 'Temel noktaları içeriyor' },
+          { score: 2, label: 'Zayıf', description: 'Konuya yüzeysel değinmiş' },
           { score: 0, label: 'Yetersiz', description: 'Konuyla ilgisiz' },
         ],
       },
       {
-        name: 'Yapi', description: 'Yazi duzeni ve akis', maxPoints: 5,
+        name: 'Yapı', description: 'Yazı düzeni ve akış', maxPoints: 5,
         levels: [
-          { score: 5, label: 'Akici', description: 'Mantikli akis ve duzen' },
-          { score: 3, label: 'Kabul edilebilir', description: 'Kismi duzen' },
-          { score: 0, label: 'Dagimik', description: 'Duzen yok' },
+          { score: 5, label: 'Akıcı', description: 'Mantıklı akış ve düzen' },
+          { score: 3, label: 'Kabul edilebilir', description: 'Kısmi düzen' },
+          { score: 0, label: 'Dağınık', description: 'Düzen yok' },
         ],
       },
     ],

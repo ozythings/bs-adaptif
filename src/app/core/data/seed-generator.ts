@@ -254,12 +254,14 @@ export function generateSeeds() {
     updatedAt: '2026-01-01T10:00:00Z',
   }));
 
+  let nextCriterionId = 1;
   const rubrics: Rubric[] = RUBRIC_SPECS.map((s, i) => ({
     id: 100 + i,
     name: s.name,
     questionId: s.questionId,
-    criteria: s.criteria.map((c, ci) => ({
-      id: (i + 1) * 2 + ci - 1,
+    questionType: s.questionType,
+    criteria: s.criteria.map((c) => ({
+      id: nextCriterionId++,
       name: c.name,
       description: c.description,
       maxPoints: c.maxPoints,
