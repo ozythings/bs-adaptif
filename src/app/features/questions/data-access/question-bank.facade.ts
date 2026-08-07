@@ -361,6 +361,12 @@ export class QuestionBankFacade {
     this.notification.show(`v${target.version} versiyonuna dönüldü`, 'success');
   }
 
+  getVersionNumbers(questionId: number): number[] {
+    const versions = this.versionsSeed().filter(v => v.questionId === questionId);
+    const nums = [...new Set(versions.map(v => v.version))];
+    return nums.sort((a, b) => a - b);
+  }
+
   private canManage(): boolean {
     return this.permission.hasAnyPermission(['question_create', 'question_update', 'question_delete']);
   }

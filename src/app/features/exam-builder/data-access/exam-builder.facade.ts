@@ -11,11 +11,13 @@ import { Question } from '@core/models/question.model';
 import { LearningOutcome } from '@core/models/learning-outcome.model';
 import { BlueprintStatus, ExamStatus, QuestionType, Difficulty } from '@core/models/enums';
 import { OUTCOMES_SEED } from '@core/data';
+import { QuestionBankFacade } from '../../questions/data-access/question-bank.facade';
 export class ExamBuilderFacade {
   private mockApi = inject(MockApiService);
   private notification = inject(NotificationService);
   private audit = inject(AuditService);
   private store = inject(EntityStore);
+  private questionBank = inject(QuestionBankFacade);
 
   private outcomes = OUTCOMES_SEED;
   private nextId = Math.max(...this.store.blueprints().map(b => b.id), 0) + 1;
@@ -47,6 +49,10 @@ export class ExamBuilderFacade {
     return ids
       .map(id => this.store.questions().find(q => q.id === id))
       .filter((q): q is Question => !!q);
+  }
+
+  getQuestionVersionNumbers(questionId: number): number[] {
+    return this.questionBank.getVersionNumbers(questionId);
   }
 
   getExamName(examId: number): string {
@@ -235,7 +241,7 @@ export class ExamBuilderFacade {
     return this.mockApi.post(newBlueprint);
   }
 
-  publishBlueprint(blueprintId: number, selectedQuestionIds?: number[]): Observable<ExamBlueprint | undefined> {
+  publishBlueprint(blueprintId: number, selectedQuestionIds?: number[], versionSelections?: Record<number, number>): Observable<ExamBlueprint | undefined> {
     const blueprint = this.store.blueprints().find(b => b.id === blueprintId);
     if (!blueprint) {
       this.notification.show('Blueprint bulunamadı', 'error');
@@ -278,23 +284,21 @@ export class ExamBuilderFacade {
     const versionIds: Record<number, number> = {};
     for (const qid of [...new Set(questionIds)]) {
       const q = this.store.questions().find(x => x.id === qid);
-      versionIds[qid] = q?.version ?? 1;
+      versionIds[qid] = versionSelections?.[qid] ?? q?.version ?? 1;
     }
 
     this.store.updateBlueprint(blueprintId, updated);
 
-    const newStatus = exam?.status === ExamStatus.DRAFT ? ExamStatus.PUBLISHED : exam?.status;
     const newCount = questionIds.length || exam?.questionCount || 0;
 
     this.store.updateExam(blueprint.examId, {
       questionVersionIds: versionIds,
       questionCount: newCount,
-      status: newStatus ?? ExamStatus.PUBLISHED,
     });
 
-    this.audit.log({ action: AuditAction.PUBLISH, entity: 'ExamBlueprint', entityId: blueprintId, description: `Blueprint yayınlandı: ${updated.name}`, newValue: updated });
-    this.audit.log({ action: AuditAction.PUBLISH, entity: 'Exam', entityId: blueprint.examId, description: `Sınav yayınlandı (blueprint ${blueprintId})` });
-    this.notification.show('Sınav yayınlandı ve öğrencilerin kullanımına açıldı', 'success');
+    this.audit.log({ action: AuditAction.UPDATE, entity: 'ExamBlueprint', entityId: blueprintId, description: `Blueprint soruları kaydedildi: ${updated.name}`, newValue: updated });
+    this.audit.log({ action: AuditAction.UPDATE, entity: 'Exam', entityId: blueprint.examId, description: `Sınav soru seçimi güncellendi (blueprint ${blueprintId})` });
+    this.notification.show('Soru seçimi kaydedildi', 'success');
     return this.mockApi.put(updated);
   }
 

@@ -17,14 +17,13 @@ import { ExamBuilderFacade } from './data-access/exam-builder.facade';
 import { NotificationService } from '@core/observability/notification.service';
 import { BlueprintConstraintPanelComponent } from '@shared/components/blueprint-constraint-panel/blueprint-constraint-panel.component';
 import { BlueprintEditorComponent } from '@shared/components/blueprint-editor/blueprint-editor.component';
-import { QuestionEditorComponent } from '@shared/components/question-editor/question-editor.component';
 import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components';
 import { StatusTextPipe } from '@shared/pipes';
 import { ExamBlueprint, BlueprintConstraint, BlueprintSummary, PointDistribution } from '@core/models/exam-blueprint.model';
 import { Exam } from '@core/models/exam.model';
 import { Question } from '@core/models/question.model';
 import { LearningOutcome } from '@core/models/learning-outcome.model';
-import { BlueprintStatus, QuestionType, Difficulty } from '@core/models/enums';
+import { BlueprintStatus } from '@core/models/enums';
 
 @Component({
   selector: 'app-exam-builder',
@@ -32,7 +31,7 @@ import { BlueprintStatus, QuestionType, Difficulty } from '@core/models/enums';
   imports: [
     CommonModule, RouterLink, MatDialogModule, MatButtonModule, MatIconModule, MatTableModule, MatCardModule,
     MatProgressSpinnerModule, MatTooltipModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatPaginatorModule,
-    BlueprintConstraintPanelComponent, BlueprintEditorComponent, QuestionEditorComponent, ErrorStateComponent, StatusTextPipe,
+    BlueprintConstraintPanelComponent, BlueprintEditorComponent, ErrorStateComponent, StatusTextPipe,
   ],
   template: `
     <div class="space-y-4">
@@ -57,6 +56,14 @@ import { BlueprintStatus, QuestionType, Difficulty } from '@core/models/enums';
           </div>
         } @else {
           <table mat-table [dataSource]="paginatedBlueprints()" class="w-full">
+            <ng-container matColumnDef="id">
+              <th mat-header-cell *matHeaderCellDef class="w-16">Blueprint ID</th>
+              <td mat-cell *matCellDef="let b"><span>{{ b.id }}</span></td>
+            </ng-container>
+            <ng-container matColumnDef="examId">
+              <th mat-header-cell *matHeaderCellDef class="w-16">Sınav ID</th>
+              <td mat-cell *matCellDef="let b"><span>{{ b.examId }}</span></td>
+            </ng-container>
             <ng-container matColumnDef="name">
               <th mat-header-cell *matHeaderCellDef>Blueprint Adı</th>
               <td mat-cell *matCellDef="let b">
@@ -182,9 +189,14 @@ import { BlueprintStatus, QuestionType, Difficulty } from '@core/models/enums';
                         (change)="toggleQuestion(q.id)" />
                       <span class="font-mono text-xs text-gray-400 w-8">#{{ q.id }}</span>
                       <span class="flex-1 text-sm truncate">{{ q.questionText }}</span>
-                      <button mat-icon-button (click)="editQuestion(q, $event)" matTooltip="Soruyu Düzenle" class="!w-7 !h-7">
-                        <mat-icon class="!text-sm">edit</mat-icon>
-                      </button>
+                      <mat-select [value]="versionSelections()[q.id] ?? q.version"
+                                  (selectionChange)="onVersionChange(q.id, $event.value)"
+                                  [matTooltip]="'Versiyon Seç'"
+                                  class="shrink-0 !w-12 text-xs text-gray-600 border border-gray-200 rounded px-1 py-0.5 hover:border-gray-400 focus:outline-none">
+                        @for (v of (availableVersions()[q.id] ?? [q.version]); track v) {
+                          <mat-option [value]="v">v{{ v }}</mat-option>
+                        }
+                      </mat-select>
                       <span class="px-1.5 py-0.5 rounded text-xs font-medium"
                         [class.bg-green-100]="q.difficulty === 'easy'"
                         [class.text-green-700]="q.difficulty === 'easy'"
@@ -203,7 +215,7 @@ import { BlueprintStatus, QuestionType, Difficulty } from '@core/models/enums';
                 </div>
                 @if (manualViolations().length > 0) {
                   <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-2">
-                    <p class="text-sm font-medium text-yellow-800 mb-1">Eksik Kapsama</p>
+                    <p class="text-sm font-medium text-yellow-800 mb-1">Eksik Kapsam</p>
                     <ul class="list-disc list-inside text-sm text-yellow-700">
                       @for (v of manualViolations(); track v) {
                         <li>{{ v }}</li>
@@ -250,13 +262,13 @@ import { BlueprintStatus, QuestionType, Difficulty } from '@core/models/enums';
                 <mat-icon>auto_fix_high</mat-icon> Otomatik Seç
               </button>
               @if (selectedCount() > 0 && bp.status !== BlueprintStatus.READY) {
-                <button mat-raised-button color="accent" (click)="publish(bp.id)">
-                  <mat-icon>publish</mat-icon> Yayınla ({{ selectedCount() }} soru)
+                <button mat-raised-button color="accent" (click)="saveQuestions(bp.id)">
+                  <mat-icon>save</mat-icon> Soruları Kaydet ({{ selectedCount() }} soru)
                 </button>
               }
               @if (bp.status === BlueprintStatus.READY) {
-                <button mat-stroked-button color="accent" (click)="publish(bp.id)">
-                  <mat-icon>publish</mat-icon> Yayınla
+                <button mat-stroked-button color="accent" (click)="saveQuestions(bp.id)">
+                  <mat-icon>save</mat-icon> Soruları Kaydet
                 </button>
               }
             </div>
@@ -280,7 +292,7 @@ export class ExamBuilderPage implements OnInit {
   private dialog = inject(MatDialog);
 
   readonly BlueprintStatus = BlueprintStatus;
-  displayedColumns = ['name', 'exam', 'status', 'actions'];
+  displayedColumns = ['id', 'examId', 'name', 'exam', 'status', 'actions'];
 
   pageSize = signal(10);
   pageIndex = signal(0);
@@ -300,6 +312,8 @@ export class ExamBuilderPage implements OnInit {
   allOutcomes = signal<LearningOutcome[]>([]);
   examQuestions = signal<Question[]>([]);
   manualSelectedIds = signal<Set<number>>(new Set());
+  versionSelections = signal<Record<number, number>>({});
+  availableVersions = signal<Record<number, number[]>>({});
 
   selectedCount = computed(() => this.manualSelectedIds().size);
 
@@ -382,54 +396,6 @@ export class ExamBuilderPage implements OnInit {
     return this.facade.getExamName(examId);
   }
 
-  editQuestion(q: Question, event: Event): void {
-    event.stopPropagation();
-    event.preventDefault();
-    const dialogRef = this.dialog.open(QuestionEditorComponent, {
-      width: '600px',
-      data: {
-        question: {
-          id: q.id,
-          stem: q.questionText,
-          type: q.type as QuestionType,
-          difficulty: q.difficulty as Difficulty,
-          points: q.points,
-          outcomes: this.allOutcomes(),
-        },
-      },
-    });
-
-    dialogRef.afterClosed().subscribe((result: any) => {
-      if (!result) return;
-      const editedType = result.type as QuestionType;
-      let options: string[] = [];
-      let correctAnswer: number | string;
-
-      if (editedType === QuestionType.MULTIPLE_CHOICE) {
-        options = (result.options || []).filter((o: any) => o.value).map((o: any) => o.value);
-        correctAnswer = (result.options || []).findIndex((o: any) => o.isCorrect);
-      } else if (editedType === QuestionType.TRUE_FALSE) {
-        options = ['Doğru', 'Yanlış'];
-        correctAnswer = String(result.correctAnswer || '').trim().toLowerCase() === 'yanlış' ? 1 : 0;
-      } else {
-        options = [];
-        correctAnswer = (result.correctAnswer || '');
-      }
-
-      this.facade.updateQuestion(q.id, {
-        questionText: result.stem,
-        type: editedType,
-        difficulty: result.difficulty,
-        points: result.points,
-        options,
-        correctAnswer,
-        outcomeIds: result.outcomeIds || [],
-      }).subscribe(() => {
-        this.reloadExamQuestions();
-      });
-    });
-  }
-
   private reloadExamQuestions(): void {
     const bp = this.selectedBlueprint();
     if (!bp) return;
@@ -437,10 +403,19 @@ export class ExamBuilderPage implements OnInit {
     if (exam) {
       this.facade.getQuestionsByCourse(exam.courseId).subscribe(data => {
         this.examQuestions.set(data);
-        if (exam.questionVersionIds) {
-          const ids = Object.keys(exam.questionVersionIds).map(Number);
-          this.manualSelectedIds.set(new Set(ids));
+        const versionMap = exam.questionVersionIds ?? {};
+        const selections: Record<number, number> = {};
+        const versions: Record<number, number[]> = {};
+        for (const q of data) {
+          versions[q.id] = this.facade.getQuestionVersionNumbers(q.id).length > 0
+            ? this.facade.getQuestionVersionNumbers(q.id)
+            : [q.version];
+          selections[q.id] = versionMap[q.id] ?? q.version;
         }
+        this.availableVersions.set(versions);
+        this.versionSelections.set(selections);
+        const ids = Object.keys(versionMap).map(Number);
+        this.manualSelectedIds.set(new Set(ids));
       });
     }
   }
@@ -453,6 +428,10 @@ export class ExamBuilderPage implements OnInit {
   selectBlueprint(bp: ExamBlueprint): void {
     this.selectedBlueprint.set(bp);
     this.manualSelectedIds.set(new Set());
+    this.versionSelections.set({});
+    this.availableVersions.set({});
+    this.selectedExamId.set(bp.examId);
+    this.router.navigate([], { queryParams: { examId: bp.examId }, replaceUrl: true });
     const exam = this.facade.getExam(bp.examId);
     if (exam) {
       this.facade.getOutcomesByCourse(exam.courseId).subscribe(outcomes => {
@@ -482,27 +461,18 @@ export class ExamBuilderPage implements OnInit {
     });
   }
 
-  publish(blueprintId: number): void {
-    if (this.manualViolations().length > 0) {
-      this.notification.show('Blueprint kısıtlamaları karşılanmadan yayınlanamaz', 'error');
+  saveQuestions(blueprintId: number): void {
+    if (this.manualSelectedIds().size === 0) {
+      this.notification.show('Kaydetmek için en az bir soru seçmelisiniz', 'error');
       return;
     }
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: {
-        title: 'Sınavı Yayınla',
-        message: 'Seçilen sorularla sınavı yayınlamak istediğinize emin misiniz?',
-        confirmLabel: 'Yayınla',
-        cancelLabel: 'İptal',
-      },
-    });
-    dialogRef.afterClosed().subscribe(confirmed => {
-      if (confirmed) this.doPublish(blueprintId);
-    });
+    this.doSaveQuestions(blueprintId);
   }
 
-  private doPublish(blueprintId: number): void {
+  private doSaveQuestions(blueprintId: number): void {
     const ids = [...this.manualSelectedIds()];
-    this.facade.publishBlueprint(blueprintId, ids.length > 0 ? ids : undefined).subscribe({
+    const versionIds = this.buildVersionIds(ids);
+    this.facade.publishBlueprint(blueprintId, ids.length > 0 ? ids : undefined, versionIds).subscribe({
       next: () => {
         this.facade.getBlueprint(blueprintId).subscribe(bp => {
           if (bp) this.selectedBlueprint.set(bp);
@@ -510,6 +480,20 @@ export class ExamBuilderPage implements OnInit {
         });
       },
     });
+  }
+
+  private buildVersionIds(ids: number[]): Record<number, number> {
+    const selections = this.versionSelections();
+    const result: Record<number, number> = {};
+    for (const id of ids) {
+      const q = this.examQuestions().find(x => x.id === id);
+      result[id] = selections[id] ?? q?.version ?? 1;
+    }
+    return result;
+  }
+
+  onVersionChange(questionId: number, version: number): void {
+    this.versionSelections.update(map => ({ ...map, [questionId]: version }));
   }
 
   openCreateDialog(): void {

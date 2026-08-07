@@ -1,6 +1,5 @@
 import { Component,  inject,  signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -18,7 +17,7 @@ export interface BlueprintEditorData {
 @Component({
   selector: 'app-blueprint-editor',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule],
+  imports: [CommonModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule],
   template: `
     <h2 mat-dialog-title class="text-xl font-semibold text-gray-900">{{ isEdit ? 'Blueprint Düzenle' : 'Yeni Blueprint' }}</h2>
 
@@ -26,12 +25,12 @@ export interface BlueprintEditorData {
       <div class="flex flex-col gap-4 min-w-[400px]">
         <mat-form-field appearance="outline" class="w-full">
           <mat-label>Blueprint Adı</mat-label>
-          <input matInput [(ngModel)]="name" placeholder="Blueprint adı girin" autofocus />
+          <input matInput [value]="name()" (input)="name.set($any($event.target).value)" placeholder="Blueprint adı girin" autofocus />
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="w-full">
           <mat-label>Sınav</mat-label>
-          <mat-select [(ngModel)]="selectedExamId" [disabled]="!!preselectedExamId || isEdit">
+          <mat-select [value]="selectedExamId()" (selectionChange)="selectedExamId.set($event.value)" [disabled]="isEdit">
             @for (exam of exams; track exam.id) {
               <mat-option [value]="exam.id">
                 {{ getExamName(exam) }}
@@ -48,7 +47,7 @@ export interface BlueprintEditorData {
 
     <mat-dialog-actions align="end" class="!px-6 !pb-4">
       <button mat-button type="button" (click)="onCancel()">İptal</button>
-      <button mat-raised-button color="primary" [disabled]="!name || !selectedExamId" (click)="onSave()">
+      <button mat-raised-button color="primary" [disabled]="!name() || !selectedExamId()" (click)="onSave()">
         {{ isEdit ? 'Güncelle' : 'Oluştur' }}
       </button>
     </mat-dialog-actions>
@@ -58,9 +57,8 @@ export class BlueprintEditorComponent {
   private dialogRef = inject(MatDialogRef<BlueprintEditorComponent>);
   private data = inject<BlueprintEditorData>(MAT_DIALOG_DATA);
 
-  name = '';
-  selectedExamId: number | null = null;
-  preselectedExamId: number | null = null;
+  name = signal('');
+  selectedExamId = signal<number | null>(null);
   isEdit = false;
   private editBlueprintId: number | null = null;
 
@@ -72,11 +70,10 @@ export class BlueprintEditorComponent {
     if (this.data?.blueprint) {
       this.isEdit = true;
       this.editBlueprintId = this.data.blueprint.id;
-      this.name = this.data.blueprint.name;
-      this.selectedExamId = this.data.blueprint.examId;
+      this.name.set(this.data.blueprint.name);
+      this.selectedExamId.set(this.data.blueprint.examId);
     } else if (this.data?.preselectedExamId) {
-      this.selectedExamId = this.data.preselectedExamId;
-      this.preselectedExamId = this.data.preselectedExamId;
+      this.selectedExamId.set(this.data.preselectedExamId);
     }
   }
 
@@ -89,7 +86,7 @@ export class BlueprintEditorComponent {
   }
 
   onSave(): void {
-    if (!this.name || !this.selectedExamId) return;
-    this.dialogRef.close({ name: this.name, examId: this.selectedExamId, id: this.editBlueprintId });
+    if (!this.name() || !this.selectedExamId()) return;
+    this.dialogRef.close({ name: this.name(), examId: this.selectedExamId()!, id: this.editBlueprintId });
   }
 }
