@@ -66,11 +66,13 @@ export class CurrentUserService {
     return DEMO_USERS;
   }
 
+  /** @deprecated Use PermissionService.hasPermission() instead */
   hasRole(role: UserRole): boolean {
     const effective = ROLE_HIERARCHY[this.userSignal().role] || [this.userSignal().role];
     return effective.includes(role);
   }
 
+  /** @deprecated Use PermissionService.hasAnyPermission() instead */
   hasAnyRole(roles: UserRole[]): boolean {
     const effective = ROLE_HIERARCHY[this.userSignal().role] || [this.userSignal().role];
     return roles.some(r => effective.includes(r));

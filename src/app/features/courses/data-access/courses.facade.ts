@@ -2,6 +2,7 @@ import { inject,  signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { MockApiService } from '@core/api/mock-api.service';
 import { CurrentUserService } from '@core/auth/current-user.service';
+import { PermissionService } from '@core/auth/permission.service';
 import { DataScopeService } from '@core/auth/data-scope.service';
 import { NotificationService } from '@core/observability/notification.service';
 import { AuditService } from '@core/observability/audit.service';
@@ -38,6 +39,7 @@ export interface LearningPathData {
 export class CoursesFacade {
   private mockApi = inject(MockApiService);
   private currentUser = inject(CurrentUserService);
+  private permission = inject(PermissionService);
   private notification = inject(NotificationService);
   private dataScope = inject(DataScopeService);
   private audit = inject(AuditService);
@@ -523,6 +525,6 @@ export class CoursesFacade {
   }
 
   private canManage(): boolean {
-    return this.currentUser.hasAnyRole([UserRole.INSTRUCTOR, UserRole.PROGRAM_MANAGER, UserRole.PLATFORM_ADMIN]);
+    return this.permission.hasAnyPermission(['course_create', 'course_update', 'course_delete']);
   }
 }

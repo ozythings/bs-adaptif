@@ -5,6 +5,7 @@ import { MockApiService } from '@core/api/mock-api.service';
 import { NotificationService } from '@core/observability/notification.service';
 import { AuditService } from '@core/observability/audit.service';
 import { CurrentUserService } from '@core/auth/current-user.service';
+import { PermissionService } from '@core/auth/permission.service';
 import { DataScopeService } from '@core/auth/data-scope.service';
 import { EntityStore } from '@core/state/entity.store';
 import { SessionFacade } from '../../exam-session/data-access/session.facade';
@@ -42,6 +43,7 @@ export class ExamsFacade {
   private notification = inject(NotificationService);
   private audit = inject(AuditService);
   private currentUser = inject(CurrentUserService);
+  private permission = inject(PermissionService);
   private dataScope = inject(DataScopeService);
   private store = inject(EntityStore);
   private sessionFacade = inject(SessionFacade);
@@ -232,6 +234,6 @@ export class ExamsFacade {
   }
 
   private canManage(): boolean {
-    return this.currentUser.hasAnyRole([UserRole.INSTRUCTOR, UserRole.ASSESSMENT_SPECIALIST, UserRole.PROGRAM_MANAGER, UserRole.PLATFORM_ADMIN]);
+    return this.permission.hasAnyPermission(['exam_create', 'exam_update', 'exam_delete']);
   }
 }

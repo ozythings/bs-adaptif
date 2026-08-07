@@ -16,13 +16,13 @@ export const routes: Routes = [
     path: 'learning/dashboard',
     loadChildren: () => import('./features/learning/dashboard.routes').then(m => m.LEARNING_ROUTES),
     canActivate: [roleGuard],
-    data: { roles: [UserRole.PLATFORM_ADMIN, UserRole.INSTRUCTOR, UserRole.STUDENT, UserRole.ASSESSMENT_SPECIALIST, UserRole.PROGRAM_MANAGER, UserRole.OBSERVER] }
+    data: { permissions: ['course_read'] }
   },
   {
     path: 'courses',
     loadChildren: () => import('./features/courses/courses.routes').then(m => m.COURSES_ROUTES),
     canActivate: [roleGuard],
-    data: { roles: [UserRole.PLATFORM_ADMIN, UserRole.INSTRUCTOR, UserRole.STUDENT, UserRole.ASSESSMENT_SPECIALIST, UserRole.PROGRAM_MANAGER, UserRole.OBSERVER] }
+    data: { permissions: ['course_read'] }
   },
   {
     path: 'outcomes',
@@ -34,7 +34,7 @@ export const routes: Routes = [
     path: 'question-bank',
     loadChildren: () => import('./features/questions/questions.routes').then(m => m.QUESTIONS_ROUTES),
     canActivate: [roleGuard],
-    data: { roles: [UserRole.INSTRUCTOR, UserRole.ASSESSMENT_SPECIALIST] }
+    data: { permissions: ['question_create', 'question_read'] }
   },
   {
     path: 'questions/:id',
@@ -46,7 +46,7 @@ export const routes: Routes = [
     path: 'exam-builder',
     loadChildren: () => import('./features/exam-builder/exam-builder.routes').then(m => m.EXAM_BUILDER_ROUTES),
     canActivate: [roleGuard],
-    data: { roles: [UserRole.INSTRUCTOR, UserRole.ASSESSMENT_SPECIALIST, UserRole.PROGRAM_MANAGER] }
+    data: { permissions: ['exam_create', 'exam_update'] }
   },
   {
     path: 'exams',
@@ -58,7 +58,7 @@ export const routes: Routes = [
     path: 'exam-session/:token',
     loadChildren: () => import('./features/exam-session/exam-session.routes').then(m => m.EXAM_SESSION_ROUTES),
     canActivate: [roleGuard],
-    data: { roles: [UserRole.STUDENT] }
+    data: { permissions: ['student_plan'] }
   },
   {
     path: 'grading',
@@ -87,19 +87,19 @@ export const routes: Routes = [
     path: 'item-analysis',
     loadChildren: () => import('./features/item-analysis/item-analysis.routes').then(m => m.ITEM_ANALYSIS_ROUTES),
     canActivate: [roleGuard],
-    data: { roles: [UserRole.ASSESSMENT_SPECIALIST] }
+    data: { permissions: ['grading_override'] }
   },
   {
     path: 'audit-log',
     loadChildren: () => import('./features/audit-log/audit-log.routes').then(m => m.AUDIT_LOG_ROUTES),
     canActivate: [roleGuard],
-    data: { roles: [UserRole.PLATFORM_ADMIN] }
+    data: { permissions: ['audit_read'] }
   },
   {
     path: 'my-plan',
     loadComponent: () => import('./features/adaptive-plan/adaptive-plan.component').then(m => m.AdaptivePlanPage),
     canActivate: [roleGuard],
-    data: { roles: [UserRole.STUDENT] }
+    data: { permissions: ['student_plan'] }
   },
   {
     path: 'cohorts',
@@ -111,19 +111,19 @@ export const routes: Routes = [
     path: 'admin/roles',
     loadComponent: () => import('./features/admin/role-permission/role-permission-list.component').then(m => m.RolePermissionListComponent),
     canActivate: [roleGuard],
-    data: { roles: [UserRole.PLATFORM_ADMIN] }
+    data: { permissions: ['system_manage_roles'] }
   },
   {
     path: 'admin/terms',
     loadChildren: () => import('./features/admin/term-management/terms.routes').then(m => m.TERMS_ROUTES),
     canActivate: [roleGuard],
-    data: { roles: [UserRole.PLATFORM_ADMIN] }
+    data: { permissions: ['system_manage_terms'] }
   },
   {
     path: 'admin/parameters',
     loadComponent: () => import('./features/admin/system-parameters/system-parameters.component').then(m => m.SystemParametersComponent),
     canActivate: [roleGuard],
-    data: { roles: [UserRole.PLATFORM_ADMIN] }
+    data: { permissions: ['system_manage_parameters'] }
   },
   {
     path: 'switch-role',

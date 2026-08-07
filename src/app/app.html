@@ -29,7 +29,7 @@
             </a>
           </li>
         }
-        @if (canAccess([UserRole.INSTRUCTOR, UserRole.ASSESSMENT_SPECIALIST])) {
+        @if (can(['question_create', 'question_read'])) {
           <li>
             <a routerLink="/question-bank" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Soru Bankası">
               <mat-icon>quiz</mat-icon>
@@ -37,7 +37,7 @@
             </a>
           </li>
         }
-        @if (canAccess([UserRole.INSTRUCTOR, UserRole.ASSESSMENT_SPECIALIST, UserRole.PROGRAM_MANAGER])) {
+        @if (can(['exam_create', 'exam_update'])) {
           <li>
             <a routerLink="/exam-builder" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Sınav Oluşturucu">
               <mat-icon>fact_check</mat-icon>
@@ -53,7 +53,7 @@
           </a>
         </li>
         }
-        @if (user().role === UserRole.STUDENT) {
+        @if (can(['student_plan'])) {
           <li>
             <a routerLink="/my-plan" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Çalışma Planım">
               <mat-icon>event_note</mat-icon>
@@ -61,7 +61,7 @@
             </a>
           </li>
         }
-        @if (user().role === UserRole.STUDENT && user().studentId) {
+        @if (can(['student_profile']) && user().studentId) {
           <li>
             <a [routerLink]="['/participant', user().studentId, 'edit']" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Profilim">
               <mat-icon>person</mat-icon>
@@ -85,7 +85,7 @@
             </a>
           </li>
         }
-        @if (canAccess([UserRole.ASSESSMENT_SPECIALIST])) {
+        @if (can(['grading_override'])) {
           <li>
             <a routerLink="/item-analysis" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Madde Analizi">
               <mat-icon>analytics</mat-icon>
@@ -93,7 +93,7 @@
             </a>
           </li>
         }
-        @if (canAccess([UserRole.PLATFORM_ADMIN])) {
+        @if (can(['audit_read'])) {
           <li>
             <a routerLink="/audit-log" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Denetim Kaydı">
               <mat-icon>history</mat-icon>
@@ -103,7 +103,7 @@
         }
       </ul>
 
-      @if (canAccess([UserRole.PLATFORM_ADMIN])) {
+      @if (can(['system_manage_roles'])) {
         <div class="border-t pt-3 mt-3">
           <p class="px-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Yönetim</p>
           <ul class="space-y-1">
@@ -164,7 +164,7 @@
                 </a>
               </li>
             }
-            @if (canAccess([UserRole.INSTRUCTOR, UserRole.ASSESSMENT_SPECIALIST])) {
+            @if (can(['question_create', 'question_read'])) {
               <li>
                 <a routerLink="/question-bank" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50" (click)="toggleMenu()" aria-label="Soru Bankası">
                   <mat-icon>quiz</mat-icon>
@@ -172,7 +172,7 @@
                 </a>
               </li>
             }
-            @if (canAccess([UserRole.INSTRUCTOR, UserRole.ASSESSMENT_SPECIALIST, UserRole.PROGRAM_MANAGER])) {
+            @if (can(['exam_create', 'exam_update'])) {
               <li>
                 <a routerLink="/exam-builder" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50" (click)="toggleMenu()" aria-label="Sınav Oluşturucu">
                   <mat-icon>fact_check</mat-icon>
@@ -188,7 +188,7 @@
               </a>
             </li>
             }
-            @if (user().role === UserRole.STUDENT) {
+            @if (can(['student_plan'])) {
               <li>
                 <a routerLink="/my-plan" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50" (click)="toggleMenu()" aria-label="Çalışma Planım">
                   <mat-icon>event_note</mat-icon>
@@ -196,7 +196,7 @@
                 </a>
               </li>
             }
-            @if (user().role === UserRole.STUDENT && user().studentId) {
+            @if (can(['student_profile']) && user().studentId) {
               <li>
                 <a [routerLink]="['/participant', user().studentId, 'edit']" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50" (click)="toggleMenu()" aria-label="Profilim">
                   <mat-icon>person</mat-icon>
@@ -220,7 +220,7 @@
                 </a>
               </li>
             }
-            @if (canAccess([UserRole.ASSESSMENT_SPECIALIST])) {
+            @if (can(['grading_override'])) {
               <li>
                 <a routerLink="/item-analysis" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50" (click)="toggleMenu()" aria-label="Madde Analizi">
                   <mat-icon>analytics</mat-icon>
@@ -228,7 +228,7 @@
                 </a>
               </li>
             }
-            @if (canAccess([UserRole.PLATFORM_ADMIN])) {
+            @if (can(['audit_read'])) {
               <li>
                 <a routerLink="/audit-log" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50" (click)="toggleMenu()" aria-label="Denetim Kaydı">
                   <mat-icon>history</mat-icon>
@@ -237,7 +237,7 @@
               </li>
             }
           </ul>
-          @if (canAccess([UserRole.PLATFORM_ADMIN])) {
+          @if (can(['system_manage_roles'])) {
             <div class="pt-3 mt-3 border-t">
               <p class="px-2 text-xs font-semibold text-gray-400 uppercase mb-2">Yönetim</p>
               <ul class="space-y-2">

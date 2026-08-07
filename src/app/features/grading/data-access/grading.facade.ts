@@ -8,6 +8,7 @@ import { MockApiService } from '@core/api/mock-api.service';
 import { StorageService } from '@core/storage/storage.service';
 import { AuditService } from '@core/observability/audit.service';
 import { CurrentUserService } from '@core/auth/current-user.service';
+import { PermissionService } from '@core/auth/permission.service';
 import { NotificationService } from '@core/observability/notification.service';
 import { OptimisticService } from '@core/optimistic/optimistic.service';
 import { DataScopeService } from '@core/auth/data-scope.service';
@@ -27,6 +28,7 @@ export class GradingFacade {
   private storage = inject(StorageService);
   private audit = inject(AuditService);
   private currentUser = inject(CurrentUserService);
+  private permission = inject(PermissionService);
   private notification = inject(NotificationService);
   private optimistic = inject(OptimisticService);
   private dataScope = inject(DataScopeService);
@@ -408,6 +410,6 @@ export class GradingFacade {
   }
 
   private canManage(): boolean {
-    return this.currentUser.hasAnyRole([UserRole.INSTRUCTOR, UserRole.PLATFORM_ADMIN]);
+    return this.permission.hasPermission('grading_grade');
   }
 }

@@ -5,6 +5,7 @@ import { MockApiService } from '@core/api/mock-api.service';
 import { NotificationService } from '@core/observability/notification.service';
 import { AuditService } from '@core/observability/audit.service';
 import { CurrentUserService } from '@core/auth/current-user.service';
+import { PermissionService } from '@core/auth/permission.service';
 import { QuestionSummary, QuestionVersion, QuestionOption } from '@core/models/question-version.model';
 import { QuestionVersionStatus, QuestionType, Difficulty, QuestionStatus, AuditAction, UserRole } from '@core/models/enums';
 import { QUESTIONS_SEED, EXAMS_SEED, OUTCOMES_SEED } from '@core/data';
@@ -64,6 +65,7 @@ export class QuestionBankFacade {
   private notification = inject(NotificationService);
   private audit = inject(AuditService);
   private currentUser = inject(CurrentUserService);
+  private permission = inject(PermissionService);
 
   private questionsSeed = signal<QuestionSummary[]>(QUESTIONS_SEED.map(mapOldToSummary));
   private versionsSeed = signal<QuestionVersion[]>(QUESTIONS_SEED.map(mapOldToVersion));
@@ -309,6 +311,6 @@ export class QuestionBankFacade {
   }
 
   private canManage(): boolean {
-    return this.currentUser.hasAnyRole([UserRole.INSTRUCTOR, UserRole.ASSESSMENT_SPECIALIST, UserRole.PLATFORM_ADMIN]);
+    return this.permission.hasAnyPermission(['question_create', 'question_update', 'question_delete']);
   }
 }

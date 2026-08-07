@@ -7,6 +7,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { ToastComponent } from '@shared/components/toast/toast.component';
 import { CurrentUserService, ROLE_HIERARCHY } from '@core/auth/current-user.service';
+import { PermissionService } from '@core/auth/permission.service';
+import { ROLE_LABELS } from '@core/auth/permission-constants';
 import { UserRole } from '@core/models/enums';
 
 @Component({
@@ -27,6 +29,7 @@ import { UserRole } from '@core/models/enums';
 })
 export class App {
   private currentUserService = inject(CurrentUserService);
+  private permissionService = inject(PermissionService);
   protected readonly menuOpen = signal(window.innerWidth >= 768);
 
   readonly user = this.currentUserService.user;
@@ -49,15 +52,11 @@ export class App {
     return roles.some(r => effective.includes(r));
   }
 
+  can(permissions: string[]): boolean {
+    return this.permissionService.hasAnyPermission(permissions);
+  }
+
   getRoleLabel(role: UserRole): string {
-    const labels: Record<UserRole, string> = {
-      [UserRole.PLATFORM_ADMIN]: 'Platform Yöneticisi',
-      [UserRole.PROGRAM_MANAGER]: 'Program Yöneticisi',
-      [UserRole.INSTRUCTOR]: 'Eğitmen',
-      [UserRole.ASSESSMENT_SPECIALIST]: 'Ölçme Uzmanı',
-      [UserRole.OBSERVER]: 'Gözlemci',
-      [UserRole.STUDENT]: 'Öğrenci'
-    };
-    return labels[role] || role;
+    return ROLE_LABELS[role] || role;
   }
 }
