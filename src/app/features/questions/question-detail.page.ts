@@ -282,11 +282,7 @@ export class QuestionDetailPage {
   }
 
   rollbackToVersion(questionId: number, versionId: number): void {
-    const versions = this.versions().filter(v => v.questionId === questionId);
-    const target = versions.find(v => v.id === versionId);
-    if (!target) return;
-
-    this.notificationService.show(`v${target.version} versiyonuna dönüldü`, 'success');
+    this.facade.revertToVersion(questionId, versionId);
     this.loadData();
   }
 

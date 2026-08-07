@@ -310,6 +310,33 @@ export class QuestionBankFacade {
     return this.mockApi.put(updated);
   }
 
+  revertToVersion(questionId: number, versionId: number): void {
+    const target = this.versionsSeed().find(v => v.id === versionId && v.questionId === questionId);
+    if (!target) return;
+
+    this.questionsSeed.update(list =>
+      list.map(q => q.id === questionId
+        ? {
+            ...q,
+            stem: target.stem,
+            type: target.type,
+            difficulty: target.difficulty,
+            options: target.options,
+            correctAnswer: target.correctAnswer,
+            solution: target.solution,
+            points: target.points,
+            tags: target.tags,
+            latestVersionId: versionId,
+            currentVersion: target.version,
+            updatedAt: new Date().toISOString(),
+          }
+        : q
+      )
+    );
+
+    this.notification.show(`v${target.version} versiyonuna dönüldü`, 'success');
+  }
+
   private canManage(): boolean {
     return this.permission.hasAnyPermission(['question_create', 'question_update', 'question_delete']);
   }
