@@ -142,6 +142,8 @@ import { StatusTextPipe } from '@shared/pipes';
                         <mat-icon>{{ item.completedAttempt.scorePercentage >= item.exam.passingScore ? 'check_circle' : 'cancel' }}</mat-icon>
                         <span class="font-semibold">%{{ item.completedAttempt.scorePercentage }}</span>
                       </div>
+                    } @else if (item.submittedAttempt) {
+                      <span class="px-3 py-1 rounded-lg text-sm font-medium bg-gray-100 text-gray-500">–</span>
                     } @else if (item.hasActiveSession && item.activeSessionToken) {
                       <a mat-stroked-button color="primary" [routerLink]="['/exam-session', item.activeSessionToken]">
                         <mat-icon>play_arrow</mat-icon> Devam Et
