@@ -9,6 +9,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { Attempt, QuestionResponse } from '@core/models/attempt.model';
 import { Rubric, GradingResult } from '@core/models/rubric.model';
 import { ResultStatus, QuestionType } from '@core/models/enums';
@@ -27,7 +28,7 @@ interface QuestionItem {
 @Component({
   selector: 'app-grading-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatIconModule, MatButtonModule, MatProgressSpinnerModule, MatDividerModule, MatCardModule, MatFormFieldModule, MatInputModule, MatDialogModule, RubricGraderComponent, ErrorStateComponent, ConfirmDialogComponent],
+  imports: [CommonModule, RouterLink, MatIconModule, MatButtonModule, MatProgressSpinnerModule, MatDividerModule, MatCardModule, MatFormFieldModule, MatInputModule, MatDialogModule, MatTooltipModule, RubricGraderComponent, ErrorStateComponent, ConfirmDialogComponent],
   template: `
     <div class="space-y-6">
       @if (loading()) {
@@ -39,7 +40,11 @@ interface QuestionItem {
       } @else if (attempt(); as attempt) {
             <div class="flex items-center justify-between">
               <div>
-                <a routerLink="/grading" class="text-sm text-gray-500 hover:text-blue-600 mb-1 inline-block">← Değerlendirmeye Dön</a>
+                <div class="flex items-center gap-2 mb-1">
+                  <button mat-icon-button routerLink="/grading" matTooltip="Geri Dön">
+                    <mat-icon>arrow_back</mat-icon>
+                  </button>
+                </div>
                 <h1 class="text-2xl font-bold text-gray-900">Değerlendirme #{{ attempt.id }}</h1>
             <p class="text-gray-500">{{ getExamName(attempt.examId) }} - {{ getStudentName(attempt.studentId) }}</p>
           </div>

@@ -1,6 +1,7 @@
 import { Component, inject, signal, computed, OnInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, Validators, FormArray, FormGroup } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTableModule } from '@angular/material/table';
@@ -25,7 +26,7 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
   selector: 'app-rubric-management',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, ReactiveFormsModule, MatIconModule, MatButtonModule,
+    CommonModule, FormsModule, ReactiveFormsModule, RouterLink, MatIconModule, MatButtonModule,
     MatTableModule, MatCardModule, MatProgressSpinnerModule, MatDialogModule,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatChipsModule,
     MatDividerModule, MatTooltipModule, MatAutocompleteModule, ErrorStateComponent,
@@ -34,7 +35,12 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
   template: `
     <div class="space-y-4">
       <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-900">Rubrik Yönetimi</h1>
+        <div class="flex items-center gap-2">
+          <button mat-icon-button routerLink="/grading" matTooltip="Geri Dön">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+          <h1 class="text-2xl font-bold text-gray-900">Rubrik Yönetimi</h1>
+        </div>
         <button mat-raised-button color="primary" (click)="openEditor()">
           <mat-icon>add</mat-icon> Yeni Rubrik
         </button>

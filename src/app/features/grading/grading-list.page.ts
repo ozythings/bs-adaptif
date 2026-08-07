@@ -24,7 +24,7 @@ import { DebounceDirective } from '@shared/directives';
     <div class="space-y-4">
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-900">Değerlendirme Bekleyen Sınavlar</h1>
-        <button mat-stroked-button color="primary" routerLink="/grading/rubrics">
+        <button mat-raised-button color="primary" routerLink="/grading/rubrics">
           <mat-icon>assignment</mat-icon> Rubrik Yönetimi
         </button>
       </div>

@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { QuestionBankFacade } from './data-access/question-bank.facade';
 import { QuestionSummary, QuestionVersion } from '@core/models/question-version.model';
 import { QuestionType, Difficulty, QuestionVersionStatus } from '@core/models/enums';
@@ -31,16 +32,16 @@ import { DateFormatPipe } from '@shared/pipes';
     MatSelectModule,
     MatProgressSpinnerModule,
     MatChipsModule,
+    MatTooltipModule,
     DateFormatPipe,
     ErrorStateComponent,
   ],
   template: `
     <div class="space-y-6">
       <div class="flex items-center gap-2">
-        <a routerLink="/question-bank" class="text-blue-600 hover:underline flex items-center gap-1">
+        <button mat-icon-button routerLink="/question-bank" matTooltip="Geri Dön">
           <mat-icon>arrow_back</mat-icon>
-          Soru Bankası
-        </a>
+        </button>
       </div>
 
       @if (loading()) {

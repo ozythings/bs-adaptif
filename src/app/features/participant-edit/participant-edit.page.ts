@@ -10,6 +10,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ParticipantFacade } from './data-access/participant.facade';
 import { NotificationService } from '@core/observability/notification.service';
 import { ErrorStateComponent } from '@shared/components';
@@ -23,7 +24,7 @@ import { Participant } from '@core/models/participant.model';
   standalone: true,
   imports: [
     CommonModule, ReactiveFormsModule, RouterLink, MatCardModule, MatButtonModule, MatIconModule,
-    MatFormFieldModule, MatInputModule, MatProgressSpinnerModule, MatDatepickerModule, ErrorStateComponent
+    MatFormFieldModule, MatInputModule, MatProgressSpinnerModule, MatDatepickerModule, MatTooltipModule, ErrorStateComponent
   ],
   template: `
     <div class="max-w-2xl mx-auto space-y-4">
@@ -34,7 +35,11 @@ import { Participant } from '@core/models/participant.model';
       } @else if (participant(); as p) {
         <div class="flex items-center justify-between">
           <div>
-            <a routerLink="/learning/dashboard" class="text-sm text-gray-500 hover:text-blue-600 mb-1 inline-block">← Dashboard'a Dön</a>
+            <div class="flex items-center gap-2 mb-1">
+              <button mat-icon-button routerLink="/learning/dashboard" matTooltip="Geri Dön">
+                <mat-icon>arrow_back</mat-icon>
+              </button>
+            </div>
             <h1 class="text-2xl font-bold text-gray-900">Profil Düzenle</h1>
             <p class="text-gray-500">{{ p.firstName }} {{ p.lastName }} ({{ p.schoolNumber }})</p>
           </div>

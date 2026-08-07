@@ -7,6 +7,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { StudentDashboardFacade } from '../student-dashboard/student-dashboard.facade';
 import { CurrentUserService } from '@core/auth/current-user.service';
@@ -25,14 +26,18 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
   standalone: true,
   imports: [
     CommonModule, RouterLink, MatIconModule, MatButtonModule, MatProgressSpinnerModule, MatPaginatorModule,
-    MatFormFieldModule, MatInputModule, DebounceDirective,
+    MatFormFieldModule, MatInputModule, MatTooltipModule, DebounceDirective,
     MasteryHeatmap, LineChartComponent, ErrorStateComponent,
     KpiCardComponent, RecommendationReasonCardComponent
   ],
   template: `
     <div class="space-y-6 p-4">
       @if (!isObserver()) {
-      <a routerLink="/grading" class="text-sm text-gray-500 hover:text-blue-600 inline-block">← Değerlendirmeye Dön</a>
+      <div class="flex items-center gap-2 mb-2">
+        <button mat-icon-button routerLink="/grading" matTooltip="Geri Dön">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+      </div>
       }
       @if (loading()) {
         <div class="flex justify-center items-center py-20">

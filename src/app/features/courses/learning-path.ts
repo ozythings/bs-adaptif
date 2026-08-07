@@ -6,6 +6,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { CoursesFacade, LearningPathData } from './data-access/courses.facade';
 import { ErrorStateComponent } from '@shared/components';
 import { ContentFormat, MasteryLevel, UserRole, Difficulty } from '@core/models/enums';
@@ -30,7 +31,7 @@ const FORMAT_LABELS: Record<ContentFormat, string> = {
 @Component({
   selector: 'app-learning-path',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatCardModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule, MatChipsModule, ErrorStateComponent, RecommendationReasonCardComponent],
+  imports: [CommonModule, RouterLink, MatCardModule, MatIconModule, MatButtonModule, MatProgressSpinnerModule, MatChipsModule, MatTooltipModule, ErrorStateComponent, RecommendationReasonCardComponent],
   template: `
     <div class="space-y-4">
       @if (loading()) {
@@ -49,8 +50,10 @@ const FORMAT_LABELS: Record<ContentFormat, string> = {
           </div>
         } @else {
         <div class="flex items-center justify-between">
-          <div>
-            <a routerLink="/courses" class="text-sm text-gray-500 hover:text-blue-600 mb-1 inline-block">← Kurslara Dön</a>
+          <div class="flex items-center gap-2">
+            <button mat-icon-button routerLink="/courses" matTooltip="Geri Dön">
+              <mat-icon>arrow_back</mat-icon>
+            </button>
             <h1 class="text-2xl font-bold text-gray-900">{{ p.course.title }} - Öğrenme Yolu</h1>
           </div>
         </div>

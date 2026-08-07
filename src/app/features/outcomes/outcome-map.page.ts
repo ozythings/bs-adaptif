@@ -7,6 +7,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { OutcomesFacade } from './data-access/outcomes.facade';
 import { OutcomeGraphComponent, levelColorEntries } from '@shared/components/outcome-graph/outcome-graph.component';
 import { ErrorStateComponent } from '@shared/components';
@@ -19,11 +20,16 @@ import { OutcomeLevel, OutcomeStatus } from '@core/models/enums';
 @Component({
   selector: 'app-outcome-map',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatSelectModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule, MatSlideToggleModule, OutcomeGraphComponent, ErrorStateComponent, DebounceDirective, StatusTextPipe],
+  imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatSelectModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule, MatSlideToggleModule, MatTooltipModule, OutcomeGraphComponent, ErrorStateComponent, DebounceDirective, StatusTextPipe],
   template: `
     <div class="space-y-4">
       <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-900">Kazanım Grafiği</h1>
+        <div class="flex items-center gap-2">
+          <button mat-icon-button routerLink="/outcomes" matTooltip="Geri Dön">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+          <h1 class="text-2xl font-bold text-gray-900">Kazanım Grafiği</h1>
+        </div>
         <a mat-stroked-button routerLink="/outcomes"><mat-icon>list</mat-icon> Liste</a>
       </div>
 

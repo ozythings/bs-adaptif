@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { CurrentUserService, UserInfo } from '@core/auth/current-user.service';
 import { AuditAction, UserRole } from '@core/models/enums';
 import { AuditService } from '@core/observability/audit.service';
@@ -14,10 +15,14 @@ import { clearSnapshot } from '@core/data/seed-persist';
 @Component({
   selector: 'app-role-switch',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatDialogModule, ConfirmDialogComponent],
+  imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatDialogModule, MatTooltipModule, ConfirmDialogComponent],
   template: `
     <div class="space-y-4">
-      <a routerLink="/learning/dashboard" class="text-sm text-gray-500 hover:text-blue-600 inline-block">← Dashboard'a Dön</a>
+      <div class="flex items-center gap-2 mb-2">
+        <button mat-icon-button routerLink="/learning/dashboard" matTooltip="Geri Dön">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+      </div>
       <h1 class="text-2xl font-bold text-gray-900">Kullanıcı Değiştir</h1>
 
       <div class="bg-white rounded-lg shadow-sm p-6 space-y-4">

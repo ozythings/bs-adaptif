@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { CoursesFacade } from '../data-access/courses.facade';
 import { ErrorStateComponent } from '@shared/components';
 import { DebounceDirective } from '@shared/directives';
@@ -21,14 +22,14 @@ import { COURSES_SEED } from '@core/data';
   imports: [
     CommonModule, RouterLink, MatIconModule, MatButtonModule, MatTableModule,
     MatFormFieldModule, MatInputModule, MatPaginatorModule, MatProgressSpinnerModule,
-    MatCardModule, ErrorStateComponent, DebounceDirective,
+    MatCardModule, MatTooltipModule, ErrorStateComponent, DebounceDirective,
   ],
   template: `
     <div class="space-y-4">
       <div class="flex items-center gap-3">
-        <a routerLink="/courses" mat-icon-button>
+        <button mat-icon-button routerLink="/courses" matTooltip="Geri Dön">
           <mat-icon>arrow_back</mat-icon>
-        </a>
+        </button>
         <div>
           <h1 class="text-2xl font-bold text-gray-900">{{ courseTitle() }}</h1>
           <p class="text-sm text-gray-500">Kayıtlı öğrenciler</p>

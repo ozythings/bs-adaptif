@@ -15,6 +15,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { CoursesFacade } from '../data-access/courses.facade';
 import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components';
 import { ContentFormat, ContentStatus, Difficulty } from '@core/models/enums';
@@ -41,13 +42,15 @@ interface ContentFormData {
   imports: [
     CommonModule, RouterLink, ReactiveFormsModule, MatIconModule, MatButtonModule,
     MatTableModule, MatFormFieldModule, MatInputModule, MatSelectModule,
-    MatProgressSpinnerModule, MatCardModule, MatChipsModule, MatCheckboxModule, MatSlideToggleModule, MatPaginatorModule, MatDialogModule, ErrorStateComponent, ConfirmDialogComponent
+    MatProgressSpinnerModule, MatCardModule, MatChipsModule, MatCheckboxModule, MatSlideToggleModule, MatPaginatorModule, MatDialogModule, MatTooltipModule, ErrorStateComponent, ConfirmDialogComponent
   ],
   template: `
     <div class="space-y-4">
       <div class="flex items-center justify-between">
-        <div>
-          <a routerLink="/courses" class="text-sm text-gray-500 hover:text-blue-600 mb-1 inline-block">← Kurslara Dön</a>
+        <div class="flex items-center gap-2">
+          <button mat-icon-button routerLink="/courses" matTooltip="Geri Dön">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
           <h1 class="text-2xl font-bold text-gray-900">Kurs İçeriği Düzenle</h1>
         </div>
       </div>
