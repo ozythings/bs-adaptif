@@ -6,10 +6,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { StudentDashboardFacade } from '../student-dashboard/student-dashboard.facade';
 import { CurrentUserService } from '@core/auth/current-user.service';
 import { ErrorStateComponent, KpiCardComponent } from '@shared/components';
 import { RecommendationReasonCardComponent } from '@shared/components/recommendation-reason-card/recommendation-reason-card.component';
+import { DebounceDirective } from '@shared/directives';
 import { getMasteryColor, isWeak } from '@shared/utils/mastery-helpers';
 import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/student-dashboard.model';
 
@@ -19,6 +22,7 @@ import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/s
   imports: [
     CommonModule, MatCardModule, MatIconModule, MatButtonModule,
     MatProgressSpinnerModule, MatProgressBarModule, MatPaginatorModule,
+    MatFormFieldModule, MatInputModule, DebounceDirective,
     ErrorStateComponent, KpiCardComponent, RecommendationReasonCardComponent,
   ],
   template: `
@@ -53,19 +57,19 @@ import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/s
           <app-kpi-card
             borderClass="border-emerald-500" iconBgClass="bg-emerald-100" iconColorClass="text-emerald-600"
             icon="psychology" label="Genel Başarım" [value]="info.overallMastery + '%'"
-            [clickable]="true" (click)="toggleDetail('mastery')" />
+            [clickable]="true" [expanded]="expandedKpi() === 'mastery'" (click)="toggleDetail('mastery')" />
           <app-kpi-card
             borderClass="border-blue-500" iconBgClass="bg-blue-100" iconColorClass="text-blue-600"
             icon="checklist" label="İçerik Tamamlama" [value]="info.completedContents + '/' + info.totalContents"
-            [clickable]="true" (click)="toggleDetail('completed')" />
+            [clickable]="true" [expanded]="expandedKpi() === 'completed'" (click)="toggleDetail('completed')" />
           <app-kpi-card
             borderClass="border-purple-500" iconBgClass="bg-purple-100" iconColorClass="text-purple-600"
             icon="schedule" label="Planlanan Çalışma" [value]="info.studyHours.toFixed(1) + ' saat'"
-            [clickable]="true" (click)="toggleDetail('tasks')" />
+            [clickable]="true" [expanded]="expandedKpi() === 'tasks'" (click)="toggleDetail('tasks')" />
           <app-kpi-card
             borderClass="border-orange-500" iconBgClass="bg-orange-100" iconColorClass="text-orange-600"
             icon="quiz" label="Yaklaşan Sınav" [value]="info.upcomingExams.length"
-            [clickable]="true" (click)="toggleDetail('exams')" />
+            [clickable]="true" [expanded]="expandedKpi() === 'exams'" (click)="toggleDetail('exams')" />
         </div>
 
         <!-- KPI Expand Detail Panel -->
@@ -80,9 +84,15 @@ import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/s
               </button>
             </div>
 
+            <mat-form-field appearance="outline" class="w-full mb-3">
+              <mat-label>İsme göre filtrele</mat-label>
+              <input matInput [value]="kpiSearch()" [appDebounce]="300" (debouncedChange)="onKpiSearch($event)" placeholder="Kazanım, kurs veya içerik ara...">
+              <mat-icon matSuffix>search</mat-icon>
+            </mat-form-field>
+
             @switch (kpi) {
               @case ('mastery') {
-                @if (info.masteryScores.length === 0) {
+                @if (filteredMasteryForKpi().length === 0) {
                   <p class="text-gray-500 text-sm py-4">Henüz değerlendirilmemiş kazanım bulunmuyor.</p>
                 } @else {
                   <div class="space-y-2">
@@ -105,7 +115,7 @@ import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/s
                       </div>
                     }
                   </div>
-                  @if (info.masteryScores.length > 5) {
+                  @if (filteredMasteryForKpi().length > 5) {
                     <mat-paginator
                       [pageSize]="pageSize()" [pageSizeOptions]="[5, 10, 20]"
                       [length]="panelLength()" [pageIndex]="pageIndex()"
@@ -115,7 +125,7 @@ import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/s
               }
 
               @case ('completed') {
-                @if (completedCourses().length === 0) {
+                @if (filteredCompletedForKpi().length === 0) {
                   <p class="text-gray-500 text-sm py-4">Henüz içerik tamamlanmadı.</p>
                 } @else {
                   <div class="space-y-2">
@@ -128,7 +138,7 @@ import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/s
                       </div>
                     }
                   </div>
-                  @if (completedCourses().length > 5) {
+                  @if (filteredCompletedForKpi().length > 5) {
                     <mat-paginator
                       [pageSize]="pageSize()" [pageSizeOptions]="[5, 10, 20]"
                       [length]="panelLength()" [pageIndex]="pageIndex()"
@@ -138,7 +148,7 @@ import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/s
               }
 
               @case ('tasks') {
-                @if (info.scheduledTasks.length === 0) {
+                @if (filteredTasksForKpi().length === 0) {
                   <p class="text-gray-500 text-sm py-4">Bu hafta için planlanmış çalışma bulunmuyor.</p>
                 } @else {
                   <div class="space-y-2">
@@ -172,7 +182,7 @@ import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/s
                       </div>
                     }
                   </div>
-                  @if (info.scheduledTasks.length > 5) {
+                  @if (filteredTasksForKpi().length > 5) {
                     <mat-paginator
                       [pageSize]="pageSize()" [pageSizeOptions]="[5, 10, 20]"
                       [length]="panelLength()" [pageIndex]="pageIndex()"
@@ -182,7 +192,7 @@ import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/s
               }
 
               @case ('exams') {
-                @if (info.upcomingExams.length === 0) {
+                @if (filteredExamsForKpi().length === 0) {
                   <p class="text-gray-500 text-sm py-4">Yaklaşan sınav bulunmuyor.</p>
                 } @else {
                   <div class="space-y-2">
@@ -213,7 +223,7 @@ import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/s
                       </div>
                     }
                   </div>
-                  @if (info.upcomingExams.length > 5) {
+                  @if (filteredExamsForKpi().length > 5) {
                     <mat-paginator
                       [pageSize]="pageSize()" [pageSizeOptions]="[5, 10, 20]"
                       [length]="panelLength()" [pageIndex]="pageIndex()"
@@ -456,6 +466,7 @@ export class AdaptivePlanPage implements OnInit {
   error = signal<string | null>(null);
   d = signal<StudentDashboardData | null>(null);
   expandedKpi = signal<string | null>(null);
+  kpiSearch = signal('');
 
   userName = computed(() => this.currentUser.user().name);
   pageSize = signal(5);
@@ -470,46 +481,79 @@ export class AdaptivePlanPage implements OnInit {
     return info ? info.courseProgress.filter(c => c.completedContents > 0) : [];
   });
 
-  paginatedMastery = computed(() => {
+  filteredMasteryForKpi = computed(() => {
     const info = this.d();
     if (!info) return [];
+    const search = this.kpiSearch().toLowerCase();
+    return info.masteryScores.filter(ms =>
+      !search || this.outcomeName(ms.outcomeId).toLowerCase().includes(search)
+    );
+  });
+
+  filteredCompletedForKpi = computed(() => {
+    const search = this.kpiSearch().toLowerCase();
+    return this.completedCourses().filter(cp =>
+      !search || cp.courseTitle.toLowerCase().includes(search)
+    );
+  });
+
+  filteredTasksForKpi = computed(() => {
+    const info = this.d();
+    if (!info) return [];
+    const search = this.kpiSearch().toLowerCase();
+    return info.scheduledTasks.filter(t =>
+      !search ||
+      t.contentTitle.toLowerCase().includes(search) ||
+      t.courseTitle.toLowerCase().includes(search) ||
+      t.outcomeName.toLowerCase().includes(search)
+    );
+  });
+
+  filteredExamsForKpi = computed(() => {
+    const info = this.d();
+    if (!info) return [];
+    const search = this.kpiSearch().toLowerCase();
+    return info.upcomingExams.filter(e =>
+      !search ||
+      e.title.toLowerCase().includes(search) ||
+      e.courseTitle.toLowerCase().includes(search)
+    );
+  });
+
+  paginatedMastery = computed(() => {
     const start = this.pageIndex() * this.pageSize();
-    return info.masteryScores.slice(start, start + this.pageSize());
+    return this.filteredMasteryForKpi().slice(start, start + this.pageSize());
   });
 
   paginatedCompleted = computed(() => {
     const start = this.pageIndex() * this.pageSize();
-    return this.completedCourses().slice(start, start + this.pageSize());
+    return this.filteredCompletedForKpi().slice(start, start + this.pageSize());
   });
 
   paginatedTasks = computed(() => {
-    const info = this.d();
-    if (!info) return [];
     const start = this.pageIndex() * this.pageSize();
-    return info.scheduledTasks.slice(start, start + this.pageSize());
+    return this.filteredTasksForKpi().slice(start, start + this.pageSize());
   });
 
   paginatedExams = computed(() => {
-    const info = this.d();
-    if (!info) return [];
     const start = this.pageIndex() * this.pageSize();
-    return info.upcomingExams.slice(start, start + this.pageSize());
+    return this.filteredExamsForKpi().slice(start, start + this.pageSize());
   });
 
   panelLength = computed(() => {
     const kpi = this.expandedKpi();
-    const info = this.d();
-    if (!info || !kpi) return 0;
-    if (kpi === 'mastery') return info.masteryScores.length;
-    if (kpi === 'completed') return this.completedCourses().length;
-    if (kpi === 'tasks') return info.scheduledTasks.length;
-    return info.upcomingExams.length;
+    if (!kpi) return 0;
+    if (kpi === 'mastery') return this.filteredMasteryForKpi().length;
+    if (kpi === 'completed') return this.filteredCompletedForKpi().length;
+    if (kpi === 'tasks') return this.filteredTasksForKpi().length;
+    return this.filteredExamsForKpi().length;
   });
 
   constructor() {
     effect(() => {
       this.expandedKpi();
       this.pageIndex.set(0);
+      this.kpiSearch.set('');
     });
   }
 
@@ -531,6 +575,11 @@ export class AdaptivePlanPage implements OnInit {
 
   toggleDetail(key: string): void {
     this.expandedKpi.set(this.expandedKpi() === key ? null : key);
+  }
+
+  onKpiSearch(term: string): void {
+    this.kpiSearch.set(term);
+    this.pageIndex.set(0);
   }
 
   onPage(event: PageEvent): void {
