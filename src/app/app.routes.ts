@@ -74,10 +74,10 @@ export const routes: Routes = [
     data: { roles: [UserRole.INSTRUCTOR, UserRole.STUDENT, UserRole.PROGRAM_MANAGER, UserRole.OBSERVER] }
   },
   {
-    path: 'participant/:id/edit',
+    path: 'participant/:id',
     loadChildren: () => import('./features/participant-edit/participant-edit.routes').then(m => m.PARTICIPANT_EDIT_ROUTES),
     canActivate: [roleGuard],
-    data: { roles: [UserRole.PLATFORM_ADMIN, UserRole.INSTRUCTOR, UserRole.STUDENT, UserRole.PROGRAM_MANAGER] }
+    data: { roles: [UserRole.PLATFORM_ADMIN, UserRole.INSTRUCTOR, UserRole.STUDENT, UserRole.PROGRAM_MANAGER, UserRole.OBSERVER] }
   },
   {
     path: 'item-analysis',

@@ -56,8 +56,8 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
               <p class="text-sm text-gray-500">{{ s.schoolNumber }}</p>
             </div>
             @if (!isObserver()) {
-            <a [routerLink]="['/participant', s.id, 'edit']" mat-stroked-button color="primary" class="ml-auto">
-              <mat-icon>edit</mat-icon> Profili Düzenle
+             <a [routerLink]="['/participant', s.id]" mat-stroked-button color="primary" class="ml-auto">
+              <mat-icon>person</mat-icon> Profil
             </a>
             }
           </div>

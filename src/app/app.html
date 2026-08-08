@@ -63,7 +63,7 @@
         }
         @if (can(['student_profile']) && user().studentId) {
           <li>
-            <a [routerLink]="['/participant', user().studentId, 'edit']" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Profilim">
+            <a [routerLink]="['/participant', user().studentId]" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Profilim">
               <mat-icon>person</mat-icon>
               <span>Profilim</span>
             </a>
