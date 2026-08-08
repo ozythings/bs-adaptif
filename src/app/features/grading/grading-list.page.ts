@@ -64,7 +64,7 @@ import { DebounceDirective } from '@shared/directives';
           <table mat-table [dataSource]="pagedAttempts()" class="w-full">
             <ng-container matColumnDef="id">
               <th mat-header-cell *matHeaderCellDef>ID</th>
-              <td mat-cell *matCellDef="let a">#{{ a.id }}</td>
+              <td mat-cell *matCellDef="let a">{{ a.id }}</td>
             </ng-container>
 
             <ng-container matColumnDef="student">

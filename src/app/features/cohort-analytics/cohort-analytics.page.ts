@@ -1,7 +1,7 @@
 import { Component,  inject,  signal,  computed,  OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
@@ -9,6 +9,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { CohortAnalyticsFacade } from './data-access/cohort-analytics.facade';
 import { Cohort, CohortComparisonMetric } from '@core/models/cohort.model';
 import { ColumnChartComponent } from '@shared/components/column-chart/column-chart.component';
@@ -20,10 +21,15 @@ const MIN_COHORT_SIZE = 3;
 @Component({
   selector: 'app-cohort-analytics',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule, MatCardModule, MatSelectModule, MatFormFieldModule, MatProgressSpinnerModule, MatTableModule, ColumnChartComponent, ErrorStateComponent],
+  imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule, MatCardModule, MatSelectModule, MatFormFieldModule, MatProgressSpinnerModule, MatTableModule, MatTooltipModule, RouterLink, ColumnChartComponent, ErrorStateComponent],
   template: `
     <div class="space-y-4">
-      <h1 class="text-2xl font-bold text-gray-900">Cohort Analizi</h1>
+      <div class="flex items-center gap-2">
+        <button mat-icon-button routerLink="/cohorts" matTooltip="Geri Dön">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <h1 class="text-2xl font-bold text-gray-900">Kohort Analizi</h1>
+      </div>
 
       <div class="bg-white rounded-lg shadow-sm p-3">
         <div class="grid grid-cols-1 gap-3">

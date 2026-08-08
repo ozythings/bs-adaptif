@@ -11,6 +11,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { RouterLink } from '@angular/router';
 import { CohortManagementFacade } from './cohort-management.facade';
 import { Cohort } from '@core/models/cohort.model';
 import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components';
@@ -18,14 +19,19 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
 @Component({
   selector: 'app-cohort-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatButtonModule, MatIconModule, MatCardModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatSlideToggleModule, MatProgressSpinnerModule, MatTableModule, MatDialogModule, ErrorStateComponent, ConfirmDialogComponent],
+  imports: [CommonModule, ReactiveFormsModule, MatButtonModule, MatIconModule, MatCardModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatSlideToggleModule, MatProgressSpinnerModule, MatTableModule, MatDialogModule, RouterLink, ErrorStateComponent, ConfirmDialogComponent],
   template: `
     <div class="space-y-4">
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-900">Kohortlar</h1>
-        <button mat-raised-button color="primary" (click)="openNewForm()">
-          <mat-icon>add</mat-icon> Yeni Kohort
-        </button>
+        <div class="flex items-center gap-2">
+          <a mat-stroked-button routerLink="/cohorts/analytics">
+            <mat-icon>analytics</mat-icon> Kohort Analizi
+          </a>
+          <button mat-raised-button color="primary" (click)="openNewForm()">
+            <mat-icon>add</mat-icon> Yeni Kohort
+          </button>
+        </div>
       </div>
 
       @if (showForm()) {

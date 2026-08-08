@@ -145,7 +145,7 @@ const memoizedLayout = memoizeWithKey(
       }
       @if (hasCycles()) {
         <div class="absolute top-2 left-2 z-10 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5 text-sm text-red-700" [class.mt-10]="outcomes().length >= NODE_LIMIT_WARN">
-          <strong>⚠ Döngüsel önkoşul tespit edildi.</strong> Kırmızı oklara sahip kenarlar bir döngü oluşturuyor.
+          <strong>Döngüsel önkoşul tespit edildi.</strong> Kırmızı oklara sahip kenarlar bir döngü oluşturuyor.
         </div>
       }
       <div class="absolute top-2 right-2 z-10 flex flex-col gap-1 bg-white/90 rounded-lg shadow-sm p-1">
@@ -161,7 +161,7 @@ const memoizedLayout = memoizeWithKey(
         </button>
       </div>
 
-      <div class="w-full overflow-auto" style="max-height: 500px" #viewport
+      <div class="w-full overflow-auto" style="max-height: 400px" #viewport
         (wheel)="onWheel($event)"
         (mousedown)="onPanStart($event)"
         (mousemove)="onPanMove($event)"

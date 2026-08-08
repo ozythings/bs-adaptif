@@ -79,11 +79,6 @@ export const routes: Routes = [
     data: { roles: [UserRole.PLATFORM_ADMIN, UserRole.INSTRUCTOR, UserRole.STUDENT, UserRole.PROGRAM_MANAGER] }
   },
   {
-    path: 'cohort-analytics',
-    redirectTo: 'cohorts',
-    pathMatch: 'full'
-  },
-  {
     path: 'item-analysis',
     loadChildren: () => import('./features/item-analysis/item-analysis.routes').then(m => m.ITEM_ANALYSIS_ROUTES),
     canActivate: [roleGuard],
