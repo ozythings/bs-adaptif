@@ -19,6 +19,7 @@ import { ExamSession } from '@core/models/exam-session.model';
 import { ExamTimerComponent } from '@shared/components/exam-timer/exam-timer.component';
 import { ConfirmDialogComponent } from '@shared/components/confirm-dialog/confirm-dialog.component';
 import { AutosaveIndicatorComponent } from '@shared/components/autosave-indicator/autosave-indicator.component';
+import { NotificationService } from '@core/observability/notification.service';
 
 @Component({
   selector: 'app-exam-session',
@@ -54,7 +55,6 @@ import { AutosaveIndicatorComponent } from '@shared/components/autosave-indicato
           </div>
           <div class="flex items-center gap-4">
             <span class="sr-only" role="status" aria-live="polite">{{ saveStatus() === 'conflict' ? 'Çakışma tespit edildi' : '' }}</span>
-            <app-autosave-indicator [status]="saveStatus()" />
             <app-exam-timer [serverTimeReference]="session()?.serverTimeReference ?? ''" [durationMinutes]="session()?.durationMinutes ?? 0" (timeUp)="onTimeUp()" />
             <button mat-icon-button (click)="toggleSimulateOffline()" matTooltip="Bağlantıyı Simüle Et" [attr.aria-label]="connectionStatus() === 'offline' ? 'Çevrimiçi ol' : 'Çevrimdışı simüle et'">
               <mat-icon>{{ connectionStatus() === 'offline' ? 'wifi_off' : 'wifi' }}</mat-icon>
@@ -71,7 +71,8 @@ import { AutosaveIndicatorComponent } from '@shared/components/autosave-indicato
                     <span class="text-sm text-gray-500">Soru {{ currentIndex() + 1 }}</span>
                     <span class="text-sm text-gray-500 ml-2">({{ q.difficulty }})</span>
                   </div>
-                  <div class="flex gap-1">
+                  <div class="flex items-center gap-2">
+                    <app-autosave-indicator [status]="getQuestionSaveStatus(q.id)" />
                     <button mat-icon-button (click)="toggleMark(q.id)" [class.text-yellow-500]="isMarked(q.id)" [attr.aria-label]="(isMarked(q.id) ? 'İşaretli soru' : 'Soruyu işaretle') + ' ' + (currentIndex() + 1)">
                       <mat-icon>{{ isMarked(q.id) ? 'flag' : 'flag_outline' }}</mat-icon>
                     </button>
@@ -133,9 +134,8 @@ import { AutosaveIndicatorComponent } from '@shared/components/autosave-indicato
                 @for (q of questions(); track q.id; let i = $index) {
                   <button mat-mini-fab
                           [class.mat-primary]="i === currentIndex()"
-                          [class.mat-accent]="isMarked(q.id) && i !== currentIndex()"
-                          [style.border]="isAnswered(q.id) && i !== currentIndex() && !isMarked(q.id) ? '4px solid #eab308' : ''"
-                          color="{{ i === currentIndex() ? 'primary' : (isMarked(q.id) ? 'accent' : 'basic') }}"
+                          [style.background-color]="isMarked(q.id) && i !== currentIndex() ? '#eab308' : (isAnswered(q.id) && i !== currentIndex() ? '#22c55e' : '')"
+                          color="{{ i === currentIndex() ? 'primary' : 'basic' }}"
                           (click)="goToQuestion(i)"
                           [attr.aria-label]="'Soru ' + (i + 1) + (isAnswered(q.id) ? ' (cevaplandı)' : '') + (isMarked(q.id) ? ' (işaretli)' : '')">
                     {{ i + 1 }}
@@ -162,6 +162,7 @@ export class ExamSessionPage implements OnInit {
   private facade = inject(SessionFacade);
   private draftStore = inject(DraftStore);
   private dialog = inject(MatDialog);
+  private notification = inject(NotificationService);
   private destroyRef = inject(DestroyRef);
 
   session = signal<ExamSession | null>(null);
@@ -251,9 +252,16 @@ export class ExamSessionPage implements OnInit {
     return this.answerMap().get(questionId);
   }
 
+  getQuestionSaveStatus(questionId: number) {
+    return this.facade.getQuestionSaveStatus(questionId);
+  }
+
   toggleMark(questionId: number): void {
     if (!this.canInteract()) return;
     this.facade.toggleMark(questionId);
+    const marked = this.facade.markedQuestions().includes(questionId);
+    const idx = this.questions().findIndex(q => q.id === questionId);
+    this.notification.show(marked ? `Soru ${idx + 1} işaretlendi` : `Soru ${idx + 1} işareti kaldırıldı`, marked ? 'warning' : 'info', 1500);
   }
 
   isMarked(questionId: number): boolean {

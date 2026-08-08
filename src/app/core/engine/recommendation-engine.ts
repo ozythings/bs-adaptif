@@ -149,5 +149,8 @@ function lastAssessedReason(mastery: MasteryScore): ReasonDetail | null {
   if (days >= 5) {
     return { factor: 'last_assessed', weight: 0.1, description: `${days} gün önce` };
   }
-  return null;
+  if (days >= 1) {
+    return { factor: 'last_assessed', weight: 0.05, description: `${days} gün önce` };
+  }
+  return { factor: 'last_assessed', weight: 0.05, description: 'Bugün değerlendirildi' };
 }

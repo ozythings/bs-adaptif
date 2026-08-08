@@ -72,9 +72,22 @@ export class SessionFacade {
   readonly markedQuestions = signal<number[]>([]);
   readonly timeRemaining = signal(0);
   readonly connectionStatus = signal<'online' | 'offline' | 'reconnecting'>('online');
-  readonly saveStatus = signal<'saved' | 'saving' | 'offline' | 'conflict' | 'error'>('saved');
+  readonly saveStatus = signal<'idle' | 'saved' | 'saving' | 'offline' | 'conflict' | 'error'>('idle');
+  readonly questionSaveStatus = signal<Map<number, 'idle' | 'saving' | 'saved' | 'offline' | 'conflict'>>(new Map());
   readonly conflictQuestionId = signal<number | null>(null);
   readonly timerReady = signal(false);
+
+  getQuestionSaveStatus(questionId: number): 'idle' | 'saving' | 'saved' | 'offline' | 'conflict' {
+    return this.questionSaveStatus().get(questionId) ?? 'idle';
+  }
+
+  private setQuestionSaveStatus(questionId: number, status: 'idle' | 'saving' | 'saved' | 'offline' | 'conflict'): void {
+    this.questionSaveStatus.update(m => {
+      const next = new Map(m);
+      next.set(questionId, status);
+      return next;
+    });
+  }
 
   getSession(token: string): Observable<ExamSession | undefined> {
     const session = this.sessions().find(s => s.token === token);
@@ -84,6 +97,15 @@ export class SessionFacade {
       this.timerReady.set(true);
       this.markedQuestions.set(session.markedQuestions);
       this.currentQuestionIndex.set(session.currentQuestionIndex);
+
+      const drafts = this.draftStore.getBySession(session.id);
+      const statusMap = new Map<number, 'idle' | 'saving' | 'saved' | 'offline' | 'conflict'>();
+      for (const d of drafts) {
+        if (d.answer) {
+          statusMap.set(d.questionId, 'saved');
+        }
+      }
+      this.questionSaveStatus.set(statusMap);
     }
     return this.mockApi.get(session);
   }
@@ -175,6 +197,8 @@ export class SessionFacade {
     if (!this.canAnswer(sessionId)) return;
     const existing = this.draftStore.get(sessionId, questionId);
 
+    this.setQuestionSaveStatus(questionId, 'saving');
+
     const newVersion = (existing?.version ?? 0) + 1;
     const draftData: AnswerDraft = {
       id: existing?.id ?? Date.now(),
@@ -197,7 +221,7 @@ export class SessionFacade {
     this.debounceTimers.set(key, setTimeout(() => {
       this.debounceTimers.delete(key);
       this.flushAnswer(sessionId, questionId, draftData);
-    }, 1000));
+    }, 300));
   }
 
   private flushAnswer(sessionId: number, questionId: number, draftData: AnswerDraft): void {
@@ -205,6 +229,7 @@ export class SessionFacade {
       this.draftStore.save(draftData);
       this.offlineQueue.enqueue({ type: 'PUT', url: '/api/drafts', body: draftData });
       this.saveStatus.set('offline');
+      this.setQuestionSaveStatus(questionId, 'offline');
       return;
     }
 
@@ -212,10 +237,12 @@ export class SessionFacade {
     const result = this.draftStore.save(draftData);
     if (result.conflict) {
       this.saveStatus.set('conflict');
+      this.setQuestionSaveStatus(questionId, 'conflict');
       this.conflictQuestionId.set(questionId);
       return;
     }
     this.saveStatus.set('saved');
+    this.setQuestionSaveStatus(questionId, 'saved');
   }
 
   resolveConflict(sessionId: number, questionId: number): void {
@@ -371,11 +398,15 @@ export class SessionFacade {
   simulateOffline(): void {
     this.connectionStatus.set('offline');
     this.saveStatus.set('offline');
+    const qId = this.activeSession()?.questionOrder[this.currentQuestionIndex()];
+    if (qId != null) this.setQuestionSaveStatus(qId, 'offline');
   }
 
   simulateOnline(): void {
     this.connectionStatus.set('online');
     this.saveStatus.set('saved');
+    const qId = this.activeSession()?.questionOrder[this.currentQuestionIndex()];
+    if (qId != null) this.setQuestionSaveStatus(qId, 'saved');
     this.syncQueuedAnswers();
   }
 }

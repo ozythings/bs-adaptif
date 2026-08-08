@@ -7,9 +7,11 @@ import { MatIconModule } from '@angular/material/icon';
   imports: [MatIconModule],
   template: `
     <span class="flex items-center gap-1 text-sm"
+          [class.text-gray-400]="status() === 'idle'"
           [class.text-green-600]="status() === 'saved'"
           [class.text-orange-600]="status() === 'saving'"
           [class.text-red-600]="status() === 'offline' || status() === 'conflict' || status() === 'error'">
+      @if (status() === 'idle') { <mat-icon class="text-sm">cloud_queue</mat-icon> }
       @if (status() === 'saved') { <mat-icon class="text-sm">cloud_done</mat-icon> }
       @if (status() === 'saving') { <mat-icon class="text-sm animate-pulse">cloud_upload</mat-icon> }
       @if (status() === 'offline') { <mat-icon class="text-sm">cloud_off</mat-icon> }
@@ -20,10 +22,11 @@ import { MatIconModule } from '@angular/material/icon';
   `
 })
 export class AutosaveIndicatorComponent {
-  status = input<'saved' | 'saving' | 'offline' | 'conflict' | 'error'>('saved');
+  status = input<'idle' | 'saved' | 'saving' | 'offline' | 'conflict' | 'error'>('idle');
 
   protected label(): string {
     switch (this.status()) {
+      case 'idle': return 'Henüz kaydedilmedi';
       case 'saved': return 'Kaydedildi';
       case 'saving': return 'Kaydediliyor';
       case 'offline': return 'Çevrimdışı';
