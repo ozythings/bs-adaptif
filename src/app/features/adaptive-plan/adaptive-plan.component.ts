@@ -235,136 +235,7 @@ import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/s
           </div>
         }
 
-        <!-- Weekly Plan + Recommendations -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Weekly Schedule -->
-          <mat-card appearance="outlined" class="lg:col-span-2">
-            <div class="p-5">
-              <div class="flex items-center gap-2 mb-4">
-                <mat-icon class="text-teal-600">date_range</mat-icon>
-                <h2 class="text-lg font-semibold text-gray-900">Haftalık Program</h2>
-              </div>
-              @if (info.scheduledTasks.length === 0) {
-                <p class="text-gray-500 text-sm py-4">Bu hafta için planlanmış çalışma bulunmuyor.</p>
-              } @else {
-                <div class="space-y-0">
-                  @let grouped = groupByDay(info.scheduledTasks);
-                  @for (day of dayLabels(); track day) {
-                    <div class="border-b border-gray-100 py-3">
-                      <div class="flex items-center gap-3 mb-2">
-                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
-                          [class.bg-teal-500]="grouped[day]?.length"
-                          [class.text-white]="grouped[day]?.length"
-                          [class.bg-gray-100]="!grouped[day]?.length"
-                          [class.text-gray-400]="!grouped[day]?.length">
-                          {{ day.substring(0, 3).toUpperCase() }}
-                        </div>
-                        <span class="font-medium text-gray-900">{{ day }}</span>
-                        @if (!grouped[day]?.length) {
-                          <span class="text-xs text-gray-400">- Dinlenme günü</span>
-                        }
-                      </div>
-                      @if (grouped[day]?.length) {
-                        <div class="ml-11 space-y-2">
-                          @for (task of grouped[day]; track task.contentId) {
-                            <div class="flex items-start gap-2 p-2 rounded-lg"
-                              [class.bg-red-50]="task.priority === 'critical'"
-                              [class.bg-yellow-50]="task.priority === 'high'"
-                              [class.bg-blue-50]="task.priority === 'medium'"
-                              [class.bg-gray-50]="task.priority === 'low'">
-                              <mat-icon class="text-lg mt-0.5"
-                                [class.text-red-600]="task.priority === 'critical'"
-                                [class.text-yellow-600]="task.priority === 'high'"
-                                [class.text-blue-600]="task.priority === 'medium'"
-                                [class.text-gray-500]="task.priority === 'low'">
-                                {{ task.priority === 'critical' ? 'priority_high' : task.priority === 'high' ? 'error' : 'checklist' }}
-                              </mat-icon>
-                              <div class="flex-1 min-w-0">
-                                <p class="text-sm font-medium text-gray-900 truncate">{{ task.contentTitle }}</p>
-                                <p class="text-xs text-gray-500">{{ task.courseTitle }} &middot; {{ task.outcomeName }}</p>
-                              </div>
-                              <div class="text-right flex-shrink-0">
-                                <span class="text-xs font-medium"
-                                  [class.text-red-600]="task.priority === 'critical'"
-                                  [class.text-yellow-600]="task.priority === 'high'"
-                                  [class.text-blue-600]="task.priority === 'medium'"
-                                  [class.text-gray-500]="task.priority === 'low'">
-                                  {{ task.durationMinutes }}dk
-                                </span>
-                                <p class="text-xs text-gray-400">%{{ task.masteryScore }}</p>
-                              </div>
-                            </div>
-                          }
-                        </div>
-                      }
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-          </mat-card>
-
-          <!-- Recommendations -->
-          <mat-card appearance="outlined" class="lg:col-span-1">
-            <div class="p-5">
-              <div class="flex items-center gap-2 mb-4">
-                <mat-icon class="text-amber-600">lightbulb</mat-icon>
-                <h2 class="text-lg font-semibold text-gray-900">Öncelikli Öneriler</h2>
-              </div>
-              @if (info.recommendations.length === 0) {
-                <p class="text-gray-500 text-sm py-4">Henüz öneri bulunmuyor.</p>
-              } @else {
-                <div class="space-y-3">
-                  @for (rec of info.recommendations; track rec.contentId + '-' + rec.outcomeId) {
-                    <app-recommendation-reason-card
-                      [recommendation]="rec"
-                      [outcomeName]="facade.getOutcomeName(rec.outcomeId)"
-                      [courseName]="facade.getCourseNameByOutcome(rec.outcomeId)" />
-                  }
-                </div>
-              }
-            </div>
-          </mat-card>
-        </div>
-
-        <!-- Courses Mastery -->
-        @if (info.courseMastery.length > 0) {
-          <div>
-            <h2 class="text-lg font-semibold text-gray-900 mb-3">Kurs Başarım Durumu</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              @for (course of info.courseMastery; track course.courseId) {
-                <mat-card appearance="outlined" class="hover:shadow-md transition-shadow">
-                  <div class="p-4">
-                    <h3 class="font-semibold text-gray-900 truncate mb-3">{{ course.courseTitle }}</h3>
-                    <div class="flex items-center justify-between mb-2">
-                      <span class="text-xs text-gray-500">Başarım</span>
-                      <span class="text-xs font-medium"
-                        [class.text-green-600]="course.avgMastery >= 80"
-                        [class.text-blue-600]="course.avgMastery >= 60 && course.avgMastery < 80"
-                        [class.text-yellow-600]="course.avgMastery >= 40 && course.avgMastery < 60"
-                        [class.text-red-600]="course.avgMastery < 40">
-                        %{{ course.avgMastery }}
-                      </span>
-                    </div>
-                    <mat-progress-bar
-                      [value]="course.avgMastery"
-                      [color]="course.avgMastery >= 60 ? 'primary' : 'warn'"
-                      class="mb-3 rounded-full">
-                    </mat-progress-bar>
-                    <div class="flex items-center justify-between text-xs text-gray-500">
-                      <span>{{ course.masteredOutcomes }}/{{ course.totalOutcomes }} kazanım</span>
-                      @if (course.weakOutcomeCount > 0) {
-                        <span class="text-red-500">{{ course.weakOutcomeCount }} zayıf</span>
-                      }
-                    </div>
-                  </div>
-                </mat-card>
-              }
-            </div>
-          </div>
-        }
-
-        <!-- Upcoming Exams -->
+        <!-- Upcoming Exams + Overall Progress -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <mat-card appearance="outlined" class="p-5">
             <div class="flex items-center gap-2 mb-4">
@@ -450,6 +321,133 @@ import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/s
                   class="rounded-full">
                 </mat-progress-bar>
               </div>
+            </div>
+          </mat-card>
+        </div>
+
+        <!-- Courses Mastery -->
+        @if (info.courseMastery.length > 0) {
+          <div>
+            <h2 class="text-lg font-semibold text-gray-900 mb-3">Kurs Başarım Durumu</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              @for (course of info.courseMastery; track course.courseId) {
+                <mat-card appearance="outlined" class="hover:shadow-md transition-shadow">
+                  <div class="p-4">
+                    <h3 class="font-semibold text-gray-900 truncate mb-3">{{ course.courseTitle }}</h3>
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="text-xs text-gray-500">Başarım</span>
+                      <span class="text-xs font-medium"
+                        [class.text-green-600]="course.avgMastery >= 80"
+                        [class.text-blue-600]="course.avgMastery >= 60 && course.avgMastery < 80"
+                        [class.text-yellow-600]="course.avgMastery >= 40 && course.avgMastery < 60"
+                        [class.text-red-600]="course.avgMastery < 40">
+                        %{{ course.avgMastery }}
+                      </span>
+                    </div>
+                    <mat-progress-bar
+                      [value]="course.avgMastery"
+                      [color]="course.avgMastery >= 60 ? 'primary' : 'warn'"
+                      class="mb-3 rounded-full">
+                    </mat-progress-bar>
+                    <div class="flex items-center justify-between text-xs text-gray-500">
+                      <span>{{ course.masteredOutcomes }}/{{ course.totalOutcomes }} kazanım</span>
+                      @if (course.weakOutcomeCount > 0) {
+                        <span class="text-red-500">{{ course.weakOutcomeCount }} zayıf</span>
+                      }
+                    </div>
+                  </div>
+                </mat-card>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Weekly Plan + Recommendations -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <mat-card appearance="outlined" class="lg:col-span-2">
+            <div class="p-5">
+              <div class="flex items-center gap-2 mb-4">
+                <mat-icon class="text-teal-600">date_range</mat-icon>
+                <h2 class="text-lg font-semibold text-gray-900">Haftalık Program</h2>
+              </div>
+              @if (info.scheduledTasks.length === 0) {
+                <p class="text-gray-500 text-sm py-4">Bu hafta için planlanmış çalışma bulunmuyor.</p>
+              } @else {
+                <div class="space-y-0">
+                  @let grouped = groupByDay(info.scheduledTasks);
+                  @for (day of dayLabels(); track day) {
+                    <div class="border-b border-gray-100 py-3">
+                      <div class="flex items-center gap-3 mb-2">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
+                          [class.bg-teal-500]="grouped[day]?.length"
+                          [class.text-white]="grouped[day]?.length"
+                          [class.bg-gray-100]="!grouped[day]?.length"
+                          [class.text-gray-400]="!grouped[day]?.length">
+                          {{ day.substring(0, 3).toUpperCase() }}
+                        </div>
+                        <span class="font-medium text-gray-900">{{ day }}</span>
+                        @if (!grouped[day]?.length) {
+                          <span class="text-xs text-gray-400">- Dinlenme günü</span>
+                        }
+                      </div>
+                      @if (grouped[day]?.length) {
+                        <div class="ml-11 space-y-2">
+                          @for (task of grouped[day]; track task.contentId) {
+                            <div class="flex items-start gap-2 p-2 rounded-lg"
+                              [class.bg-red-50]="task.priority === 'critical'"
+                              [class.bg-yellow-50]="task.priority === 'high'"
+                              [class.bg-blue-50]="task.priority === 'medium'"
+                              [class.bg-gray-50]="task.priority === 'low'">
+                              <mat-icon class="text-lg mt-0.5"
+                                [class.text-red-600]="task.priority === 'critical'"
+                                [class.text-yellow-600]="task.priority === 'high'"
+                                [class.text-blue-600]="task.priority === 'medium'"
+                                [class.text-gray-500]="task.priority === 'low'">
+                                {{ task.priority === 'critical' ? 'priority_high' : task.priority === 'high' ? 'error' : 'checklist' }}
+                              </mat-icon>
+                              <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 truncate">{{ task.contentTitle }}</p>
+                                <p class="text-xs text-gray-500">{{ task.courseTitle }} &middot; {{ task.outcomeName }}</p>
+                              </div>
+                              <div class="text-right flex-shrink-0">
+                                <span class="text-xs font-medium"
+                                  [class.text-red-600]="task.priority === 'critical'"
+                                  [class.text-yellow-600]="task.priority === 'high'"
+                                  [class.text-blue-600]="task.priority === 'medium'"
+                                  [class.text-gray-500]="task.priority === 'low'">
+                                  {{ task.durationMinutes }}dk
+                                </span>
+                                <p class="text-xs text-gray-400">%{{ task.masteryScore }}</p>
+                              </div>
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </mat-card>
+
+          <mat-card appearance="outlined" class="lg:col-span-1">
+            <div class="p-5">
+              <div class="flex items-center gap-2 mb-4">
+                <mat-icon class="text-amber-600">lightbulb</mat-icon>
+                <h2 class="text-lg font-semibold text-gray-900">Öncelikli Öneriler</h2>
+              </div>
+              @if (info.recommendations.length === 0) {
+                <p class="text-gray-500 text-sm py-4">Henüz öneri bulunmuyor.</p>
+              } @else {
+                <div class="space-y-3">
+                  @for (rec of info.recommendations; track rec.contentId + '-' + rec.outcomeId) {
+                    <app-recommendation-reason-card
+                      [recommendation]="rec"
+                      [outcomeName]="facade.getOutcomeName(rec.outcomeId)"
+                      [courseName]="facade.getCourseNameByOutcome(rec.outcomeId)" />
+                  }
+                </div>
+              }
             </div>
           </mat-card>
         </div>

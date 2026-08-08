@@ -11,6 +11,7 @@ const FACTOR_LABELS: Record<string, string> = {
   time_spent: 'Çalışma Süresi',
   completion: 'Tamamlama',
   last_assessed: 'Son Değerlendirme',
+  content_difficulty: "İçerik Zorluğu"
 };
 
 const FACTOR_ICONS: Record<string, string> = {
@@ -21,6 +22,7 @@ const FACTOR_ICONS: Record<string, string> = {
   time_spent: 'schedule',
   completion: 'check_circle',
   last_assessed: 'event',
+  content_difficulty: 'auto_awesome',
 };
 
 const PRIORITY_ICONS: Record<number, string> = {

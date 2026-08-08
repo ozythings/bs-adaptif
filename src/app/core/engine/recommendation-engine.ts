@@ -50,7 +50,8 @@ export function generateRecommendations(
         isApplied: false,
         isDismissed: false,
       };
-    });
+    })
+    .filter((r, i, arr) => arr.findIndex(x => x.outcomeId === r.outcomeId) === i);
 }
 
 function buildReasonDetails(mastery: MasteryScore, content: ContentItem): ReasonDetail[] {
@@ -61,7 +62,7 @@ function buildReasonDetails(mastery: MasteryScore, content: ContentItem): Reason
   details.push({
     factor: 'mastery_score',
     weight: isCritical ? 0.6 : 0.4,
-    description: `Başarım puanı ${mastery.score} — ${levelLabel}`,
+    description: `${mastery.score} — ${levelLabel}`,
   });
 
   if (content.difficulty) {
@@ -88,7 +89,7 @@ function contentDifficultyReason(difficulty: Difficulty): ReasonDetail {
   return {
     factor: 'content_difficulty',
     weight: 0.15,
-    description: `İçerik zorluğu: ${labels[difficulty]}`,
+    description: `${labels[difficulty]}`,
   };
 }
 
@@ -143,10 +144,10 @@ function lastAssessedReason(mastery: MasteryScore): ReasonDetail | null {
 
   const days = Math.floor((Date.now() - last) / DAY_MS);
   if (days >= 14) {
-    return { factor: 'last_assessed', weight: 0.2, description: `Son değerlendirme ${days} gün önce — bilgi tazelenmeli` };
+    return { factor: 'last_assessed', weight: 0.2, description: `${days} gün önce — bilgi tazelenmeli` };
   }
   if (days >= 5) {
-    return { factor: 'last_assessed', weight: 0.1, description: `Son değerlendirme ${days} gün önce` };
+    return { factor: 'last_assessed', weight: 0.1, description: `${days} gün önce` };
   }
   return null;
 }

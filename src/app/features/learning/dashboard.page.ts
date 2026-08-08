@@ -9,6 +9,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { interval } from 'rxjs';
 import { filter } from 'rxjs/operators';
@@ -17,9 +18,8 @@ import { CurrentUserService } from '@core/auth/current-user.service';
 import { UserRole } from '@core/models/enums';
 import { EventBusService } from '@core/state/event-bus.service';
 import { ExamSession } from '@core/models/exam-session.model';
-import { Recommendation } from '@core/models/recommendation.model';
 import { AuditLogEntry } from '@core/models/audit-log-entry.model';
-import { RecommendationReasonCardComponent, ErrorStateComponent, KpiCardComponent } from '@shared/components';
+import { ErrorStateComponent, KpiCardComponent } from '@shared/components';
 import { DebounceDirective } from '@shared/directives';
 import { ColumnChartComponent } from '@shared/components/column-chart/column-chart.component';
 import { MasteryHeatmap } from '@shared/components/mastery-heatmap/mastery-heatmap.component';
@@ -34,8 +34,8 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
   imports: [
     CommonModule, RouterLink, MatCardModule, MatIconModule, MatButtonModule,
     MatProgressSpinnerModule, MatProgressBarModule, MatPaginatorModule,
-    MatFormFieldModule, MatInputModule, DebounceDirective,
-    RecommendationReasonCardComponent, ErrorStateComponent, ColumnChartComponent, MasteryHeatmap, KpiCardComponent
+    MatFormFieldModule, MatInputModule, MatSelectModule, DebounceDirective,
+    ErrorStateComponent, ColumnChartComponent, MasteryHeatmap, KpiCardComponent
   ],
   template: `
     <div class="space-y-6">
@@ -251,94 +251,6 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
           </div>
         }
 
-        <!-- Charts Row -->
-        @defer (on viewport) {
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          @if (isStudent() && info.courseProgress.length > 0) {
-            <mat-card appearance="outlined" class="p-5">
-              <h2 class="text-lg font-semibold text-gray-900 mb-4">İçerik Tamamlama</h2>
-              <div class="h-64">
-                <app-column-chart
-                  [labels]="progressLabels()"
-                  [values]="progressValues()"
-                  title="Tamamlanan"
-                  [colors]="['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4']" />
-              </div>
-            </mat-card>
-          }
-        </div>
-        } @placeholder {
-          <div class="h-72 bg-gray-100 rounded-xl animate-pulse"></div>
-        }
-
-        <!-- Course Progress Cards -->
-        @if (isStudent() && info.courseProgress.length > 0) {
-          <div>
-            <h2 class="text-lg font-semibold text-gray-900 mb-3">Kurs İlerlemem</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              @for (cp of info.courseProgress; track cp.courseId) {
-                <mat-card appearance="outlined" class="hover:shadow-md transition-shadow">
-                  <div class="p-4">
-                    <div class="flex items-center justify-between mb-2">
-                      <h3 class="font-semibold text-gray-900 truncate">{{ cp.courseTitle }}</h3>
-                      <span class="px-2 py-0.5 rounded-full text-xs font-medium"
-                        [class.bg-green-100]="cp.status === 'completed'"
-                        [class.text-green-700]="cp.status === 'completed'"
-                        [class.bg-blue-100]="cp.status === 'approved'"
-                        [class.text-blue-700]="cp.status === 'approved'"
-                        [class.bg-yellow-100]="cp.status === 'pending'"
-                        [class.text-yellow-700]="cp.status === 'pending'">
-                        {{ cp.status === 'completed' ? 'Tamamlandı' : cp.status === 'approved' ? 'Aktif' : 'Beklemede' }}
-                      </span>
-                    </div>
-                    <p class="text-sm text-gray-500 mb-3">{{ cp.instructorName }}</p>
-                    <mat-progress-bar
-                      [value]="cp.progressPercent"
-                      color="primary"
-                      class="mb-2 rounded-full">
-                    </mat-progress-bar>
-                    <div class="flex items-center justify-between">
-                      <span class="text-xs text-gray-500">{{ cp.completedContents }}/{{ cp.totalContents }} içerik</span>
-                      <span class="text-xs font-medium text-gray-700">%{{ cp.progressPercent }}</span>
-                    </div>
-                    <div class="mt-3">
-                      <a [routerLink]="['/courses', cp.courseId, 'path']" mat-stroked-button color="primary" class="w-full text-center">
-                        <mat-icon>play_arrow</mat-icon> Devam Et
-                      </a>
-                    </div>
-                  </div>
-                </mat-card>
-              }
-            </div>
-          </div>
-        }
-
-        <!-- Mastery Heatmap + Recommendations -->
-        @if (isStudent()) {
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <mat-card appearance="outlined" class="p-5" [class.lg:col-span-2]="recommendations().length === 0">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Kazanım Haritası</h2>
-            <app-mastery-heatmap
-              [scores]="masteryScores()"
-              [outcomes]="outcomes()" />
-          </mat-card>
-
-          @if (recommendations().length > 0) {
-            <mat-card appearance="outlined" class="p-5">
-              <h2 class="text-lg font-semibold text-gray-900 mb-4">Önerilen Çalışmalar</h2>
-              <div class="flex flex-col gap-4">
-                @for (rec of recommendations(); track rec.contentId + '-' + rec.outcomeId) {
-                  <app-recommendation-reason-card
-                    [recommendation]="rec"
-                    [outcomeName]="facade.getOutcomeName(rec.outcomeId)"
-                    [courseName]="facade.getCourseNameByOutcome(rec.outcomeId)" />
-                }
-              </div>
-            </mat-card>
-          }
-        </div>
-        }
-
         <!-- Exam Results + Active Sessions -->
         @if (isStudent()) {
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -402,6 +314,91 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
                 }
               </div>
             }
+          </mat-card>
+        </div>
+        }
+
+        <!-- Charts Row -->
+        @defer (on viewport) {
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          @if (isStudent() && info.courseProgress.length > 0) {
+            <mat-card appearance="outlined" class="p-5">
+              <h2 class="text-lg font-semibold text-gray-900 mb-4">İçerik Tamamlama</h2>
+              <div class="h-64">
+                <app-column-chart
+                  [labels]="progressLabels()"
+                  [values]="progressValues()"
+                  title="Tamamlanan"
+                  [colors]="['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4']" />
+              </div>
+            </mat-card>
+          }
+        </div>
+        } @placeholder {
+          <div class="h-72 bg-gray-100 rounded-xl animate-pulse"></div>
+        }
+
+        <!-- Course Progress Cards -->
+        @if (isStudent() && info.courseProgress.length > 0) {
+          <div>
+            <h2 class="text-lg font-semibold text-gray-900 mb-3">Kurs İlerlemem</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              @for (cp of info.courseProgress; track cp.courseId) {
+                <mat-card appearance="outlined" class="hover:shadow-md transition-shadow">
+                  <div class="p-4">
+                    <div class="flex items-center justify-between mb-2">
+                      <h3 class="font-semibold text-gray-900 truncate">{{ cp.courseTitle }}</h3>
+                      <span class="px-2 py-0.5 rounded-full text-xs font-medium"
+                        [class.bg-green-100]="cp.status === 'completed'"
+                        [class.text-green-700]="cp.status === 'completed'"
+                        [class.bg-blue-100]="cp.status === 'approved'"
+                        [class.text-blue-700]="cp.status === 'approved'"
+                        [class.bg-yellow-100]="cp.status === 'pending'"
+                        [class.text-yellow-700]="cp.status === 'pending'">
+                        {{ cp.status === 'completed' ? 'Tamamlandı' : cp.status === 'approved' ? 'Aktif' : 'Beklemede' }}
+                      </span>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-3">{{ cp.instructorName }}</p>
+                    <mat-progress-bar
+                      [value]="cp.progressPercent"
+                      color="primary"
+                      class="mb-2 rounded-full">
+                    </mat-progress-bar>
+                    <div class="flex items-center justify-between">
+                      <span class="text-xs text-gray-500">{{ cp.completedContents }}/{{ cp.totalContents }} içerik</span>
+                      <span class="text-xs font-medium text-gray-700">%{{ cp.progressPercent }}</span>
+                    </div>
+                    <div class="mt-3">
+                      <a [routerLink]="['/courses', cp.courseId, 'path']" mat-stroked-button color="primary" class="w-full text-center">
+                        <mat-icon>play_arrow</mat-icon> Devam Et
+                      </a>
+                    </div>
+                  </div>
+                </mat-card>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Mastery Heatmap -->
+        @if (isStudent()) {
+        <div class="grid grid-cols-1 gap-6">
+          <mat-card appearance="outlined" class="p-5">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-lg font-semibold text-gray-900">Kazanım Haritası</h2>
+              <select
+                [value]="selectedCourseId()"
+                (change)="onHeatmapCourseChange(+($any($event.target).value))"
+                class="border border-gray-300 rounded-md px-2 py-1 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500">
+                <option value="0">Tümü</option>
+                @for (c of heatmapCourses(); track c.courseId) {
+                  <option [value]="c.courseId">{{ c.courseTitle }}</option>
+                }
+              </select>
+            </div>
+            <app-mastery-heatmap
+              [scores]="filteredMasteryScores()"
+              [outcomes]="filteredOutcomes()" />
           </mat-card>
         </div>
         }
@@ -484,12 +481,27 @@ export class DashboardPage implements OnInit {
 
   private destroyRef = inject(DestroyRef);
 
-  recommendations = signal<Recommendation[]>([]);
   activeSessions = signal<ExamSession[]>([]);
   allActiveSessions = signal<{ token: string; examId: number; examTitle: string; studentName: string; timeRemainingSeconds: number; serverTimeReference: string; durationMinutes: number }[]>([]);
   recentAuditLogs = signal<AuditLogEntry[]>([]);
   masteryScores = signal<MasteryScore[]>([]);
   outcomes = signal<LearningOutcome[]>([]);
+  selectedCourseId = signal(0);
+
+  heatmapCourses = computed(() => this.d()?.courseProgress ?? []);
+
+  filteredOutcomes = computed(() => {
+    const cid = this.selectedCourseId();
+    if (cid === 0) return this.outcomes();
+    return this.outcomes().filter(o => o.courseId === cid);
+  });
+
+  filteredMasteryScores = computed(() => {
+    const cid = this.selectedCourseId();
+    if (cid === 0) return this.masteryScores();
+    const outcomeIds = new Set(this.outcomes().filter(o => o.courseId === cid).map(o => o.id));
+    return this.masteryScores().filter(s => outcomeIds.has(s.outcomeId));
+  });
 
   userName = computed(() => this.currentUser.user().name);
   roleLabel = computed(() => {
@@ -672,7 +684,6 @@ export class DashboardPage implements OnInit {
         this.d.set(info);
         this.activeSessions.set(this.facade.getActiveSessions());
         this.allActiveSessions.set(this.facade.getAllActiveSessions());
-        this.recommendations.set(info.recommendations);
         this.masteryScores.set(info.masteryScores);
         this.outcomes.set(info.outcomes);
         this.recentAuditLogs.set(this.facade.getRecentAuditLogs(5));
@@ -681,6 +692,10 @@ export class DashboardPage implements OnInit {
       },
       error: e => { this.error.set(e.message || 'Veri yüklenemedi'); this.loading.set(false); }
     });
+  }
+
+  onHeatmapCourseChange(courseId: number): void {
+    this.selectedCourseId.set(courseId);
   }
 
   examTitle(examId: number): string {
