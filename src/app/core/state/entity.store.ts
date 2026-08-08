@@ -3,13 +3,17 @@ import { Exam } from '@core/models/exam.model';
 import { ExamBlueprint } from '@core/models/exam-blueprint.model';
 import { Question } from '@core/models/question.model';
 import { ExamSession } from '@core/models/exam-session.model';
+import { Cohort } from '@core/models/cohort.model';
+import { Participant } from '@core/models/participant.model';
 import { StorageService } from '@core/storage/storage.service';
-import { EXAMS_SEED, BLUEPRINTS_SEED, QUESTIONS_SEED, EXAM_SESSIONS_SEED } from '@core/data';
+import { EXAMS_SEED, BLUEPRINTS_SEED, QUESTIONS_SEED, EXAM_SESSIONS_SEED, COHORTS_SEED, PARTICIPANTS_SEED } from '@core/data';
 
 const SESSION_STORAGE_KEY = 'exam_sessions';
 const EXAMS_STORAGE_KEY = 'entity_exams';
 const BLUEPRINTS_STORAGE_KEY = 'entity_blueprints';
 const QUESTIONS_STORAGE_KEY = 'entity_questions';
+const COHORTS_STORAGE_KEY = 'entity_cohorts';
+const PARTICIPANTS_STORAGE_KEY = 'entity_participants';
 const DATA_VERSION_KEY = 'entity_data_version';
 const DATA_VERSION = 1;
 
@@ -20,6 +24,8 @@ export class EntityStore {
   readonly blueprints = signal<ExamBlueprint[]>(this.hydrateBlueprints());
   readonly questions = signal<Question[]>(this.hydrateQuestions());
   readonly sessions = signal<ExamSession[]>(this.hydrateSessions());
+  readonly cohorts = signal<Cohort[]>(this.hydrateCohorts());
+  readonly participants = signal<Participant[]>(this.hydrateParticipants());
 
   constructor() {
     effect(() => {
@@ -52,6 +58,16 @@ export class EntityStore {
     effect(() => {
       this.storage.set(DATA_VERSION_KEY, DATA_VERSION);
       this.storage.set(QUESTIONS_STORAGE_KEY, this.questions());
+    });
+
+    effect(() => {
+      this.storage.set(DATA_VERSION_KEY, DATA_VERSION);
+      this.storage.set(COHORTS_STORAGE_KEY, this.cohorts());
+    });
+
+    effect(() => {
+      this.storage.set(DATA_VERSION_KEY, DATA_VERSION);
+      this.storage.set(PARTICIPANTS_STORAGE_KEY, this.participants());
     });
 
     if (typeof window !== 'undefined') {
@@ -97,6 +113,20 @@ export class EntityStore {
     const cached = this.storage.get<Question[]>(QUESTIONS_STORAGE_KEY);
     if (cached && cached.length > 0) return cached;
     return [...QUESTIONS_SEED];
+  }
+
+  private hydrateCohorts(): Cohort[] {
+    if (this.storage.get<number>(DATA_VERSION_KEY) !== DATA_VERSION) return COHORTS_SEED.map(c => ({ ...c } as Cohort));
+    const cached = this.storage.get<Cohort[]>(COHORTS_STORAGE_KEY);
+    if (cached && cached.length > 0) return cached;
+    return COHORTS_SEED.map(c => ({ ...c } as Cohort));
+  }
+
+  private hydrateParticipants(): Participant[] {
+    if (this.storage.get<number>(DATA_VERSION_KEY) !== DATA_VERSION) return [...PARTICIPANTS_SEED];
+    const cached = this.storage.get<Participant[]>(PARTICIPANTS_STORAGE_KEY);
+    if (cached && cached.length > 0) return cached;
+    return [...PARTICIPANTS_SEED];
   }
 
   /**
@@ -160,6 +190,30 @@ export class EntityStore {
 
   updateQuestion(id: number, patch: Partial<Question>): void {
     this.questions.update(list => list.map(q => q.id === id ? { ...q, ...patch } : q));
+  }
+
+  addCohort(cohort: Cohort): void {
+    this.cohorts.update(list => [...list, cohort]);
+  }
+
+  updateCohort(id: number, patch: Partial<Cohort>): void {
+    this.cohorts.update(list => list.map(c => c.id === id ? { ...c, ...patch, updatedAt: new Date().toISOString() } : c));
+  }
+
+  removeCohort(id: number): void {
+    this.cohorts.update(list => list.filter(c => c.id !== id));
+  }
+
+  addParticipant(participant: Participant): void {
+    this.participants.update(list => [...list, participant]);
+  }
+
+  updateParticipant(id: number, patch: Partial<Participant>): void {
+    this.participants.update(list => list.map(p => p.id === id ? { ...p, ...patch, updatedAt: new Date().toISOString() } : p));
+  }
+
+  removeParticipant(id: number): void {
+    this.participants.update(list => list.filter(p => p.id !== id));
   }
 }
 

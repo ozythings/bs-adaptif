@@ -1,7 +1,8 @@
-import { Component,  inject,  signal,  computed,  OnInit } from '@angular/core';
+import { Component,  inject,  signal,  computed,  OnInit,  DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
@@ -169,6 +170,7 @@ export class CohortAnalyticsPage implements OnInit {
   private facade = inject(CohortAnalyticsFacade);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private destroyRef = inject(DestroyRef);
 
   protected minCohortSize = MIN_COHORT_SIZE;
 
@@ -203,18 +205,23 @@ export class CohortAnalyticsPage implements OnInit {
   });
 
   ngOnInit() {
-    const qp = this.route.snapshot.queryParamMap;
-    const cohortIds = qp.get('cohorts');
-    if (cohortIds) {
-      this.selectedCohortIds.set(cohortIds.split(',').map(Number).filter(n => !isNaN(n)));
-    }
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(qp => {
+      const ids = qp.get('cohorts');
+      this.selectedCohortIds.set(ids ? ids.split(',').map(Number).filter(n => !isNaN(n)) : []);
+    });
     this.loading.set(true);
     this.error.set(null);
     this.facade.getCohorts().subscribe({
       next: (data) => {
         this.cohorts.set(data);
         this.loading.set(false);
-        if (this.selectedCohortIds().length >= 2) this.loadMetrics();
+        const ids = this.selectedCohortIds();
+        if (ids.length >= 2) {
+          this.loadMetrics();
+        } else {
+          this.selectedCohortIds.set(data.map(c => c.id));
+          this.loadMetrics();
+        }
       },
       error: () => { this.error.set('Cohortlar yüklenirken hata oluştu'); this.loading.set(false); }
     });
