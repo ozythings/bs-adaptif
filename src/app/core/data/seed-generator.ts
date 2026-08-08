@@ -313,7 +313,9 @@ export function generateSeeds() {
     { id: 11, courseId: 4, participantId: 8, enrollmentDate: '2026-07-11T10:00:00Z', status: EnrollmentStatus.APPROVED, createdAt: '2026-07-11T10:00:00Z', updatedAt: '2026-07-11T10:00:00Z' },
     { id: 12, courseId: 5, participantId: 9, enrollmentDate: '2026-07-12T10:00:00Z', status: EnrollmentStatus.APPROVED, createdAt: '2026-07-12T10:00:00Z', updatedAt: '2026-07-12T10:00:00Z' },
     { id: 13, courseId: 6, participantId: 10, enrollmentDate: '2026-07-13T10:00:00Z', status: EnrollmentStatus.APPROVED, createdAt: '2026-07-13T10:00:00Z', updatedAt: '2026-07-13T10:00:00Z' },
-    { id: 14, courseId: 6, participantId: 11, enrollmentDate: '2026-07-14T10:00:00Z', status: EnrollmentStatus.PENDING, createdAt: '2026-07-14T10:00:00Z', updatedAt: '2026-07-14T10:00:00Z' },
+    { id: 14, courseId: 6, participantId: 11, enrollmentDate: '2026-07-14T10:00:00Z', status: EnrollmentStatus.APPROVED, createdAt: '2026-07-14T10:00:00Z', updatedAt: '2026-07-14T10:00:00Z' },
+    { id: 15, courseId: 4, participantId: 12, enrollmentDate: '2026-07-15T10:00:00Z', status: EnrollmentStatus.APPROVED, createdAt: '2026-07-15T10:00:00Z', updatedAt: '2026-07-15T10:00:00Z' },
+    { id: 16, courseId: 5, participantId: 13, enrollmentDate: '2026-07-16T10:00:00Z', status: EnrollmentStatus.APPROVED, createdAt: '2026-07-16T10:00:00Z', updatedAt: '2026-07-16T10:00:00Z' },
   ];
 
   // exam sessions — demo active session for student Ali Korkmaz
@@ -397,18 +399,21 @@ export function generateSeeds() {
     { id: 110, studentId: 7, outcomeId: 114, masteryLevel: MasteryLevel.PROFICIENT, score: 72, recentAnswers: [1, 1, 0, 1], difficultyWeightedAverage: 0.7, difficultyBreakdown: breakdownFor(72), repeatCount: 2, lastAssessedAt: '2026-08-05T10:00:00Z', calculatedAt: '2026-08-05T10:00:00Z', history: historyFor(72, '2026-08-05T10:00:00Z'), version: 1, createdAt: '2026-08-05T10:00:00Z', updatedAt: '2026-08-05T10:00:00Z' },
   ];
 
-  // generated: masteries for more students (students 2, 3, 6 across their enrolled outcomes)
+  // generated: masteries for enrolled students with forced weak distribution
   {
     const enrolledStudentIds = [...new Set(enrollments.filter(e => e.status !== EnrollmentStatus.PENDING).map(e => e.participantId))];
     let mid = 200;
     for (const sid of enrolledStudentIds) {
       const studentCourses = enrollments.filter(e => e.participantId === sid).map(e => e.courseId);
       const studentOutcomes = outcomes.filter(o => studentCourses.includes(o.courseId));
-      // skip if this student already has mastery entries
       const existing = masteryScores.filter(m => m.studentId === sid).map(m => m.outcomeId);
       const missing = studentOutcomes.filter(o => !existing.includes(o.id));
-      for (const o of pickN(missing, Math.min(missing.length, randInt(1, 4)))) {
-        const score = randInt(30, 95);
+      const count = Math.min(missing.length, randInt(2, 5));
+      const selected = pickN(missing, count);
+      for (let j = 0; j < selected.length; j++) {
+        const o = selected[j];
+        const isWeak = j === 0;
+        const score = isWeak ? randInt(22, 49) : randInt(40, 95);
         const level = score >= 80 ? MasteryLevel.ADVANCED : score >= 60 ? MasteryLevel.PROFICIENT : score >= 40 ? MasteryLevel.EMERGING : MasteryLevel.NOVICE;
         const answers = Array.from({ length: randInt(3, 5) }, () => randInt(0, 1));
         masteryScores.push({
@@ -428,40 +433,52 @@ export function generateSeeds() {
     }
   }
 
-  // generated: attempts for additional enrolled students
+  // generated: attempts for all enrolled students across 5 months
   {
     let aid = 200;
     const enrolledStudentIds = [...new Set(enrollments.filter(e => e.status !== EnrollmentStatus.PENDING).map(e => e.participantId))];
+    const months = ['04', '05', '06', '07', '08'];
+    const days = ['08', '15', '22', '28'];
     for (const sid of enrolledStudentIds) {
-      // skip students that already have attempts in the hardcoded list
-      if (attempts.some(a => a.studentId === sid)) continue;
       const studentCourses = enrollments.filter(e => e.participantId === sid).map(e => e.courseId);
       const studentExams = exams.filter(e => studentCourses.includes(e.courseId));
-      const exam = pick(studentExams);
-      if (!exam) continue;
-      const examQuestions = questions.filter(q => q.examId === exam.id);
-      const responses: QuestionResponse[] = examQuestions.map(q => ({
-        questionId: q.id,
-        answer: String(pick(q.options ?? ['0', '1'])),
-        isCorrect: rand() > 0.35,
-        autoScore: rand() > 0.35 ? q.points : 0,
-        maxScore: q.points,
-      }));
-      const total = responses.reduce((s, r) => s + r.autoScore, 0);
-      const maxScore = responses.reduce((s, r) => s + r.maxScore, 0);
-      const token = `sess_auto_${aid}_${sid}`;
-      attempts.push({
-        id: aid++, examId: exam.id, sessionToken: token,
-        studentId: sid, startedAt: '2026-08-01T10:00:00Z',
-        submittedAt: '2026-08-01T11:00:00Z',
-        status: ResultStatus.FINALIZED,
-        questionResponses: responses,
-        totalScore: total, maxScore, scorePercentage: maxScore > 0 ? Math.round((total / maxScore) * 10000) / 100 : 0,
-        gradingCompletedAt: '2026-08-01T11:05:00Z',
-        version: 1,
-        createdAt: '2026-08-01T10:00:00Z',
-        updatedAt: '2026-08-01T11:05:00Z',
-      });
+      if (!studentExams.length) continue;
+      const attemptCount = randInt(3, 5);
+      const usedExams = new Set<number>();
+      const shuffledMonths = [...months].sort(() => rand() - 0.5);
+      for (let i = 0; i < attemptCount; i++) {
+        const month = shuffledMonths[i];
+        const day = days[randInt(0, days.length - 1)];
+        const dateStr = `2026-${month}-${day}`;
+        const availableExams = studentExams.filter(e => !usedExams.has(e.id));
+        const exam = pick(availableExams.length ? availableExams : studentExams);
+        usedExams.add(exam.id);
+        const examQuestions = questions.filter(q => q.examId === exam.id);
+        const responses: QuestionResponse[] = examQuestions.map(q => ({
+          questionId: q.id,
+          answer: String(pick(q.options ?? ['0', '1'])),
+          isCorrect: rand() > 0.3 + i * 0.05,
+          autoScore: rand() > 0.3 + i * 0.05 ? q.points : 0,
+          maxScore: q.points,
+        }));
+        const total = responses.reduce((s, r) => s + r.autoScore, 0);
+        const maxScore = responses.reduce((s, r) => s + r.maxScore, 0);
+        const token = `sess_auto_${aid}_${sid}`;
+        attempts.push({
+          id: aid++, examId: exam.id, sessionToken: token,
+          studentId: sid,
+          startedAt: `${dateStr}T09:00:00Z`,
+          submittedAt: `${dateStr}T10:00:00Z`,
+          status: ResultStatus.FINALIZED,
+          questionResponses: responses,
+          totalScore: total, maxScore,
+          scorePercentage: maxScore > 0 ? Math.round((total / maxScore) * 10000) / 100 : 0,
+          gradingCompletedAt: `${dateStr}T10:05:00Z`,
+          version: 1,
+          createdAt: `${dateStr}T09:00:00Z`,
+          updatedAt: `${dateStr}T10:05:00Z`,
+        });
+      }
     }
   }
 

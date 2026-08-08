@@ -145,7 +145,8 @@ const MIN_COHORT_SIZE = 3;
 
           @if (trendData(); as trend) {
             <div class="bg-white rounded-lg shadow-sm p-4 mt-3">
-              <h3 class="font-semibold text-gray-900 mb-4">Aylık Ortalama Başarı Trendi</h3>
+              <h3 class="font-semibold text-gray-900 mb-1">Aylık Ortalama Başarı Trendi</h3>
+              <p class="text-xs text-gray-500 mb-3">Sınav puan ortalamalarının aylara göre değişimi</p>
               @for (ds of trend.datasets; track ds.name) {
                 <div class="mb-4 last:mb-0">
                   <p class="text-sm font-medium text-gray-700 mb-2">{{ ds.name }}</p>
