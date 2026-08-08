@@ -16,6 +16,7 @@ import { Attempt } from '@core/models/attempt.model';
 import { GradingFacade } from './data-access/grading.facade';
 import { ErrorStateComponent } from '@shared/components';
 import { DebounceDirective } from '@shared/directives';
+import { PermissionService } from '@core/auth/permission.service';
 
 @Component({
   selector: 'app-grading-list',
@@ -25,9 +26,11 @@ import { DebounceDirective } from '@shared/directives';
     <div class="space-y-4">
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-900">Değerlendirme Bekleyen Sınavlar</h1>
-        <button mat-raised-button color="primary" routerLink="/grading/rubrics">
-          <mat-icon>assignment</mat-icon> Rubrik Yönetimi
-        </button>
+        @if (canModify()) {
+          <button mat-raised-button color="primary" routerLink="/grading/rubrics">
+            <mat-icon>assignment</mat-icon> Rubrik Yönetimi
+          </button>
+        }
       </div>
 
       <div class="bg-white rounded-lg shadow-sm p-3">
@@ -140,6 +143,11 @@ export class GradingListPage {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
+  private permissionService = inject(PermissionService);
+
+  canModify = computed(() =>
+    this.permissionService.hasAnyPermission(['grading_grade'])
+  );
 
   loading = signal(true);
   error = signal<string | null>(null);

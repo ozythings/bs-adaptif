@@ -15,6 +15,7 @@ import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { ConfirmDialogComponent } from '@shared/components';
 import { Term } from '@core/models/term.model';
+import { PermissionService } from '@core/auth/permission.service';
 
 function todayStr(): string {
   const d = new Date();
@@ -50,12 +51,14 @@ let nextId = 4;
     <div class="space-y-4">
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-900">Dönem Yönetimi</h1>
-        <button mat-raised-button color="primary" (click)="openCreateDialog()">
-          <mat-icon>add</mat-icon> Yeni Dönem
-        </button>
+        @if (canModify()) {
+          <button mat-raised-button color="primary" (click)="openCreateDialog()">
+            <mat-icon>add</mat-icon> Yeni Dönem
+          </button>
+        }
       </div>
 
-      @if (showForm()) {
+      @if (canModify() && showForm()) {
         <mat-card class="p-4">
           <h2 class="text-lg font-semibold text-gray-900 mb-3">{{ editingId() ? 'Dönem Düzenle' : 'Yeni Dönem Ekle' }}</h2>
           <form [formGroup]="termForm" (ngSubmit)="save()">
@@ -138,14 +141,16 @@ let nextId = 4;
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef class="w-28"></th>
               <td mat-cell *matCellDef="let t">
-                <div class="flex items-center gap-1">
-                  <button mat-icon-button color="primary" (click)="editTerm(t)" title="Düzenle">
-                    <mat-icon>edit</mat-icon>
-                  </button>
-                  <button mat-icon-button color="warn" (click)="deleteTerm(t)" title="Sil">
-                    <mat-icon>delete</mat-icon>
-                  </button>
-                </div>
+                @if (canModify()) {
+                  <div class="flex items-center gap-1">
+                    <button mat-icon-button color="primary" (click)="editTerm(t)" title="Düzenle">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button color="warn" (click)="deleteTerm(t)" title="Sil">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                }
               </td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
@@ -167,6 +172,11 @@ let nextId = 4;
 export class TermListComponent {
   private fb = inject(FormBuilder);
   private dialog = inject(MatDialog);
+  private permissionService = inject(PermissionService);
+
+  canModify = computed(() =>
+    this.permissionService.hasAnyPermission(['system_manage_terms'])
+  );
 
   terms = signal<Term[]>([
     { id: 1, name: '2026 Bahar', startDate: '2026-02-15', endDate: '2026-06-15', isActive: false, createdAt: '2026-01-01', updatedAt: '2026-01-01' },

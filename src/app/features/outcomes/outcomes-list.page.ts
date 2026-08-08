@@ -20,6 +20,7 @@ import { LearningOutcome } from '@core/models/learning-outcome.model';
 import { OutcomeLevel, OutcomeStatus } from '@core/models/enums';
 import { StatusTextPipe } from '@shared/pipes';
 import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components';
+import { PermissionService } from '@core/auth/permission.service';
 
 @Component({
   selector: 'app-outcomes-list',
@@ -33,13 +34,15 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
           <button mat-stroked-button routerLink="/outcomes/map">
             <mat-icon>account_tree</mat-icon> Grafik
           </button>
-          <button mat-raised-button color="primary" (click)="openNewForm()">
-            <mat-icon>add</mat-icon> Yeni
-          </button>
+          @if (canModify()) {
+            <button mat-raised-button color="primary" (click)="openNewForm()">
+              <mat-icon>add</mat-icon> Yeni
+            </button>
+          }
         </div>
       </div>
 
-      @if (showForm()) {
+      @if (canModify() && showForm()) {
         <form [formGroup]="form" (ngSubmit)="onSubmit()" class="bg-white rounded-lg shadow-sm p-4 space-y-3">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <mat-form-field appearance="outline">
@@ -146,13 +149,15 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef></th>
                <td mat-cell *matCellDef="let o">
-                <button mat-icon-button (click)="onEdit(o)" matTooltip="Düzenle">
-                  <mat-icon class="!text-gray-700">edit</mat-icon>
-                </button>
-                <button mat-icon-button color="warn" (click)="onDelete(o)" matTooltip="Sil">
-                  <mat-icon>delete</mat-icon>
-                </button>
-              </td>
+                @if (canModify()) {
+                  <button mat-icon-button (click)="onEdit(o)" matTooltip="Düzenle">
+                    <mat-icon class="!text-gray-700">edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="onDelete(o)" matTooltip="Sil">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                }
+               </td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="columns"></tr>
             <tr mat-row *matRowDef="let row; columns: columns;"></tr>
@@ -177,6 +182,11 @@ export class OutcomesListPage implements OnInit {
   private route = inject(ActivatedRoute);
   private fb = inject(FormBuilder);
   private dialog = inject(MatDialog);
+  private permissionService = inject(PermissionService);
+
+  canModify = computed(() =>
+    this.permissionService.hasAnyPermission(['outcome_create', 'outcome_update', 'outcome_delete'])
+  );
 
   ngOnInit() {
     const qp = this.route.snapshot.queryParamMap;

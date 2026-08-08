@@ -20,6 +20,7 @@ import { BlueprintConstraintPanelComponent } from '@shared/components/blueprint-
 import { BlueprintEditorComponent } from '@shared/components/blueprint-editor/blueprint-editor.component';
 import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components';
 import { StatusTextPipe } from '@shared/pipes';
+import { PermissionService } from '@core/auth/permission.service';
 import { ExamBlueprint, BlueprintConstraint, BlueprintSummary, PointDistribution } from '@core/models/exam-blueprint.model';
 import { Exam } from '@core/models/exam.model';
 import { Question } from '@core/models/question.model';
@@ -38,9 +39,11 @@ import { BlueprintStatus } from '@core/models/enums';
     <div class="space-y-4">
       <div class="flex items-center justify-between flex-wrap gap-3">
         <h1 class="text-2xl font-bold text-gray-900">Sınav Oluşturucu</h1>
-        <button mat-raised-button color="primary" (click)="openCreateDialog()">
-          <mat-icon>add</mat-icon> Yeni Blueprint
-        </button>
+        @if (canModify()) {
+          <button mat-raised-button color="primary" (click)="openCreateDialog()">
+            <mat-icon>add</mat-icon> Yeni Blueprint
+          </button>
+        }
       </div>
 
       <div class="bg-white rounded-lg shadow-sm p-3">
@@ -100,12 +103,14 @@ import { BlueprintStatus } from '@core/models/enums';
                   <button mat-stroked-button color="primary" size="small" (click)="selectBlueprint(b)">
                     <mat-icon>visibility</mat-icon> Detay
                   </button>
-                  <button mat-icon-button (click)="openEditDialog(b)" matTooltip="Düzenle">
-                    <mat-icon class="text-sm">edit</mat-icon>
-                  </button>
-                  <button mat-icon-button (click)="confirmDelete(b)" matTooltip="Sil">
-                    <mat-icon class="text-sm">delete</mat-icon>
-                  </button>
+                  @if (canModify()) {
+                    <button mat-icon-button (click)="openEditDialog(b)" matTooltip="Düzenle">
+                      <mat-icon class="text-sm">edit</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="confirmDelete(b)" matTooltip="Sil">
+                      <mat-icon class="text-sm">delete</mat-icon>
+                    </button>
+                  }
                 </div>
               </td>
             </ng-container>
@@ -266,21 +271,23 @@ import { BlueprintStatus } from '@core/models/enums';
               </div>
             }
 
-            <div class="flex flex-wrap gap-2 pt-2">
-              <button mat-raised-button color="primary" (click)="autoSelect(bp.id)">
-                <mat-icon>auto_fix_high</mat-icon> Otomatik Seç
-              </button>
-              @if (selectedCount() > 0 && bp.status !== BlueprintStatus.READY) {
-                <button mat-raised-button color="accent" (click)="saveQuestions(bp.id)">
-                  <mat-icon>save</mat-icon> Soruları Kaydet ({{ selectedCount() }} soru)
+            @if (canModify()) {
+              <div class="flex flex-wrap gap-2 pt-2">
+                <button mat-raised-button color="primary" (click)="autoSelect(bp.id)">
+                  <mat-icon>auto_fix_high</mat-icon> Otomatik Seç
                 </button>
-              }
-              @if (bp.status === BlueprintStatus.READY) {
-                <button mat-stroked-button color="accent" (click)="saveQuestions(bp.id)">
-                  <mat-icon>save</mat-icon> Soruları Kaydet
-                </button>
-              }
-            </div>
+                @if (selectedCount() > 0 && bp.status !== BlueprintStatus.READY) {
+                  <button mat-raised-button color="accent" (click)="saveQuestions(bp.id)">
+                    <mat-icon>save</mat-icon> Soruları Kaydet ({{ selectedCount() }} soru)
+                  </button>
+                }
+                @if (bp.status === BlueprintStatus.READY) {
+                  <button mat-stroked-button color="accent" (click)="saveQuestions(bp.id)">
+                    <mat-icon>save</mat-icon> Soruları Kaydet
+                  </button>
+                }
+              </div>
+            }
 
             @if (autoSelectLoading()) {
               <div class="flex justify-center py-4">
@@ -299,6 +306,11 @@ export class ExamBuilderPage implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private dialog = inject(MatDialog);
+  private permissionService = inject(PermissionService);
+
+  canModify = computed(() =>
+    this.permissionService.hasAnyPermission(['exam_create', 'exam_update'])
+  );
 
   readonly BlueprintStatus = BlueprintStatus;
   displayedColumns = ['id', 'examId', 'name', 'exam', 'status', 'actions'];

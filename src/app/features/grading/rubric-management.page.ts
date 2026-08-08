@@ -22,6 +22,7 @@ import { Question } from '@core/models/question.model';
 import { QUESTIONS_SEED } from '@core/data';
 import { GradingFacade } from './data-access/grading.facade';
 import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components';
+import { PermissionService } from '@core/auth/permission.service';
 
 @Component({
   selector: 'app-rubric-management',
@@ -42,9 +43,11 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
           </button>
           <h1 class="text-2xl font-bold text-gray-900">Rubrik Yönetimi</h1>
         </div>
-        <button mat-raised-button color="primary" (click)="openEditor()">
-          <mat-icon>add</mat-icon> Yeni Rubrik
-        </button>
+        @if (canModify()) {
+          <button mat-raised-button color="primary" (click)="openEditor()">
+            <mat-icon>add</mat-icon> Yeni Rubrik
+          </button>
+        }
       </div>
 
       <div class="bg-white rounded-lg shadow-sm overflow-x-auto">
@@ -112,14 +115,16 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef>İşlemler</th>
               <td mat-cell *matCellDef="let r">
-                <div class="flex items-center gap-1">
-                  <button mat-icon-button (click)="openEditor(r)" matTooltip="Düzenle">
-                    <mat-icon class="text-sm">edit</mat-icon>
-                  </button>
-                  <button mat-icon-button (click)="confirmDelete(r)" matTooltip="Sil">
-                    <mat-icon class="text-sm">delete</mat-icon>
-                  </button>
-                </div>
+                @if (canModify()) {
+                  <div class="flex items-center gap-1">
+                    <button mat-icon-button (click)="openEditor(r)" matTooltip="Düzenle">
+                      <mat-icon class="text-sm">edit</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="confirmDelete(r)" matTooltip="Sil">
+                      <mat-icon class="text-sm">delete</mat-icon>
+                    </button>
+                  </div>
+                }
               </td>
             </ng-container>
 
@@ -268,6 +273,11 @@ export class RubricManagementPage implements OnInit {
   private facade = inject(GradingFacade);
   private fb = inject(FormBuilder);
   private dialog = inject(MatDialog);
+  private permissionService = inject(PermissionService);
+
+  canModify = computed(() =>
+    this.permissionService.hasAnyPermission(['grading_grade'])
+  );
 
   loading = signal(true);
   error = signal<string | null>(null);

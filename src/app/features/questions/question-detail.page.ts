@@ -17,6 +17,7 @@ import { QuestionEditorComponent, QuestionFormValue } from '@shared/components/q
 import { ErrorStateComponent } from '@shared/components';
 import { NotificationService } from '@core/observability/notification.service';
 import { DateFormatPipe } from '@shared/pipes';
+import { PermissionService } from '@core/auth/permission.service';
 
 @Component({
   selector: 'app-question-detail',
@@ -57,7 +58,7 @@ import { DateFormatPipe } from '@shared/pipes';
               <h1 class="text-2xl font-bold text-gray-900">{{ q.stem }}</h1>
               <p class="text-sm text-gray-500 mt-1">ID: {{ q.id }} | v{{ q.currentVersion }}</p>
             </div>
-            @if (q.status === QuestionVersionStatus.PUBLISHED) {
+            @if (canModify() && q.status === QuestionVersionStatus.PUBLISHED) {
               <button mat-raised-button color="primary" (click)="createNewVersion(q)">
                 <mat-icon>add</mat-icon>
                 Yeni Versiyon
@@ -181,6 +182,11 @@ export class QuestionDetailPage {
   private facade = inject(QuestionBankFacade);
   private dialog = inject(MatDialog);
   private notificationService = inject(NotificationService);
+  private permissionService = inject(PermissionService);
+
+  canModify = computed(() =>
+    this.permissionService.hasAnyPermission(['question_update'])
+  );
 
   readonly QuestionType = QuestionType;
   readonly QuestionVersionStatus = QuestionVersionStatus;

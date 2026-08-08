@@ -21,6 +21,7 @@ import { CoursesFacade } from '../data-access/courses.facade';
 import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components';
 import { ContentFormat, ContentStatus, Difficulty } from '@core/models/enums';
 import { CurrentUserService } from '@core/auth/current-user.service';
+import { PermissionService } from '@core/auth/permission.service';
 import { ContentItem } from '@core/models/content-item.model';
 import { NotificationService } from '@core/observability/notification.service';
 
@@ -67,21 +68,24 @@ interface ContentFormData {
               <h2 class="text-lg font-semibold text-gray-900">{{ c.title }}</h2>
               <p class="text-sm text-gray-500">{{ c.description }}</p>
             </div>
-            <div class="flex items-center gap-3">
-              <span class="text-sm text-gray-600">Durum:</span>
-              <mat-slide-toggle
-                [checked]="c.status === 'active'"
-                (change)="toggleStatus()"
-                color="primary">
-                {{ c.status === 'active' ? 'Aktif' : 'Pasif' }}
-              </mat-slide-toggle>
-            </div>
+            @if (canModify()) {
+              <div class="flex items-center gap-3">
+                <span class="text-sm text-gray-600">Durum:</span>
+                <mat-slide-toggle
+                  [checked]="c.status === 'active'"
+                  (change)="toggleStatus()"
+                  color="primary">
+                  {{ c.status === 'active' ? 'Aktif' : 'Pasif' }}
+                </mat-slide-toggle>
+              </div>
+            }
           </div>
         </mat-card>
 
-        <mat-card appearance="outlined" class="p-4 mb-4">
-          <h2 class="text-lg font-semibold text-gray-900 mb-3">Yeni İçerik Ekle</h2>
-          <form [formGroup]="contentForm" (ngSubmit)="addContent()">
+        @if (canModify()) {
+          <mat-card appearance="outlined" class="p-4 mb-4">
+            <h2 class="text-lg font-semibold text-gray-900 mb-3">Yeni İçerik Ekle</h2>
+            <form [formGroup]="contentForm" (ngSubmit)="addContent()">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
               <mat-form-field appearance="outline" class="w-full">
                 <mat-label>Başlık</mat-label>
@@ -145,6 +149,7 @@ interface ContentFormData {
             </div>
           </form>
         </mat-card>
+        }
 
         <mat-card appearance="outlined" class="p-4">
           <h2 class="text-lg font-semibold text-gray-900 mb-3">Mevcut İçerikler</h2>
@@ -186,9 +191,11 @@ interface ContentFormData {
                 <ng-container matColumnDef="actions">
                   <th mat-header-cell *matHeaderCellDef></th>
                   <td mat-cell *matCellDef="let item">
-                    <button mat-icon-button color="warn" (click)="deleteContent(item.id)">
-                      <mat-icon>delete</mat-icon>
-                    </button>
+                    @if (canModify()) {
+                      <button mat-icon-button color="warn" (click)="deleteContent(item.id)">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    }
                   </td>
                 </ng-container>
                 <tr mat-header-row *matHeaderRowDef="contentColumns"></tr>
@@ -220,8 +227,13 @@ export class CourseEditPage implements OnInit {
   private fb = inject(FormBuilder);
   private route = inject(ActivatedRoute);
   private currentUser = inject(CurrentUserService);
+  private permissionService = inject(PermissionService);
   private dialog = inject(MatDialog);
   private notification = inject(NotificationService);
+
+  canModify = computed(() =>
+    this.permissionService.hasAnyPermission(['course_update'])
+  );
 
   loading = signal(true);
   error = signal<string | null>(null);

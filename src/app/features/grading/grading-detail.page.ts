@@ -17,6 +17,7 @@ import { Question } from '@core/models/question.model';
 import { GradingFacade, GradingHistoryEntry } from './data-access/grading.facade';
 import { RubricGraderComponent } from '@shared/components/rubric-grader/rubric-grader.component';
 import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components';
+import { PermissionService } from '@core/auth/permission.service';
 
 interface QuestionItem {
   question: Question;
@@ -56,7 +57,7 @@ interface QuestionItem {
               [class.text-green-700]="attempt.status === 'finalized'">
               {{ attempt.status === 'draft' ? 'Değerlendiriliyor' : 'Sonuçlandı' }}
             </span>
-            @if (attempt.status === ResultStatus.DRAFT) {
+            @if (canModify() && attempt.status === ResultStatus.DRAFT) {
               <button mat-raised-button color="primary" [disabled]="finalizing()" (click)="finalize()">
                 <mat-icon>check_circle</mat-icon>
                 Sonuçlandır
@@ -122,9 +123,11 @@ interface QuestionItem {
                       @if (item.response.gradingNote) {
                         <span class="text-sm text-gray-500">Not: {{ item.response.gradingNote }}</span>
                       }
-                      <button mat-stroked-button size="small" (click)="startEdit(item.question.id)">
-                        <mat-icon>edit</mat-icon> Düzenle
-                      </button>
+                      @if (canModify()) {
+                        <button mat-stroked-button size="small" (click)="startEdit(item.question.id)">
+                          <mat-icon>edit</mat-icon> Düzenle
+                        </button>
+                      }
                     </div>
                   } @else {
                     <div class="space-y-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
@@ -148,16 +151,18 @@ interface QuestionItem {
                         <textarea matInput rows="2" #noteInput
                                   [value]="item.response.gradingNote || ''"></textarea>
                       </mat-form-field>
-                      <div class="flex items-center gap-2">
-                        <button mat-stroked-button color="primary" (click)="onManualGrade(item, scoreInput.value, noteInput.value)">
-                          <mat-icon>save</mat-icon> Kaydet
-                        </button>
-                        @if (item.response.manualScore != null) {
-                          <button mat-stroked-button (click)="cancelEdit(item.question.id)">
-                            İptal
+                      @if (canModify()) {
+                        <div class="flex items-center gap-2">
+                          <button mat-stroked-button color="primary" (click)="onManualGrade(item, scoreInput.value, noteInput.value)">
+                            <mat-icon>save</mat-icon> Kaydet
                           </button>
+                          @if (item.response.manualScore != null) {
+                            <button mat-stroked-button (click)="cancelEdit(item.question.id)">
+                              İptal
+                            </button>
                         }
                       </div>
+                    }
                     </div>
                   }
                 }
@@ -178,9 +183,10 @@ interface QuestionItem {
                 <div class="text-xs text-gray-400 mt-2">
                   Değerlendiren: {{ item.response.gradedBy }} - {{ item.response.gradedAt | date:'short' }}
                 </div>
-              }
-            </div>
-          }
+                        }
+                      </div>
+                    }
+                  }
         </div>
 
         @if (gradingHistory().length > 0) {
@@ -214,6 +220,11 @@ export class GradingDetailPage {
   private router = inject(Router);
   private gradingFacade = inject(GradingFacade);
   private dialog = inject(MatDialog);
+  private permissionService = inject(PermissionService);
+
+  canModify = computed(() =>
+    this.permissionService.hasAnyPermission(['grading_grade'])
+  );
 
   readonly ResultStatus = ResultStatus;
   readonly QuestionType = QuestionType;

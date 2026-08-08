@@ -19,6 +19,7 @@ import { ErrorStateComponent } from '@shared/components';
 import { DebounceDirective } from '@shared/directives';
 import { CourseStatus, EnrollmentStatus, UserRole } from '@core/models/enums';
 import { CurrentUserService } from '@core/auth/current-user.service';
+import { PermissionService } from '@core/auth/permission.service';
 import { StatusTextPipe } from '@shared/pipes';
 
 @Component({
@@ -29,7 +30,7 @@ import { StatusTextPipe } from '@shared/pipes';
     <div class="space-y-4">
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-900">Kurslar</h1>
-        @if (!isStudent()) {
+        @if (canModify()) {
           <div class="flex items-center gap-2">
             @if (pendingEnrollments().length > 0) {
               <button mat-stroked-button color="accent" (click)="showPending.set(!showPending())">
@@ -225,7 +226,7 @@ import { StatusTextPipe } from '@shared/pipes';
                       </button>
                     }
                   }
-                  @if (!isStudent()) {
+                  @if (canModify()) {
                     <button mat-icon-button [routerLink]="['/courses', item.course.id, 'edit']" color="primary">
                       <mat-icon>edit</mat-icon>
                     </button>
@@ -256,6 +257,7 @@ import { StatusTextPipe } from '@shared/pipes';
 export class CourseListPage implements OnInit {
   private facade = inject(CoursesFacade);
   private currentUser = inject(CurrentUserService);
+  private permissionService = inject(PermissionService);
   private fb = inject(FormBuilder);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -289,6 +291,9 @@ export class CourseListPage implements OnInit {
   });
 
   isStudent = computed(() => this.currentUser.user().role === UserRole.STUDENT);
+  canModify = computed(() =>
+    this.permissionService.hasAnyPermission(['course_create', 'course_update', 'course_delete'])
+  );
 
   displayedColumns: string[] = [];
 

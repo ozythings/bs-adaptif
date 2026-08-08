@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { roleGuard } from '@core/guards/role.guard';
 
 export const COURSES_ROUTES: Routes = [
   {
@@ -11,7 +12,9 @@ export const COURSES_ROUTES: Routes = [
   },
   {
     path: ':id/edit',
-    loadComponent: () => import('./course-edit/course-edit.page').then(m => m.CourseEditPage)
+    loadComponent: () => import('./course-edit/course-edit.page').then(m => m.CourseEditPage),
+    canActivate: [roleGuard],
+    data: { permissions: ['course_update'] }
   },
   {
     path: ':id/details',
