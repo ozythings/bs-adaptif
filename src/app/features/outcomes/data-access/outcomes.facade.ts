@@ -22,6 +22,10 @@ export class OutcomesFacade {
     return this.mockApi.get(filtered);
   }
 
+  getAll(): Observable<LearningOutcome[]> {
+    return this.mockApi.get(this.rawOutcomes());
+  }
+
   getById(id: number): Observable<LearningOutcome | undefined> {
     return this.mockApi.get(this.rawOutcomes().find(o => o.id === id));
   }

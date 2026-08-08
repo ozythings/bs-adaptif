@@ -36,8 +36,9 @@ import { OutcomeLevel, OutcomeStatus } from '@core/models/enums';
       <div class="bg-white rounded-lg shadow-sm p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <mat-form-field appearance="outline" class="w-full">
           <mat-label>Ders</mat-label>
-          <mat-select [value]="selectedCourseId()" (selectionChange)="onCourseChange($event.value)">
-            @for (c of facade.courses; track c.id) {
+            <mat-select [value]="selectedCourseId()" (selectionChange)="onCourseChange($event.value)">
+              <mat-option [value]="null">Tümü</mat-option>
+              @for (c of facade.courses; track c.id) {
               <mat-option [value]="c.id">{{ c.title }}</mat-option>
             }
           </mat-select>
@@ -137,7 +138,7 @@ import { OutcomeLevel, OutcomeStatus } from '@core/models/enums';
 export class OutcomeMapPage implements OnInit {
   protected facade = inject(OutcomesFacade);
 
-  selectedCourseId = signal(1);
+  selectedCourseId = signal<number | null>(1);
   selectedNodeId = signal<number | null>(null);
   focusMode = signal(false);
   searchTerm = signal('');
@@ -184,7 +185,9 @@ export class OutcomeMapPage implements OnInit {
   loadOutcomes(): void {
     this.loading.set(true);
     this.error.set(null);
-    this.facade.getByCourse(this.selectedCourseId()).subscribe({
+    const courseId = this.selectedCourseId();
+    const source = courseId != null ? this.facade.getByCourse(courseId) : this.facade.getAll();
+    source.subscribe({
       next: items => {
         this.rawOutcomes.set(items);
         this.loading.set(false);
@@ -193,7 +196,7 @@ export class OutcomeMapPage implements OnInit {
     });
   }
 
-  onCourseChange(courseId: number): void {
+  onCourseChange(courseId: number | null): void {
     this.selectedCourseId.set(courseId);
     this.selectedNodeId.set(null);
     this.searchTerm.set('');

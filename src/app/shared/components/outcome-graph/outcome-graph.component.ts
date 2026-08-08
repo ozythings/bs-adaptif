@@ -164,7 +164,7 @@ const memoizedLayout = memoizeWithKey(
         (mousemove)="onPanMove($event)"
         (mouseup)="onPanEnd()"
         (mouseleave)="onPanEnd()">
-        <svg [attr.width]="svgWidth()" [attr.height]="svgHeight()" class="block" [style.transform]="'scale(' + zoomLevel() + ')'" style="transform-origin: 0 0">
+        <svg [attr.width]="svgWidth() * zoomLevel()" [attr.height]="svgHeight() * zoomLevel()" [attr.viewBox]="'0 0 ' + svgWidth() + ' ' + svgHeight()" class="block">
           @for (edge of edges(); track edge.from + '-' + edge.to) {
             <line
               [attr.x1]="getNode(edge.from)?.x ?? 0"
