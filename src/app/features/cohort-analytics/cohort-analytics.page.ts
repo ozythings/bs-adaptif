@@ -139,7 +139,7 @@ const MIN_COHORT_SIZE = 3;
 
           <div class="mt-4">
             <button mat-stroked-button (click)="loadTrend()" [disabled]="trendLoading()">
-              <mat-icon>timeline</mat-icon> {{ trendData() ? 'Trendi Gizle' : 'Zaman Trendini Goster' }}
+              <mat-icon>timeline</mat-icon> {{ trendData() ? 'Trendi Gizle' : 'Zaman Trendini Göster' }}
             </button>
           </div>
 
