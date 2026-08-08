@@ -65,7 +65,7 @@ import { StatusTextPipe } from '@shared/pipes';
                 </mat-select>
               </mat-form-field>
               <mat-form-field appearance="outline" class="w-full">
-                <mat-label>Maks. Katılımcı</mat-label>
+                <mat-label>Maks. Öğrenci</mat-label>
                 <input matInput type="number" formControlName="maxParticipants" placeholder="Örn: 25">
               </mat-form-field>
             </div>

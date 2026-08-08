@@ -29,7 +29,7 @@ export class ParticipantFacade {
       action: AuditAction.UPDATE,
       entity: 'Participant',
       entityId: id,
-      description: `Katılımcı profili güncellendi: ${updated.firstName} ${updated.lastName}`,
+      description: `Öğrenci profili güncellendi: ${updated.firstName} ${updated.lastName}`,
       oldValue: { schoolNumber: existing.schoolNumber, email: existing.email, phone: existing.phone },
       newValue: { schoolNumber: updated.schoolNumber, email: updated.email, phone: updated.phone },
     });

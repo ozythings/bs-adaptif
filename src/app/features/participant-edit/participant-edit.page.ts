@@ -138,7 +138,7 @@ export class ParticipantEditPage implements OnInit {
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (isNaN(id)) {
-      this.error.set('Geçersiz katılımcı ID');
+      this.error.set('Geçersiz öğrenci ID');
       this.loading.set(false);
       return;
     }
@@ -154,7 +154,7 @@ export class ParticipantEditPage implements OnInit {
     ).subscribe({
       next: p => {
         if (!p) {
-          this.error.set('Katılımcı bulunamadı');
+          this.error.set('Öğrenci bulunamadı');
         } else {
           this.participant.set(p);
           this.form.patchValue({
@@ -169,7 +169,7 @@ export class ParticipantEditPage implements OnInit {
         this.loading.set(false);
       },
       error: e => {
-        this.error.set(e.message || 'Katılımcı yüklenemedi');
+        this.error.set(e.message || 'Öğrenci yüklenemedi');
         this.loading.set(false);
       }
     });

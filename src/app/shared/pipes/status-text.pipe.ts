@@ -56,7 +56,7 @@ const STATUS_MAP = new Map<string, string>([
   [AuditAction.SESSION_EXPIRE, 'Oturum Süre Aşımı'],
   [UserRole.INSTRUCTOR, 'Eğitmen'],
   [UserRole.STUDENT, 'Öğrenci'],
-  [UserRole.ASSESSMENT_SPECIALIST, 'Değerlendirme Uzmanı'],
+  [UserRole.ASSESSMENT_SPECIALIST, 'Ölçme Uzmanı'],
   [UserRole.PROGRAM_MANAGER, 'Program Yöneticisi'],
   [UserRole.OBSERVER, 'Gözlemci'],
   [UserRole.PLATFORM_ADMIN, 'Platform Yöneticisi'],

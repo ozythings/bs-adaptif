@@ -33,13 +33,6 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
   ],
   template: `
     <div class="space-y-6 p-4">
-      @if (!isObserver()) {
-      <div class="flex items-center gap-2 mb-2">
-        <button mat-icon-button routerLink="/grading" matTooltip="Geri Dön">
-          <mat-icon>arrow_back</mat-icon>
-        </button>
-      </div>
-      }
       @if (loading()) {
         <div class="flex justify-center items-center py-20">
           <mat-spinner diameter="32" />
@@ -50,6 +43,11 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
       } @else if (d(); as info) {
         @if (info.student; as s) {
           <div class="flex items-center gap-3">
+            @if (!isObserver()) {
+              <button mat-icon-button routerLink="/grading" matTooltip="Geri Dön">
+                <mat-icon>arrow_back</mat-icon>
+              </button>
+            }
             <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
               {{ s.firstName.charAt(0) }}{{ s.lastName.charAt(0) }}
             </div>

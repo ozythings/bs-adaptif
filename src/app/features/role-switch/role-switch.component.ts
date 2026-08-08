@@ -1,10 +1,12 @@
-import { Component,  inject,  signal } from '@angular/core';
+import { Component,  inject,  signal,  computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
 import { CurrentUserService, UserInfo } from '@core/auth/current-user.service';
 import { AuditAction, UserRole } from '@core/models/enums';
 import { AuditService } from '@core/observability/audit.service';
@@ -15,42 +17,59 @@ import { clearSnapshot } from '@core/data/seed-persist';
 @Component({
   selector: 'app-role-switch',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatDialogModule, MatTooltipModule, ConfirmDialogComponent],
+  imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatDialogModule, MatTooltipModule, MatFormFieldModule, MatSelectModule, ConfirmDialogComponent],
   template: `
     <div class="space-y-4">
-      <div class="flex items-center gap-2 mb-2">
-        <button mat-icon-button routerLink="/learning/dashboard" matTooltip="Geri Dön">
-          <mat-icon>arrow_back</mat-icon>
-        </button>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <button mat-icon-button routerLink="/learning/dashboard" matTooltip="Geri Dön">
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+          <h1 class="text-2xl font-bold text-gray-900">Kullanıcı Değiştir</h1>
+        </div>
       </div>
-      <h1 class="text-2xl font-bold text-gray-900">Kullanıcı Değiştir</h1>
 
-      <div class="bg-white rounded-lg shadow-sm p-6 space-y-4">
-        <p class="text-sm text-gray-500">
-          Şu anki kullanıcı: <span class="font-medium text-gray-900">{{ user().name }}</span>
-          <span class="text-xs text-gray-400 ml-2">({{ roleLabel(user().role) }})</span>
-        </p>
-
-        <div class="space-y-2 max-h-96 overflow-y-auto">
-          @for (u of users; track u.id) {
-            <button (click)="switchUser(u)"
-              class="w-full text-left px-4 py-3 rounded-lg border-2 flex items-center justify-between transition-colors"
-              [class.border-blue-500]="selectedId() === u.id"
-              [class.bg-blue-50]="selectedId() === u.id"
-              [class.border-gray-200]="selectedId() !== u.id"
-              [class.hover:border-blue-300]="selectedId() !== u.id">
-              <div>
-                <span class="font-medium text-gray-900">{{ u.name }}</span>
-                <span class="text-xs text-gray-500 ml-2">({{ roleLabel(u.role) }})</span>
-              </div>
-              @if (selectedId() === u.id) {
-                <mat-icon color="primary">check_circle</mat-icon>
-              }
-            </button>
-          }
+      <div class="bg-white rounded-lg shadow-sm p-6 space-y-6">
+        <div>
+          <p class="text-sm text-gray-500 mb-3">
+            Şu anki kullanıcı: <span class="font-medium text-gray-900">{{ user().name }}</span>
+            <span class="text-xs text-gray-400 ml-2">({{ roleLabel(user().role) }})</span>
+          </p>
         </div>
 
-        <div class="flex justify-end pt-3 border-t">
+        <div>
+          <p class="text-sm font-semibold text-gray-700 mb-3">1. Rol Seçin</p>
+          <div class="grid grid-cols-3 gap-4">
+            @for (r of roleGroups; track r.role) {
+              <button (click)="selectRole(r.role)"
+                class="w-full h-28 rounded-xl border-2 flex flex-col items-center justify-center gap-2 transition-colors"
+                [class.bg-blue-600]="selectedRole() === r.role"
+                [class.text-white]="selectedRole() === r.role"
+                [class.border-blue-600]="selectedRole() === r.role"
+                [class.bg-white]="selectedRole() !== r.role"
+                [class.border-gray-200]="selectedRole() !== r.role"
+                [class.text-gray-700]="selectedRole() !== r.role"
+                [class.hover:border-blue-400]="selectedRole() !== r.role">
+                <mat-icon class="text-3xl" [class.text-white]="selectedRole() === r.role" [class.text-gray-400]="selectedRole() !== r.role">{{ roleIcon(r.role) }}</mat-icon>
+                <span class="text-sm">{{ roleLabel(r.role) }}</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        @if (selectedRole()) {
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Kullanıcı Seçin</mat-label>
+            <mat-select [value]="selectedId()" (selectionChange)="selectedId.set($event.value)">
+              @for (u of usersByRole(); track u.id) {
+                <mat-option [value]="u.id">{{ u.name }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+
+        <div class="flex justify-end gap-3 pt-4 border-t">
+          <button mat-button routerLink="/learning/dashboard">İptal</button>
           <button mat-raised-button color="primary"
             [disabled]="!selectedId() || selectedId() === user().id"
             (click)="confirmSwitch()">Değiştir</button>
@@ -80,6 +99,34 @@ export class RoleSwitchComponent {
   readonly users: UserInfo[] = this.currentUserService.getAvailableUsers();
 
   selectedId = signal<number | null>(null);
+  selectedRole = signal<UserRole | null>(null);
+
+  roleGroups: { role: UserRole; users: UserInfo[] }[] = [];
+
+  constructor() {
+    const order: UserRole[] = [
+      UserRole.PLATFORM_ADMIN,
+      UserRole.INSTRUCTOR,
+      UserRole.STUDENT,
+      UserRole.ASSESSMENT_SPECIALIST,
+      UserRole.PROGRAM_MANAGER,
+      UserRole.OBSERVER,
+    ];
+    this.roleGroups = order
+      .map(role => ({ role, users: this.users.filter(u => u.role === role) }))
+      .filter(g => g.users.length > 0);
+  }
+
+  usersByRole = computed(() => {
+    const role = this.selectedRole();
+    if (!role) return [];
+    return this.users.filter(u => u.role === role);
+  });
+
+  selectRole(role: UserRole): void {
+    this.selectedRole.set(role);
+    this.selectedId.set(null);
+  }
 
   switchUser(u: UserInfo): void {
     this.selectedId.set(u.id);
@@ -133,13 +180,25 @@ export class RoleSwitchComponent {
 
   roleLabel(role: UserRole): string {
     const labels: Record<UserRole, string> = {
+      [UserRole.PLATFORM_ADMIN]: 'Platform Yöneticisi',
       [UserRole.INSTRUCTOR]: 'Eğitmen',
       [UserRole.STUDENT]: 'Öğrenci',
       [UserRole.ASSESSMENT_SPECIALIST]: 'Ölçme Uzmanı',
       [UserRole.PROGRAM_MANAGER]: 'Program Yöneticisi',
       [UserRole.OBSERVER]: 'Gözlemci',
-      [UserRole.PLATFORM_ADMIN]: 'Platform Yöneticisi'
     };
     return labels[role] || role;
+  }
+
+  roleIcon(role: UserRole): string {
+    const icons: Record<UserRole, string> = {
+      [UserRole.PLATFORM_ADMIN]: 'admin_panel_settings',
+      [UserRole.INSTRUCTOR]: 'school',
+      [UserRole.STUDENT]: 'people',
+      [UserRole.ASSESSMENT_SPECIALIST]: 'fact_check',
+      [UserRole.PROGRAM_MANAGER]: 'manage_accounts',
+      [UserRole.OBSERVER]: 'visibility',
+    };
+    return icons[role] || 'person';
   }
 }
