@@ -69,14 +69,14 @@ import { DebounceDirective } from '@shared/directives';
             </ng-container>
 
             <ng-container matColumnDef="student">
-              <th mat-header-cell *matHeaderCellDef>Öğrenci</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Öğrenci</th>
               <td mat-cell *matCellDef="let a">
                 <a [routerLink]="['/student', a.studentId, 'analytics']" class="text-blue-600 hover:underline">{{ getStudentName(a.studentId) }}</a>
               </td>
             </ng-container>
 
             <ng-container matColumnDef="exam">
-              <th mat-header-cell *matHeaderCellDef>Sınav</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Sınav</th>
               <td mat-cell *matCellDef="let a">{{ getExamName(a.examId) }}</td>
             </ng-container>
 
@@ -177,6 +177,8 @@ export class GradingListPage {
       let va: any, vb: any;
       switch (col) {
         case 'id': va = a.id; vb = b.id; break;
+        case 'student': va = this.getStudentName(a.studentId); vb = this.getStudentName(b.studentId); break;
+        case 'exam': va = this.getExamName(a.examId); vb = this.getExamName(b.examId); break;
         case 'autoScore': va = a.totalScore; vb = b.totalScore; break;
         case 'status': va = a.status; vb = b.status; break;
         default: return 0;

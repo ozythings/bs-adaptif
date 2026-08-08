@@ -66,15 +66,15 @@ import { BlueprintStatus } from '@core/models/enums';
         } @else {
           <table mat-table matSort [dataSource]="paginatedBlueprints()" class="w-full" (matSortChange)="onSort($event)">
             <ng-container matColumnDef="id">
-              <th mat-header-cell *matHeaderCellDef class="w-28">Blueprint ID</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header class="w-28">Blueprint ID</th>
               <td mat-cell *matCellDef="let b"><span>{{ b.id }}</span></td>
             </ng-container>
             <ng-container matColumnDef="examId">
-              <th mat-header-cell *matHeaderCellDef class="w-20">Sınav ID</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header class="w-20">Sınav ID</th>
               <td mat-cell *matCellDef="let b"><span>{{ b.examId }}</span></td>
             </ng-container>
             <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef>Blueprint Adı</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Blueprint Adı</th>
               <td mat-cell *matCellDef="let b">
                 <button mat-button class="hover:underline font-medium" style="color: #2563eb" (click)="selectBlueprint(b)">
                   {{ b.name }}
@@ -82,11 +82,11 @@ import { BlueprintStatus } from '@core/models/enums';
               </td>
             </ng-container>
             <ng-container matColumnDef="exam">
-              <th mat-header-cell *matHeaderCellDef>Sınav</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Sınav</th>
               <td mat-cell *matCellDef="let b">{{ getExamName(b.examId) }}</td>
             </ng-container>
             <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Durum</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Durum</th>
               <td mat-cell *matCellDef="let b">
                 <span class="px-2 py-1 rounded-full text-xs font-medium" [class]="statusClass(b.status)">
                   {{ b.status | statusText }}
