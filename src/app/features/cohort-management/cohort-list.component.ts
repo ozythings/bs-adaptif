@@ -23,13 +23,13 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
   template: `
     <div class="space-y-4">
       <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-900">Kohortlar</h1>
+        <h1 class="text-2xl font-bold text-gray-900">Cohortlar</h1>
         <div class="flex items-center gap-2">
           <a mat-stroked-button routerLink="/cohorts/analytics">
-            <mat-icon>analytics</mat-icon> Kohort Analizi
+            <mat-icon>analytics</mat-icon> Cohort Analizi
           </a>
           <button mat-raised-button color="primary" (click)="openNewForm()">
-            <mat-icon>add</mat-icon> Yeni Kohort
+            <mat-icon>add</mat-icon> Yeni Cohort
           </button>
         </div>
       </div>
@@ -38,12 +38,12 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
         <form [formGroup]="form" (ngSubmit)="onSubmit()" class="bg-white rounded-lg shadow-sm p-4 space-y-3">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <mat-form-field appearance="outline">
-              <mat-label>Kohort Adı</mat-label>
+              <mat-label>Cohort Adı</mat-label>
               <input matInput formControlName="name" placeholder="Örn: 2024 Güz Grubu">
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Açıklama</mat-label>
-              <input matInput formControlName="description" placeholder="Kohort açıklaması">
+              <input matInput formControlName="description" placeholder="Cohort açıklaması">
             </mat-form-field>
             <mat-form-field appearance="outline">
               <mat-label>Dönem</mat-label>
@@ -66,7 +66,7 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
       @if (loading()) {
         <div class="flex justify-center py-8"><mat-spinner diameter="32" /></div>
       } @else if (error()) {
-        <app-error-state [title]="'Kohortlar yüklenemedi'" [message]="error()!" (retry)="loadData()" />
+        <app-error-state [title]="'Cohortlar yüklenemedi'" [message]="error()!" (retry)="loadData()" />
       } @else if (cohorts().length === 0) {
         <div class="bg-white rounded-lg shadow-sm text-center p-12 text-gray-500">
           <mat-icon class="text-4xl mb-2">groups</mat-icon>
@@ -151,7 +151,7 @@ export class CohortListComponent implements OnInit {
         this.loading.set(false);
       },
       error: err => {
-        this.error.set(err.message || 'Kohortlar yüklenirken hata oluştu');
+        this.error.set(err.message || 'Cohortlar yüklenirken hata oluştu');
         this.loading.set(false);
       }
     });
@@ -201,7 +201,7 @@ export class CohortListComponent implements OnInit {
   onDelete(cohort: Cohort): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
-        title: 'Kohortu Sil',
+        title: 'Cohortu Sil',
         message: `"${cohort.name}" kohortunu silmek istediğinize emin misiniz?`,
         confirmLabel: 'Sil',
         cancelLabel: 'İptal',

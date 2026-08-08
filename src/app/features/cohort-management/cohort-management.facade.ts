@@ -19,7 +19,7 @@ export class CohortManagementFacade {
   readonly cohorts = this.rawCohorts.asReadonly();
 
   getCohorts(): Observable<Cohort[]> {
-    this.audit.log({ action: AuditAction.VIEW, entity: 'Cohort', entityId: 0, description: 'Kohort listesi görüntülendi' });
+    this.audit.log({ action: AuditAction.VIEW, entity: 'Cohort', entityId: 0, description: 'Cohort listesi görüntülendi' });
     return this.mockApi.get(this.rawCohorts());
   }
 
@@ -39,34 +39,34 @@ export class CohortManagementFacade {
       updatedAt: now,
     };
     this.rawCohorts.update(list => [...list, newCohort]);
-    this.audit.log({ action: AuditAction.CREATE, entity: 'Cohort', entityId: newCohort.id, description: 'Kohort oluşturuldu', newValue: newCohort });
-    this.notification.show('Kohort oluşturuldu', 'success');
+    this.audit.log({ action: AuditAction.CREATE, entity: 'Cohort', entityId: newCohort.id, description: 'Cohort oluşturuldu', newValue: newCohort });
+    this.notification.show('Cohort oluşturuldu', 'success');
     return this.mockApi.post(newCohort);
   }
 
   updateCohort(id: number, data: { name?: string; description?: string; isActive?: boolean }): Observable<Cohort | undefined> {
     const idx = this.rawCohorts().findIndex(c => c.id === id);
     if (idx === -1) {
-      this.notification.show('Kohort bulunamadı', 'error');
+      this.notification.show('Cohort bulunamadı', 'error');
       return this.mockApi.simulateError();
     }
     const old = this.rawCohorts()[idx];
     const updated: Cohort = { ...old, ...data, updatedAt: new Date().toISOString() };
     this.rawCohorts.update(list => list.map((c, i) => i === idx ? updated : c));
-    this.audit.log({ action: AuditAction.UPDATE, entity: 'Cohort', entityId: id, description: 'Kohort güncellendi', oldValue: old, newValue: updated });
-    this.notification.show('Kohort güncellendi', 'success');
+    this.audit.log({ action: AuditAction.UPDATE, entity: 'Cohort', entityId: id, description: 'Cohort güncellendi', oldValue: old, newValue: updated });
+    this.notification.show('Cohort güncellendi', 'success');
     return this.mockApi.put(updated);
   }
 
   deleteCohort(id: number): Observable<boolean> {
     const cohort = this.rawCohorts().find(c => c.id === id);
     if (!cohort) {
-      this.notification.show('Kohort bulunamadı', 'error');
+      this.notification.show('Cohort bulunamadı', 'error');
       return this.mockApi.simulateError();
     }
     this.rawCohorts.update(list => list.filter(c => c.id !== id));
-    this.audit.log({ action: AuditAction.DELETE, entity: 'Cohort', entityId: id, description: `Kohort silindi: ${cohort.name}` });
-    this.notification.show('Kohort silindi', 'success');
+    this.audit.log({ action: AuditAction.DELETE, entity: 'Cohort', entityId: id, description: `Cohort silindi: ${cohort.name}` });
+    this.notification.show('Cohort silindi', 'success');
     return this.mockApi.delete(true);
   }
 }

@@ -97,19 +97,19 @@ export class CohortAnalyticsFacade {
       cohorts = cohorts.filter(c => scope.allowedCohortIds!.includes(c.id));
     }
     const filtered = cohorts.filter(c => c.studentIds.length >= MIN_COHORT_SIZE);
-    this.audit.log({ action: AuditAction.VIEW, entity: 'Cohort', entityId: 0, description: 'Kohort listesi görüntülendi' });
+    this.audit.log({ action: AuditAction.VIEW, entity: 'Cohort', entityId: 0, description: 'Cohort listesi görüntülendi' });
     return this.mockApi.get(filtered);
   }
 
   getCohortDetail(cohortId: number): Observable<CohortDetail | undefined> {
     const cohort = COHORTS_SEED.find(c => c.id === cohortId);
     if (!cohort) return this.mockApi.get(undefined);
-    this.audit.log({ action: AuditAction.VIEW, entity: 'Cohort', entityId: cohortId, description: 'Kohort detayı görüntülendi' });
+    this.audit.log({ action: AuditAction.VIEW, entity: 'Cohort', entityId: cohortId, description: 'Cohort detayı görüntülendi' });
     return this.mockApi.get({ cohort, studentCount: cohort.studentIds.length });
   }
 
   getComparisonMetrics(cohortIds: number[]): Observable<CohortComparisonMetric[]> {
-    this.audit.log({ action: AuditAction.VIEW, entity: 'Cohort', entityId: 0, description: 'Kohort karşılaştırma metrikleri görüntülendi' });
+    this.audit.log({ action: AuditAction.VIEW, entity: 'Cohort', entityId: 0, description: 'Cohort karşılaştırma metrikleri görüntülendi' });
     return this.mockApi.get(memoizedComparison(cohortIds));
   }
 

@@ -75,7 +75,7 @@ import { BlueprintStatus } from '@core/models/enums';
             <ng-container matColumnDef="name">
               <th mat-header-cell *matHeaderCellDef>Blueprint Adı</th>
               <td mat-cell *matCellDef="let b">
-                <button mat-button class="text-blue-600 hover:underline font-medium" (click)="selectBlueprint(b)">
+                <button mat-button class="hover:underline font-medium" style="color: #2563eb" (click)="selectBlueprint(b)">
                   {{ b.name }}
                 </button>
               </td>

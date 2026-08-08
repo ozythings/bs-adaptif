@@ -159,7 +159,7 @@ import { StatusTextPipe } from '@shared/pipes';
             <ng-container matColumnDef="id">
               <th mat-header-cell *matHeaderCellDef class="w-16">ID</th>
               <td mat-cell *matCellDef="let item" [class.opacity-50]="isPaleRow(item)">
-                <span class="font-mono text-xs text-gray-500">{{ item.course.id }}</span>
+                <span class="text-xs">{{ item.course.id }}</span>
               </td>
             </ng-container>
             <ng-container matColumnDef="title">

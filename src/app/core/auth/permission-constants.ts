@@ -56,7 +56,7 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
   },
   {
     key: 'cohort',
-    label: 'Kohort',
+    label: 'Cohort',
     permissions: [
       { key: 'cohort_create', label: 'Oluştur' },
       { key: 'cohort_read', label: 'Görüntüle' },
