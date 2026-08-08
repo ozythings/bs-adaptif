@@ -42,6 +42,14 @@ import { BlueprintStatus } from '@core/models/enums';
         </button>
       </div>
 
+      <div class="bg-white rounded-lg shadow-sm p-3">
+        <mat-form-field appearance="outline" class="w-full sm:w-72">
+          <mat-label>Ada Göre Filtrele</mat-label>
+          <input matInput [value]="searchTerm()" (input)="onSearch($event)" placeholder="Blueprint veya sınav adı...">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+      </div>
+
       <div class="bg-white rounded-lg shadow-sm overflow-x-auto">
         @if (loading()) {
           <div class="flex justify-center py-12">
@@ -57,11 +65,11 @@ import { BlueprintStatus } from '@core/models/enums';
         } @else {
           <table mat-table [dataSource]="paginatedBlueprints()" class="w-full">
             <ng-container matColumnDef="id">
-              <th mat-header-cell *matHeaderCellDef class="w-16">Blueprint ID</th>
+              <th mat-header-cell *matHeaderCellDef class="w-28">Blueprint ID</th>
               <td mat-cell *matCellDef="let b"><span>{{ b.id }}</span></td>
             </ng-container>
             <ng-container matColumnDef="examId">
-              <th mat-header-cell *matHeaderCellDef class="w-16">Sınav ID</th>
+              <th mat-header-cell *matHeaderCellDef class="w-20">Sınav ID</th>
               <td mat-cell *matCellDef="let b"><span>{{ b.examId }}</span></td>
             </ng-container>
             <ng-container matColumnDef="name">
@@ -296,10 +304,10 @@ export class ExamBuilderPage implements OnInit {
 
   pageSize = signal(10);
   pageIndex = signal(0);
-  total = computed(() => this.blueprints().length);
+  total = computed(() => this.filteredBlueprints().length);
   paginatedBlueprints = computed(() => {
     const start = this.pageIndex() * this.pageSize();
-    return this.blueprints().slice(start, start + this.pageSize());
+    return this.filteredBlueprints().slice(start, start + this.pageSize());
   });
 
   loading = signal(true);
@@ -314,6 +322,17 @@ export class ExamBuilderPage implements OnInit {
   manualSelectedIds = signal<Set<number>>(new Set());
   versionSelections = signal<Record<number, number>>({});
   availableVersions = signal<Record<number, number[]>>({});
+  searchTerm = signal('');
+
+  filteredBlueprints = computed(() => {
+    const term = this.searchTerm().toLowerCase();
+    const list = this.blueprints();
+    if (!term) return list;
+    return list.filter(b =>
+      b.name.toLowerCase().includes(term) ||
+      this.getExamName(b.examId).toLowerCase().includes(term)
+    );
+  });
 
   selectedCount = computed(() => this.manualSelectedIds().size);
 
@@ -385,6 +404,11 @@ export class ExamBuilderPage implements OnInit {
     if (examId == null) return;
     const match = this.blueprints().find(b => b.examId === examId);
     if (match) this.selectBlueprint(match);
+  }
+
+  onSearch(event: Event): void {
+    this.searchTerm.set((event.target as HTMLInputElement).value);
+    this.pageIndex.set(0);
   }
 
   onPage(event: PageEvent): void {
