@@ -255,7 +255,11 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
         @if (isStudent()) {
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <mat-card appearance="outlined" class="p-5">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Sınav Sonuçlarım</h2>
+            <button type="button" class="w-full flex items-center gap-2 mb-4 text-left" (click)="expandedExamResults.set(!expandedExamResults())">
+              <mat-icon class="text-gray-500 text-sm transition-transform" [style.transform]="expandedExamResults() ? 'rotate(90deg)' : 'none'">chevron_right</mat-icon>
+              <h2 class="text-lg font-semibold text-gray-900">Sınav Sonuçlarım</h2>
+            </button>
+            @if (expandedExamResults()) {
             @if (info.examAttempts.length === 0) {
               <p class="text-gray-500 text-sm">Henüz sınav sonucunuz bulunmuyor</p>
             } @else {
@@ -288,10 +292,15 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
                 }
               </div>
             }
+            }
           </mat-card>
 
           <mat-card appearance="outlined" class="p-5">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Aktif Oturumlar</h2>
+            <button type="button" class="w-full flex items-center gap-2 mb-4 text-left" (click)="expandedActiveSessions.set(!expandedActiveSessions())">
+              <mat-icon class="text-gray-500 text-sm transition-transform" [style.transform]="expandedActiveSessions() ? 'rotate(90deg)' : 'none'">chevron_right</mat-icon>
+              <h2 class="text-lg font-semibold text-gray-900">Aktif Oturumlar</h2>
+            </button>
+            @if (expandedActiveSessions()) {
             @if (activeSessions().length === 0) {
               <p class="text-gray-500 text-sm">Aktif sınav oturumunuz bulunmuyor</p>
             } @else {
@@ -314,6 +323,7 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
                 }
               </div>
             }
+            }
           </mat-card>
         </div>
         }
@@ -323,7 +333,11 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           @if (isStudent() && info.courseProgress.length > 0) {
             <mat-card appearance="outlined" class="p-5">
-              <h2 class="text-lg font-semibold text-gray-900 mb-4">İçerik Tamamlama</h2>
+              <button type="button" class="w-full flex items-center gap-2 mb-4 text-left" (click)="expandedContentCompletion.set(!expandedContentCompletion())">
+                <mat-icon class="text-gray-500 text-sm transition-transform" [style.transform]="expandedContentCompletion() ? 'rotate(90deg)' : 'none'">chevron_right</mat-icon>
+                <h2 class="text-lg font-semibold text-gray-900">İçerik Tamamlama</h2>
+              </button>
+              @if (expandedContentCompletion()) {
               <div class="h-64">
                 <app-column-chart
                   [labels]="progressLabels()"
@@ -331,6 +345,7 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
                   title="Tamamlanan"
                   [colors]="['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4']" />
               </div>
+              }
             </mat-card>
           }
         </div>
@@ -385,7 +400,10 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
         <div class="grid grid-cols-1 gap-6">
           <mat-card appearance="outlined" class="p-5">
             <div class="flex items-center justify-between mb-4">
-              <h2 class="text-lg font-semibold text-gray-900">Kazanım Haritası</h2>
+              <button type="button" class="flex items-center gap-2 text-left" (click)="expandedHeatmap.set(!expandedHeatmap())">
+                <mat-icon class="text-gray-500 text-sm transition-transform" [style.transform]="expandedHeatmap() ? 'rotate(90deg)' : 'none'">chevron_right</mat-icon>
+                <h2 class="text-lg font-semibold text-gray-900">Kazanım Haritası</h2>
+              </button>
               <select
                 [value]="selectedCourseId()"
                 (change)="onHeatmapCourseChange(+($any($event.target).value))"
@@ -396,9 +414,11 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
                 }
               </select>
             </div>
+            @if (expandedHeatmap()) {
             <app-mastery-heatmap
               [scores]="filteredMasteryScores()"
               [outcomes]="filteredOutcomes()" />
+            }
           </mat-card>
         </div>
         }
@@ -474,6 +494,10 @@ export class DashboardPage implements OnInit {
   error = signal<string | null>(null);
   d = signal<StudentDashboardData | null>(null);
   expandedKpi = signal<string | null>(null);
+  expandedExamResults = signal(true);
+  expandedActiveSessions = signal(true);
+  expandedContentCompletion = signal(true);
+  expandedHeatmap = signal(true);
   kpiSearch = signal('');
   pageSize = signal(5);
   pageIndex = signal(0);

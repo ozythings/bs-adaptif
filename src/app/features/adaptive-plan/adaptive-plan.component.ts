@@ -238,10 +238,12 @@ import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/s
         <!-- Upcoming Exams + Overall Progress -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <mat-card appearance="outlined" class="p-5">
-            <div class="flex items-center gap-2 mb-4">
+            <button type="button" class="w-full flex items-center gap-2 mb-4 text-left" (click)="expandedUpcomingExams.set(!expandedUpcomingExams())">
               <mat-icon class="text-orange-600">assignment</mat-icon>
+              <mat-icon class="text-gray-500 text-sm transition-transform" [style.transform]="expandedUpcomingExams() ? 'rotate(90deg)' : 'none'">chevron_right</mat-icon>
               <h2 class="text-lg font-semibold text-gray-900">Yaklaşan Sınavlar</h2>
-            </div>
+            </button>
+            @if (expandedUpcomingExams()) {
             @if (info.upcomingExams.length === 0) {
               <div class="flex flex-col items-center py-8 text-center">
                 <mat-icon class="text-gray-300 text-5xl mb-2">event_busy</mat-icon>
@@ -277,14 +279,17 @@ import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/s
                 }
               </div>
             }
+            }
           </mat-card>
 
           <!-- Overall Progress -->
           <mat-card appearance="outlined" class="p-5">
-            <div class="flex items-center gap-2 mb-4">
+            <button type="button" class="w-full flex items-center gap-2 mb-4 text-left" (click)="expandedOverallProgress.set(!expandedOverallProgress())">
               <mat-icon class="text-green-600">trending_up</mat-icon>
+              <mat-icon class="text-gray-500 text-sm transition-transform" [style.transform]="expandedOverallProgress() ? 'rotate(90deg)' : 'none'">chevron_right</mat-icon>
               <h2 class="text-lg font-semibold text-gray-900">Genel İlerleme</h2>
-            </div>
+            </button>
+            @if (expandedOverallProgress()) {
             <div class="flex flex-col items-center py-4">
               <div class="relative w-40 h-40 mb-4">
                 <svg class="w-full h-full transform -rotate-90" viewBox="0 0 160 160">
@@ -322,6 +327,7 @@ import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/s
                 </mat-progress-bar>
               </div>
             </div>
+            }
           </mat-card>
         </div>
 
@@ -366,10 +372,12 @@ import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/s
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <mat-card appearance="outlined" class="lg:col-span-2">
             <div class="p-5">
-              <div class="flex items-center gap-2 mb-4">
+              <button type="button" class="w-full flex items-center gap-2 mb-4 text-left" (click)="expandedWeeklyPlan.set(!expandedWeeklyPlan())">
                 <mat-icon class="text-teal-600">date_range</mat-icon>
+                <mat-icon class="text-gray-500 text-sm transition-transform" [style.transform]="expandedWeeklyPlan() ? 'rotate(90deg)' : 'none'">chevron_right</mat-icon>
                 <h2 class="text-lg font-semibold text-gray-900">Haftalık Program</h2>
-              </div>
+              </button>
+              @if (expandedWeeklyPlan()) {
               @if (info.scheduledTasks.length === 0) {
                 <p class="text-gray-500 text-sm py-4">Bu hafta için planlanmış çalışma bulunmuyor.</p>
               } @else {
@@ -427,15 +435,18 @@ import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/s
                   }
                 </div>
               }
+              }
             </div>
           </mat-card>
 
           <mat-card appearance="outlined" class="lg:col-span-1">
             <div class="p-5">
-              <div class="flex items-center gap-2 mb-4">
+              <button type="button" class="w-full flex items-center gap-2 mb-4 text-left" (click)="expandedRecommendations.set(!expandedRecommendations())">
                 <mat-icon class="text-amber-600">lightbulb</mat-icon>
+                <mat-icon class="text-gray-500 text-sm transition-transform" [style.transform]="expandedRecommendations() ? 'rotate(90deg)' : 'none'">chevron_right</mat-icon>
                 <h2 class="text-lg font-semibold text-gray-900">Öncelikli Öneriler</h2>
-              </div>
+              </button>
+              @if (expandedRecommendations()) {
               @if (info.recommendations.length === 0) {
                 <p class="text-gray-500 text-sm py-4">Henüz öneri bulunmuyor.</p>
               } @else {
@@ -447,6 +458,7 @@ import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/s
                       [courseName]="facade.getCourseNameByOutcome(rec.outcomeId)" />
                   }
                 </div>
+              }
               }
             </div>
           </mat-card>
@@ -464,6 +476,10 @@ export class AdaptivePlanPage implements OnInit {
   error = signal<string | null>(null);
   d = signal<StudentDashboardData | null>(null);
   expandedKpi = signal<string | null>(null);
+  expandedUpcomingExams = signal(true);
+  expandedOverallProgress = signal(true);
+  expandedWeeklyPlan = signal(true);
+  expandedRecommendations = signal(true);
   kpiSearch = signal('');
 
   userName = computed(() => this.currentUser.user().name);
