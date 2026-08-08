@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit, DestroyRef } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -18,6 +18,8 @@ import { emailValidator } from '@shared/validators/email.validator';
 import { phoneValidator } from '@shared/validators/phone.validator';
 import { schoolNumberValidator } from '@shared/validators/school-number.validator';
 import { Participant } from '@core/models/participant.model';
+import { CurrentUserService } from '@core/auth/current-user.service';
+import { UserRole } from '@core/models/enums';
 
 @Component({
   selector: 'app-participant-edit',
@@ -40,7 +42,7 @@ import { Participant } from '@core/models/participant.model';
                 <mat-icon>arrow_back</mat-icon>
               </button>
             </div>
-            <h1 class="text-2xl font-bold text-gray-900">Profil Düzenle</h1>
+            <h1 class="text-2xl font-bold text-gray-900">{{ isStudentView() ? 'Profil' : 'Profil Düzenle' }}</h1>
             <p class="text-gray-500">{{ p.firstName }} {{ p.lastName }} ({{ p.schoolNumber }})</p>
           </div>
         </div>
@@ -50,21 +52,21 @@ import { Participant } from '@core/models/participant.model';
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <mat-form-field appearance="outline" class="w-full">
                 <mat-label>Ad</mat-label>
-                <input matInput formControlName="firstName" placeholder="Ad">
+                <input matInput formControlName="firstName" placeholder="Ad" [readonly]="isStudentView()">
                 @if (form.controls['firstName'].hasError('required')) {
                   <mat-error>Ad zorunludur</mat-error>
                 }
               </mat-form-field>
               <mat-form-field appearance="outline" class="w-full">
                 <mat-label>Soyad</mat-label>
-                <input matInput formControlName="lastName" placeholder="Soyad">
+                <input matInput formControlName="lastName" placeholder="Soyad" [readonly]="isStudentView()">
                 @if (form.controls['lastName'].hasError('required')) {
                   <mat-error>Soyad zorunludur</mat-error>
                 }
               </mat-form-field>
               <mat-form-field appearance="outline" class="w-full">
                 <mat-label>Okul Numarası</mat-label>
-                <input matInput formControlName="schoolNumber" placeholder="Örn: 2024001">
+                <input matInput formControlName="schoolNumber" placeholder="Örn: 2024001" [readonly]="isStudentView()">
                 @if (form.controls['schoolNumber'].hasError('required')) {
                   <mat-error>Okul numarası zorunludur</mat-error>
                 } @else if (form.controls['schoolNumber'].hasError('schoolNumber')) {
@@ -73,7 +75,7 @@ import { Participant } from '@core/models/participant.model';
               </mat-form-field>
               <mat-form-field appearance="outline" class="w-full">
                 <mat-label>E-posta</mat-label>
-                <input matInput formControlName="email" placeholder="ornek@okul.com">
+                <input matInput formControlName="email" placeholder="ornek@okul.com" [readonly]="isStudentView()">
                 @if (form.controls['email'].hasError('required')) {
                   <mat-error>E-posta zorunludur</mat-error>
                 } @else if (form.controls['email'].hasError('email')) {
@@ -82,7 +84,7 @@ import { Participant } from '@core/models/participant.model';
               </mat-form-field>
               <mat-form-field appearance="outline" class="w-full">
                 <mat-label>Telefon</mat-label>
-                <input matInput formControlName="phone" placeholder="Örn: 05321234567">
+                <input matInput formControlName="phone" placeholder="Örn: 05321234567" [readonly]="isStudentView()">
                 @if (form.controls['phone'].hasError('required')) {
                   <mat-error>Telefon zorunludur</mat-error>
                 } @else if (form.controls['phone'].hasError('phone')) {
@@ -91,18 +93,22 @@ import { Participant } from '@core/models/participant.model';
               </mat-form-field>
               <mat-form-field appearance="outline" class="w-full">
                 <mat-label>Doğum Tarihi</mat-label>
-                <input matInput [matDatepicker]="birthPicker" formControlName="birthDate" placeholder="GG/AA/YYYY">
-                <mat-datepicker-toggle matIconSuffix [for]="birthPicker"></mat-datepicker-toggle>
+                <input matInput [matDatepicker]="birthPicker" formControlName="birthDate" placeholder="GG/AA/YYYY" [readonly]="isStudentView()">
+                @if (!isStudentView()) {
+                  <mat-datepicker-toggle matIconSuffix [for]="birthPicker"></mat-datepicker-toggle>
+                }
                 <mat-datepicker #birthPicker></mat-datepicker>
               </mat-form-field>
             </div>
 
-            <div class="flex gap-2 mt-4">
-              <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || saving()">
-                <mat-icon>save</mat-icon> Kaydet
-              </button>
-              <button mat-stroked-button type="button" routerLink="/learning/dashboard">İptal</button>
-            </div>
+            @if (!isStudentView()) {
+              <div class="flex gap-2 mt-4">
+                <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid || saving()">
+                  <mat-icon>save</mat-icon> Kaydet
+                </button>
+                <button mat-stroked-button type="button" routerLink="/learning/dashboard">İptal</button>
+              </div>
+            }
           </form>
         </mat-card>
       }
@@ -115,6 +121,9 @@ export class ParticipantEditPage implements OnInit {
   private fb = inject(FormBuilder);
   private notification = inject(NotificationService);
   private destroyRef = inject(DestroyRef);
+  private currentUser = inject(CurrentUserService);
+
+  isStudentView = computed(() => this.currentUser.user().role === UserRole.STUDENT);
 
   loading = signal(true);
   saving = signal(false);
@@ -131,7 +140,7 @@ export class ParticipantEditPage implements OnInit {
       schoolNumber: ['', [Validators.required, schoolNumberValidator()]],
       email: ['', [Validators.required, emailValidator()]],
       phone: ['', [Validators.required, phoneValidator()]],
-      birthDate: [null as Date | null],
+      birthDate: [null as Date | null, [Validators.required]],
     });
   }
 
