@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
+import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
 import { CohortManagementFacade } from './cohort-management.facade';
@@ -18,7 +19,7 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
 @Component({
   selector: 'app-cohort-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatButtonModule, MatIconModule, MatCardModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressSpinnerModule, MatTableModule, MatDialogModule, RouterLink, ErrorStateComponent, ConfirmDialogComponent],
+  imports: [CommonModule, ReactiveFormsModule, MatButtonModule, MatIconModule, MatCardModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressSpinnerModule, MatTableModule, MatSortModule, MatDialogModule, RouterLink, ErrorStateComponent, ConfirmDialogComponent],
   template: `
     <div class="space-y-4">
       <div class="flex items-center justify-between">
@@ -81,7 +82,7 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
         </div>
       } @else {
         <div class="bg-white rounded-lg shadow-sm overflow-x-auto">
-          <table mat-table [dataSource]="filteredCohorts()" class="w-full">
+          <table mat-table matSort [dataSource]="filteredCohorts()" class="w-full" (matSortChange)="onSort($event)">
             <ng-container matColumnDef="id">
               <th mat-header-cell *matHeaderCellDef class="w-16">ID</th>
               <td mat-cell *matCellDef="let c">{{ c.id }}</td>
@@ -130,15 +131,38 @@ export class CohortListComponent implements OnInit {
   editingId = signal<number | null>(null);
   cohorts = signal<Cohort[]>([]);
   searchTerm = signal('');
+  sortColumn = signal('');
+  sortDirection = signal<'asc' | 'desc' | ''>('');
 
   filteredCohorts = computed(() => {
     const term = this.searchTerm().toLowerCase();
-    if (!term) return this.cohorts();
-    return this.cohorts().filter(c =>
-      c.name.toLowerCase().includes(term) ||
-      (c.description ?? '').toLowerCase().includes(term)
-    );
+    const list = this.cohorts();
+    const filtered = term
+      ? list.filter(c => c.name.toLowerCase().includes(term) || (c.description ?? '').toLowerCase().includes(term))
+      : [...list];
+    const col = this.sortColumn();
+    const dir = this.sortDirection();
+    if (col && dir) {
+      filtered.sort((a, b) => {
+        let va: any, vb: any;
+        switch (col) {
+          case 'id': va = a.id; vb = b.id; break;
+          case 'name': va = a.name.toLowerCase(); vb = b.name.toLowerCase(); break;
+          case 'description': va = (a.description ?? '').toLowerCase(); vb = (b.description ?? '').toLowerCase(); break;
+          case 'studentCount': va = a.studentIds.length; vb = b.studentIds.length; break;
+          default: return 0;
+        }
+        const cmp = va < vb ? -1 : va > vb ? 1 : 0;
+        return dir === 'asc' ? cmp : -cmp;
+      });
+    }
+    return filtered;
   });
+
+  onSort(sort: Sort): void {
+    this.sortColumn.set(sort.active);
+    this.sortDirection.set(sort.direction);
+  }
 
   columns = ['id', 'name', 'description', 'studentCount', 'actions'];
 

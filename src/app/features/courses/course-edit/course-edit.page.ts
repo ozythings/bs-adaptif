@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTableModule } from '@angular/material/table';
+import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -41,7 +42,7 @@ interface ContentFormData {
   standalone: true,
   imports: [
     CommonModule, RouterLink, ReactiveFormsModule, MatIconModule, MatButtonModule,
-    MatTableModule, MatFormFieldModule, MatInputModule, MatSelectModule,
+    MatTableModule, MatSortModule, MatFormFieldModule, MatInputModule, MatSelectModule,
     MatProgressSpinnerModule, MatCardModule, MatChipsModule, MatCheckboxModule, MatSlideToggleModule, MatPaginatorModule, MatDialogModule, MatTooltipModule, ErrorStateComponent, ConfirmDialogComponent
   ],
   template: `
@@ -151,29 +152,29 @@ interface ContentFormData {
             <div class="text-center py-8 text-gray-500">Henüz içerik eklenmemiş</div>
           } @else {
             <div class="overflow-x-auto">
-              <table mat-table [dataSource]="paginatedContents()" class="w-full">
+              <table mat-table matSort [dataSource]="paginatedContents()" class="w-full" (matSortChange)="onSort($event)">
                 <ng-container matColumnDef="sortOrder">
                   <th mat-header-cell *matHeaderCellDef>Sıra</th>
                   <td mat-cell *matCellDef="let item">{{ item.sortOrder }}</td>
                 </ng-container>
                 <ng-container matColumnDef="title">
-                  <th mat-header-cell *matHeaderCellDef>Başlık</th>
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Başlık</th>
                   <td mat-cell *matCellDef="let item">{{ item.title }}</td>
                 </ng-container>
                 <ng-container matColumnDef="format">
-                  <th mat-header-cell *matHeaderCellDef>Format</th>
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Format</th>
                   <td mat-cell *matCellDef="let item">{{ formatLabel(item.format) }}</td>
                 </ng-container>
                 <ng-container matColumnDef="difficulty">
-                  <th mat-header-cell *matHeaderCellDef>Zorluk</th>
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Zorluk</th>
                   <td mat-cell *matCellDef="let item">{{ difficultyLabel(item.difficulty) }}</td>
                 </ng-container>
                 <ng-container matColumnDef="duration">
-                  <th mat-header-cell *matHeaderCellDef>Süre</th>
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Süre</th>
                   <td mat-cell *matCellDef="let item">{{ item.durationMinutes }} dk</td>
                 </ng-container>
                 <ng-container matColumnDef="required">
-                  <th mat-header-cell *matHeaderCellDef>Zorunlu</th>
+                  <th mat-header-cell *matHeaderCellDef mat-sort-header>Zorunlu</th>
                   <td mat-cell *matCellDef="let item">
                     @if (item.isRequired) {
                       <mat-icon class="text-green-600 text-sm">check_circle</mat-icon>
@@ -230,15 +231,42 @@ export class CourseEditPage implements OnInit {
   courseOutcomes = signal<any[]>([]);
   pageSize = signal(5);
   pageIndex = signal(0);
+  sortColumn = signal('');
+  sortDirection = signal<'asc' | 'desc' | ''>('');
 
   contentForm: FormGroup;
 
   contentColumns = ['sortOrder', 'title', 'format', 'difficulty', 'duration', 'required', 'actions'];
 
   paginatedContents = computed(() => {
+    const data = [...this.contents()];
+    const col = this.sortColumn();
+    const dir = this.sortDirection();
+    if (col && dir) {
+      data.sort((a, b) => {
+        let va: any, vb: any;
+        switch (col) {
+          case 'sortOrder': va = a.sortOrder; vb = b.sortOrder; break;
+          case 'title': va = a.title.toLowerCase(); vb = b.title.toLowerCase(); break;
+          case 'format': va = a.format; vb = b.format; break;
+          case 'difficulty': va = a.difficulty; vb = b.difficulty; break;
+          case 'duration': va = a.durationMinutes; vb = b.durationMinutes; break;
+          case 'required': va = a.isRequired ? 1 : 0; vb = b.isRequired ? 1 : 0; break;
+          default: return 0;
+        }
+        const cmp = va < vb ? -1 : va > vb ? 1 : 0;
+        return dir === 'asc' ? cmp : -cmp;
+      });
+    }
     const start = this.pageIndex() * this.pageSize();
-    return this.contents().slice(start, start + this.pageSize());
+    return data.slice(start, start + this.pageSize());
   });
+
+  onSort(sort: Sort): void {
+    this.sortColumn.set(sort.active);
+    this.sortDirection.set(sort.direction);
+    this.pageIndex.set(0);
+  }
 
   constructor() {
     this.contentForm = this.fb.group({

@@ -7,6 +7,7 @@ import { filter } from 'rxjs/operators';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTableModule } from '@angular/material/table';
+import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -23,7 +24,7 @@ import { StatusTextPipe } from '@shared/pipes';
 @Component({
   selector: 'app-course-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, ReactiveFormsModule, MatIconModule, MatButtonModule, MatTableModule, MatProgressSpinnerModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatSlideToggleModule, MatPaginatorModule, ErrorStateComponent, DebounceDirective, StatusTextPipe],
+  imports: [CommonModule, RouterLink, ReactiveFormsModule, MatIconModule, MatButtonModule, MatTableModule, MatSortModule, MatProgressSpinnerModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatSlideToggleModule, MatPaginatorModule, ErrorStateComponent, DebounceDirective, StatusTextPipe],
   template: `
     <div class="space-y-4">
       <div class="flex items-center justify-between">
@@ -155,15 +156,15 @@ import { StatusTextPipe } from '@shared/pipes';
             <p>Henüz kurs bulunmuyor</p>
           </div>
         } @else {
-          <table mat-table [dataSource]="paginatedCourses()" class="w-full">
+          <table mat-table matSort [dataSource]="paginatedCourses()" class="w-full" (matSortChange)="onSort($event)">
             <ng-container matColumnDef="id">
-              <th mat-header-cell *matHeaderCellDef class="w-16">ID</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header class="w-16">ID</th>
               <td mat-cell *matCellDef="let item" [class.opacity-50]="isPaleRow(item)">
                 <span class="text-xs">{{ item.course.id }}</span>
               </td>
             </ng-container>
             <ng-container matColumnDef="title">
-              <th mat-header-cell *matHeaderCellDef>Kurs Adı</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Kurs Adı</th>
               <td mat-cell *matCellDef="let item" [class.opacity-50]="isPaleRow(item)">
                 <a [routerLink]="['/courses', item.course.id, 'path']" class="text-blue-600 hover:underline font-medium">
                   {{ item.course.title }}
@@ -171,15 +172,15 @@ import { StatusTextPipe } from '@shared/pipes';
               </td>
             </ng-container>
             <ng-container matColumnDef="instructor">
-              <th mat-header-cell *matHeaderCellDef>Eğitmen</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Eğitmen</th>
               <td mat-cell *matCellDef="let item" [class.opacity-50]="isPaleRow(item)">{{ item.instructorName }}</td>
             </ng-container>
             <ng-container matColumnDef="enrollmentCount">
-              <th mat-header-cell *matHeaderCellDef>Kayıtlı</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Kayıtlı</th>
               <td mat-cell *matCellDef="let item" [class.opacity-50]="isPaleRow(item)">{{ item.enrollmentCount }}</td>
             </ng-container>
             <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Durum</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Durum</th>
               <td mat-cell *matCellDef="let item" [class.opacity-50]="isPaleRow(item)">
                 <span class="px-2 py-1 rounded-full text-xs font-medium"
                   [class.bg-green-100]="item.course.status === 'active'"
@@ -193,7 +194,7 @@ import { StatusTextPipe } from '@shared/pipes';
               </td>
             </ng-container>
             <ng-container matColumnDef="enrollmentStatus">
-              <th mat-header-cell *matHeaderCellDef>Katılım</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Katılım</th>
               <td mat-cell *matCellDef="let item" [class.opacity-50]="isPaleRow(item)">
                 <span class="px-2 py-1 rounded-full text-xs font-medium" [ngClass]="enrollmentBadgeClass(item.enrollmentStatus)">
                   {{ enrollmentLabel(item.enrollmentStatus) }}
@@ -271,6 +272,8 @@ export class CourseListPage implements OnInit {
   instructorFilter = signal<number | null>(null);
   pageSize = signal(10);
   pageIndex = signal(0);
+  sortColumn = signal('');
+  sortDirection = signal<'asc' | 'desc' | ''>('');
   showForm = signal(false);
   showPending = signal(false);
   pendingSearchTerm = signal('');
@@ -299,9 +302,34 @@ export class CourseListPage implements OnInit {
   });
 
   paginatedCourses = computed(() => {
+    const data = [...this.filteredCourses()];
+    const col = this.sortColumn();
+    const dir = this.sortDirection();
+    if (col && dir) {
+      data.sort((a, b) => {
+        let va: any, vb: any;
+        switch (col) {
+          case 'id': va = a.course.id; vb = b.course.id; break;
+          case 'title': va = a.course.title.toLowerCase(); vb = b.course.title.toLowerCase(); break;
+          case 'instructor': va = a.instructorName; vb = b.instructorName; break;
+          case 'enrollmentCount': va = a.enrollmentCount; vb = b.enrollmentCount; break;
+          case 'status': va = a.course.status; vb = b.course.status; break;
+          case 'enrollmentStatus': va = a.enrollmentStatus; vb = b.enrollmentStatus; break;
+          default: return 0;
+        }
+        const cmp = va < vb ? -1 : va > vb ? 1 : 0;
+        return dir === 'asc' ? cmp : -cmp;
+      });
+    }
     const start = this.pageIndex() * this.pageSize();
-    return this.filteredCourses().slice(start, start + this.pageSize());
+    return data.slice(start, start + this.pageSize());
   });
+
+  onSort(sort: Sort): void {
+    this.sortColumn.set(sort.active);
+    this.sortDirection.set(sort.direction);
+    this.pageIndex.set(0);
+  }
 
   filteredPendingEnrollments = computed(() => {
     const search = this.pendingSearchTerm().toLowerCase();

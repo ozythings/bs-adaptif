@@ -5,6 +5,7 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
+import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -30,7 +31,7 @@ import { BlueprintStatus } from '@core/models/enums';
   standalone: true,
   imports: [
     CommonModule, RouterLink, MatDialogModule, MatButtonModule, MatIconModule, MatTableModule, MatCardModule,
-    MatProgressSpinnerModule, MatTooltipModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatPaginatorModule,
+    MatProgressSpinnerModule, MatTooltipModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatPaginatorModule, MatSortModule,
     BlueprintConstraintPanelComponent, BlueprintEditorComponent, ErrorStateComponent, StatusTextPipe,
   ],
   template: `
@@ -63,7 +64,7 @@ import { BlueprintStatus } from '@core/models/enums';
             <p>Henüz blueprint oluşturulmamış</p>
           </div>
         } @else {
-          <table mat-table [dataSource]="paginatedBlueprints()" class="w-full">
+          <table mat-table matSort [dataSource]="paginatedBlueprints()" class="w-full" (matSortChange)="onSort($event)">
             <ng-container matColumnDef="id">
               <th mat-header-cell *matHeaderCellDef class="w-28">Blueprint ID</th>
               <td mat-cell *matCellDef="let b"><span>{{ b.id }}</span></td>
@@ -304,11 +305,37 @@ export class ExamBuilderPage implements OnInit {
 
   pageSize = signal(10);
   pageIndex = signal(0);
+  sortColumn = signal('');
+  sortDirection = signal<'asc' | 'desc' | ''>('');
   total = computed(() => this.filteredBlueprints().length);
   paginatedBlueprints = computed(() => {
+    const data = [...this.filteredBlueprints()];
+    const col = this.sortColumn();
+    const dir = this.sortDirection();
+    if (col && dir) {
+      data.sort((a, b) => {
+        let va: any, vb: any;
+        switch (col) {
+          case 'id': va = a.id; vb = b.id; break;
+          case 'examId': va = a.examId; vb = b.examId; break;
+          case 'name': va = a.name.toLowerCase(); vb = b.name.toLowerCase(); break;
+          case 'exam': va = a.examId; vb = b.examId; break;
+          case 'status': va = a.status; vb = b.status; break;
+          default: return 0;
+        }
+        const cmp = va < vb ? -1 : va > vb ? 1 : 0;
+        return dir === 'asc' ? cmp : -cmp;
+      });
+    }
     const start = this.pageIndex() * this.pageSize();
-    return this.filteredBlueprints().slice(start, start + this.pageSize());
+    return data.slice(start, start + this.pageSize());
   });
+
+  onSort(sort: Sort): void {
+    this.sortColumn.set(sort.active);
+    this.sortDirection.set(sort.direction);
+    this.pageIndex.set(0);
+  }
 
   loading = signal(true);
   error = signal<string | null>(null);

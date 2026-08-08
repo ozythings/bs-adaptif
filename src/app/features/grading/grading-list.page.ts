@@ -7,6 +7,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
@@ -19,7 +20,7 @@ import { DebounceDirective } from '@shared/directives';
 @Component({
   selector: 'app-grading-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatIconModule, MatButtonModule, MatTableModule, MatProgressSpinnerModule, MatPaginatorModule, MatFormFieldModule, MatSelectModule, MatInputModule, MatChipsModule, ErrorStateComponent, DebounceDirective],
+  imports: [CommonModule, RouterLink, MatIconModule, MatButtonModule, MatTableModule, MatProgressSpinnerModule, MatPaginatorModule, MatSortModule, MatFormFieldModule, MatSelectModule, MatInputModule, MatChipsModule, ErrorStateComponent, DebounceDirective],
   template: `
     <div class="space-y-4">
       <div class="flex items-center justify-between">
@@ -61,9 +62,9 @@ import { DebounceDirective } from '@shared/directives';
             <p>Değerlendirme bekleyen sınav bulunmuyor</p>
           </div>
         } @else {
-          <table mat-table [dataSource]="pagedAttempts()" class="w-full">
+          <table mat-table matSort [dataSource]="pagedAttempts()" class="w-full" (matSortChange)="onSort($event)">
             <ng-container matColumnDef="id">
-              <th mat-header-cell *matHeaderCellDef>ID</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>ID</th>
               <td mat-cell *matCellDef="let a">{{ a.id }}</td>
             </ng-container>
 
@@ -80,7 +81,7 @@ import { DebounceDirective } from '@shared/directives';
             </ng-container>
 
             <ng-container matColumnDef="autoScore">
-              <th mat-header-cell *matHeaderCellDef>Otomatik Puan</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Otomatik Puan</th>
               <td mat-cell *matCellDef="let a" class="font-medium">{{ a.totalScore }} / {{ a.maxScore }}</td>
             </ng-container>
 
@@ -96,7 +97,7 @@ import { DebounceDirective } from '@shared/directives';
             </ng-container>
 
             <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>Durum</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Durum</th>
               <td mat-cell *matCellDef="let a">
                 <span class="px-2 py-1 rounded-full text-xs font-medium"
                   [class.bg-yellow-100]="a.status === 'draft'"
@@ -164,10 +165,37 @@ export class GradingListPage {
 
   totalCount = computed(() => this.filteredAttempts().length);
 
+  sortColumn = signal('');
+  sortDirection = signal<'asc' | 'desc' | ''>('');
+
+  sortedAttempts = computed(() => {
+    const data = [...this.filteredAttempts()];
+    const col = this.sortColumn();
+    const dir = this.sortDirection();
+    if (!col || !dir) return data;
+    data.sort((a, b) => {
+      let va: any, vb: any;
+      switch (col) {
+        case 'id': va = a.id; vb = b.id; break;
+        case 'autoScore': va = a.totalScore; vb = b.totalScore; break;
+        case 'status': va = a.status; vb = b.status; break;
+        default: return 0;
+      }
+      const cmp = va < vb ? -1 : va > vb ? 1 : 0;
+      return dir === 'asc' ? cmp : -cmp;
+    });
+    return data;
+  });
+
   pagedAttempts = computed(() => {
     const start = this.pageIndex() * this.pageSize();
-    return this.filteredAttempts().slice(start, start + this.pageSize());
+    return this.sortedAttempts().slice(start, start + this.pageSize());
   });
+
+  onSort(sort: Sort): void {
+    this.sortColumn.set(sort.active);
+    this.sortDirection.set(sort.direction);
+  }
 
   constructor() {
     const qp = this.route.snapshot.queryParamMap;

@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTableModule } from '@angular/material/table';
+import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
@@ -29,7 +30,7 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
     CommonModule, FormsModule, ReactiveFormsModule, RouterLink, MatIconModule, MatButtonModule,
     MatTableModule, MatCardModule, MatProgressSpinnerModule, MatDialogModule,
     MatFormFieldModule, MatInputModule, MatSelectModule, MatChipsModule,
-    MatDividerModule, MatTooltipModule, MatAutocompleteModule, ErrorStateComponent,
+    MatDividerModule, MatTooltipModule, MatAutocompleteModule, MatSortModule, ErrorStateComponent,
   ],
   encapsulation: ViewEncapsulation.None,
   template: `
@@ -59,19 +60,19 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
             <p>Henüz rubrik oluşturulmamış</p>
           </div>
         } @else {
-          <table mat-table [dataSource]="rubrics()" class="w-full">
+          <table mat-table matSort [dataSource]="sortedRubrics()" class="w-full" (matSortChange)="onSort($event)">
             <ng-container matColumnDef="id">
               <th mat-header-cell *matHeaderCellDef>ID</th>
               <td mat-cell *matCellDef="let r">#{{ r.id }}</td>
             </ng-container>
 
             <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef>Ad</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Ad</th>
               <td mat-cell *matCellDef="let r">{{ r.name }}</td>
             </ng-container>
 
             <ng-container matColumnDef="type">
-              <th mat-header-cell *matHeaderCellDef>Soru Tipi</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Soru Tipi</th>
               <td mat-cell *matCellDef="let r">
                 @if (r.questionType) {
                   <span class="px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-700">
@@ -91,7 +92,7 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
             </ng-container>
 
             <ng-container matColumnDef="maxPoints">
-              <th mat-header-cell *matHeaderCellDef>Maks Puan</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Maks Puan</th>
               <td mat-cell *matCellDef="let r">{{ getMaxPoints(r) }}</td>
             </ng-container>
 
@@ -271,6 +272,32 @@ export class RubricManagementPage implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
   rubrics = signal<Rubric[]>([]);
+  sortColumn = signal('');
+  sortDirection = signal<'asc' | 'desc' | ''>('');
+
+  sortedRubrics = computed(() => {
+    const data = [...this.rubrics()];
+    const col = this.sortColumn();
+    const dir = this.sortDirection();
+    if (!col || !dir) return data;
+    data.sort((a, b) => {
+      let va: any, vb: any;
+      switch (col) {
+        case 'name': va = a.name; vb = b.name; break;
+        case 'type': va = a.questionType ?? ''; vb = b.questionType ?? ''; break;
+        case 'maxPoints': va = this.getMaxPoints(a); vb = this.getMaxPoints(b); break;
+        default: return 0;
+      }
+      const cmp = va < vb ? -1 : va > vb ? 1 : 0;
+      return dir === 'asc' ? cmp : -cmp;
+    });
+    return data;
+  });
+
+  onSort(sort: Sort): void {
+    this.sortColumn.set(sort.active);
+    this.sortDirection.set(sort.direction);
+  }
   editingRubric = signal<Rubric | null>(null);
   isNewRubric = signal(false);
 

@@ -14,6 +14,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
+import { MatSortModule, Sort } from '@angular/material/sort';
 import { OutcomesFacade } from './data-access/outcomes.facade';
 import { LearningOutcome } from '@core/models/learning-outcome.model';
 import { OutcomeLevel, OutcomeStatus } from '@core/models/enums';
@@ -23,7 +24,7 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
 @Component({
   selector: 'app-outcomes-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ReactiveFormsModule, MatButtonModule, MatIconModule, MatCardModule, MatSelectModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule, MatTableModule, MatPaginatorModule, MatDialogModule, StatusTextPipe, ErrorStateComponent, ConfirmDialogComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ReactiveFormsModule, MatButtonModule, MatIconModule, MatCardModule, MatSelectModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule, MatTableModule, MatPaginatorModule, MatDialogModule, MatSortModule, StatusTextPipe, ErrorStateComponent, ConfirmDialogComponent],
   template: `
     <div class="space-y-4">
       <div class="flex items-center justify-between">
@@ -123,17 +124,17 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
         </div>
       } @else {
         <div class="bg-white rounded-lg shadow-sm overflow-x-auto">
-          <table mat-table [dataSource]="pagedOutcomes()" class="w-full">
+          <table mat-table matSort [dataSource]="pagedOutcomes()" class="w-full" (matSortChange)="onSort($event)">
             <ng-container matColumnDef="code">
-              <th mat-header-cell *matHeaderCellDef>Kod</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Kod</th>
               <td mat-cell *matCellDef="let o"><strong>{{ o.code }}</strong></td>
             </ng-container>
             <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef>Ad</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Ad</th>
               <td mat-cell *matCellDef="let o">{{ o.name }}</td>
             </ng-container>
             <ng-container matColumnDef="level">
-              <th mat-header-cell *matHeaderCellDef>Seviye</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Seviye</th>
               <td mat-cell *matCellDef="let o">{{ o.level | statusText }}</td>
             </ng-container>
             <ng-container matColumnDef="prerequisites">
@@ -220,12 +221,34 @@ export class OutcomesListPage implements OnInit {
     );
   });
 
+  sortColumn = signal('');
+  sortDirection = signal<'asc' | 'desc' | ''>('');
+
+  sortedOutcomes = computed(() => {
+    const data = [...this.filteredOutcomes()];
+    const col = this.sortColumn();
+    const dir = this.sortDirection();
+    if (!col || !dir) return data;
+    data.sort((a, b) => {
+      const va = col === 'code' ? a.code : col === 'name' ? a.name : String(a.level);
+      const vb = col === 'code' ? b.code : col === 'name' ? b.name : String(b.level);
+      const cmp = va < vb ? -1 : va > vb ? 1 : 0;
+      return dir === 'asc' ? cmp : -cmp;
+    });
+    return data;
+  });
+
   filteredCount = computed(() => this.filteredOutcomes().length);
 
   pagedOutcomes = computed(() => {
     const start = this.pageIndex() * this.pageSize();
-    return this.filteredOutcomes().slice(start, start + this.pageSize());
+    return this.sortedOutcomes().slice(start, start + this.pageSize());
   });
+
+  onSort(sort: Sort): void {
+    this.sortColumn.set(sort.active);
+    this.sortDirection.set(sort.direction);
+  }
 
   form = this.fb.group({
     code: ['', [Validators.required], [uniqueCodeValidator(this.facade.outcomes().map(o => o.code))]],

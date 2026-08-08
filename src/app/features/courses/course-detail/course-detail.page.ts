@@ -4,6 +4,7 @@ import { RouterLink, ActivatedRoute } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTableModule } from '@angular/material/table';
+import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
@@ -20,7 +21,7 @@ import { COURSES_SEED } from '@core/data';
   selector: 'app-course-detail',
   standalone: true,
   imports: [
-    CommonModule, RouterLink, MatIconModule, MatButtonModule, MatTableModule,
+    CommonModule, RouterLink, MatIconModule, MatButtonModule, MatTableModule, MatSortModule,
     MatFormFieldModule, MatInputModule, MatPaginatorModule, MatProgressSpinnerModule,
     MatCardModule, MatTooltipModule, ErrorStateComponent, DebounceDirective,
   ],
@@ -56,15 +57,15 @@ import { COURSES_SEED } from '@core/data';
               <p>Kayıtlı öğrenci bulunmuyor</p>
             </div>
           } @else {
-            <table mat-table [dataSource]="paginatedEnrollments()" class="w-full">
+            <table mat-table [dataSource]="paginatedEnrollments()" matSort (matSortChange)="onSort($event)" class="w-full">
               <ng-container matColumnDef="name">
-                <th mat-header-cell *matHeaderCellDef>Ad Soyad</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Ad Soyad</th>
                 <td mat-cell *matCellDef="let row">
                   <span class="font-medium text-gray-900">{{ row.participant.firstName }} {{ row.participant.lastName }}</span>
                 </td>
               </ng-container>
               <ng-container matColumnDef="schoolNumber">
-                <th mat-header-cell *matHeaderCellDef>Okul No</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Okul No</th>
                 <td mat-cell *matCellDef="let row" class="text-gray-600">{{ row.participant.schoolNumber }}</td>
               </ng-container>
               <ng-container matColumnDef="email">
@@ -72,7 +73,7 @@ import { COURSES_SEED } from '@core/data';
                 <td mat-cell *matCellDef="let row" class="text-gray-600">{{ row.participant.email }}</td>
               </ng-container>
               <ng-container matColumnDef="status">
-                <th mat-header-cell *matHeaderCellDef>Durum</th>
+                <th mat-header-cell *matHeaderCellDef mat-sort-header>Durum</th>
                 <td mat-cell *matCellDef="let row">
                   <span class="px-2 py-1 rounded-full text-xs font-medium"
                     [class.bg-green-100]="row.enrollment.status === 'approved'"
@@ -88,7 +89,7 @@ import { COURSES_SEED } from '@core/data';
                 </td>
               </ng-container>
               <ng-container matColumnDef="enrollmentDate">
-                <th mat-header-cell *matHeaderCellDef>Kayıt Tarihi</th>
+                 <th mat-header-cell *matHeaderCellDef mat-sort-header>Kayıt Tarihi</th>
                 <td mat-cell *matCellDef="let row" class="text-gray-500 text-xs">{{ formatDate(row.enrollment.enrollmentDate) }}</td>
               </ng-container>
               <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
@@ -117,6 +118,8 @@ export class CourseDetailPage implements OnInit {
   searchTerm = signal('');
   pageSize = signal(10);
   pageIndex = signal(0);
+  sortColumn = signal('');
+  sortDirection = signal<'asc' | 'desc' | ''>('');
   enrollments = signal<{ participant: { id: number; firstName: string; lastName: string; schoolNumber: string; email: string }; enrollment: { status: string; enrollmentDate: string } }[]>([]);
 
   displayedColumns = ['name', 'schoolNumber', 'email', 'status', 'enrollmentDate'];
@@ -132,9 +135,32 @@ export class CourseDetailPage implements OnInit {
   });
 
   paginatedEnrollments = computed(() => {
+    const data = [...this.filteredEnrollments()];
+    const col = this.sortColumn();
+    const dir = this.sortDirection();
+    if (col && dir) {
+      data.sort((a, b) => {
+        let va: string, vb: string;
+        switch (col) {
+          case 'name': va = `${a.participant.firstName} ${a.participant.lastName}`.toLowerCase(); vb = `${b.participant.firstName} ${b.participant.lastName}`.toLowerCase(); break;
+          case 'schoolNumber': va = a.participant.schoolNumber; vb = b.participant.schoolNumber; break;
+          case 'status': va = a.enrollment.status; vb = b.enrollment.status; break;
+          case 'enrollmentDate': va = a.enrollment.enrollmentDate; vb = b.enrollment.enrollmentDate; break;
+          default: return 0;
+        }
+        const cmp = va < vb ? -1 : va > vb ? 1 : 0;
+        return dir === 'asc' ? cmp : -cmp;
+      });
+    }
     const start = this.pageIndex() * this.pageSize();
-    return this.filteredEnrollments().slice(start, start + this.pageSize());
+    return data.slice(start, start + this.pageSize());
   });
+
+  onSort(sort: Sort): void {
+    this.sortColumn.set(sort.active);
+    this.sortDirection.set(sort.direction);
+    this.pageIndex.set(0);
+  }
 
   ngOnInit(): void {
     this.courseId = Number(this.route.snapshot.paramMap.get('id'));
