@@ -1,5 +1,7 @@
 const SNAPSHOT_KEY = 'bs_adaptif_seed_snapshot';
-const SNAPSHOT_VERSION = 10;
+const SNAPSHOT_VERSION = 11;
+
+export { SNAPSHOT_VERSION };
 
 export type SeedSnapshot = Record<string, unknown[]> & { __version?: number };
 

@@ -452,13 +452,26 @@ export function generateSeeds() {
         const day = days[randInt(0, days.length - 1)];
         const dateStr = `2026-${month}-${day}`;
         const examQuestions = questions.filter(q => q.examId === exam.id);
-        const responses: QuestionResponse[] = examQuestions.map(q => ({
-          questionId: q.id,
-          answer: String(pick(q.options ?? ['0', '1'])),
-          isCorrect: rand() > 0.35,
-          autoScore: rand() > 0.35 ? q.points : 0,
-          maxScore: q.points,
-        }));
+        const responses: QuestionResponse[] = examQuestions.map(q => {
+          const hasOptions = q.options && q.options.length > 0;
+          let answer: string;
+          let isCorrect: boolean;
+          if (hasOptions) {
+            const idx = randInt(0, q.options!.length - 1);
+            answer = String(idx);
+            isCorrect = idx === (q.correctAnswer as number);
+          } else {
+            answer = 'cevap_metni';
+            isCorrect = rand() > 0.35;
+          }
+          return {
+            questionId: q.id,
+            answer,
+            isCorrect,
+            autoScore: isCorrect ? q.points : 0,
+            maxScore: q.points,
+          };
+        });
         const total = responses.reduce((s, r) => s + r.autoScore, 0);
         const maxScore = responses.reduce((s, r) => s + r.maxScore, 0);
         const token = `sess_auto_${aid}_${sid}`;

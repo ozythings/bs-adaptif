@@ -6,6 +6,7 @@ import { ItemAnalysis, DistractorAnalysis } from '@core/models/item-analysis.mod
 import { AuditService } from '@core/observability/audit.service';
 import { AuditAction, QuestionType } from '@core/models/enums';
 import { ATTEMPTS_SEED, QUESTIONS_SEED } from '@core/data';
+import { SNAPSHOT_VERSION } from '@core/data/seed-persist';
 import { Attempt } from '@core/models/attempt.model';
 import { Question } from '@core/models/question.model';
 import { memoizeWithKey } from '@shared/utils/memoize';
@@ -117,7 +118,12 @@ export class ItemAnalysisFacade {
   }
 
   private loadAttempts(): Attempt[] {
-    return this.storage.get<Attempt[]>(this.ATTEMPTS_KEY) || ATTEMPTS_SEED;
+    const snapshot = this.storage.get<Record<string, unknown>>('seed_snapshot');
+    if (snapshot && snapshot['__version'] === SNAPSHOT_VERSION) {
+      const stored = this.storage.get<Attempt[]>(this.ATTEMPTS_KEY);
+      if (stored) return stored;
+    }
+    return ATTEMPTS_SEED;
   }
 
   private computeAll(): void {

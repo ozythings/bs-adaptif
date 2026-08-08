@@ -88,7 +88,7 @@ interface ItemAnalysisDisplay extends ItemAnalysis {
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Güçlük</mat-label>
+          <mat-label>Zorluk</mat-label>
           <mat-select [value]="difficultyFilter()" (selectionChange)="onDifficultyChange($event.value)">
             <mat-option value="">Tümü</mat-option>
             <mat-option value="easy">Kolay</mat-option>
@@ -142,7 +142,7 @@ interface ItemAnalysisDisplay extends ItemAnalysis {
 
                   <div class="flex flex-wrap gap-4">
                     <div class="flex items-center gap-2">
-                      <span class="text-xs text-gray-500">Güçlük:</span>
+                      <span class="text-xs text-gray-500">Zorluk:</span>
                       <span [style.background]="difficultyColor(item.difficultyIndex)" class="text-white px-2 py-0.5 rounded text-xs font-medium">
                         {{ difficultyLabel(item.difficultyIndex) }} ({{ item.difficultyIndex | number:'1.2' }})
                       </span>
