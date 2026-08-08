@@ -11,8 +11,8 @@ export class MockApiService {
   private notification = inject(NotificationService);
   private conflictResolver = inject(ConflictResolverService);
 
-  private readonly DEFAULT_DELAY = 300;
-  private simulationDelay = 300;
+  private readonly DEFAULT_DELAY = 100;
+  private simulationDelay = 100;
   private simulationErrorRate = 0;
 
   setErrorRate(rate: number): void {
