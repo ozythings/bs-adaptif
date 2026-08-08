@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, viewChild, TemplateRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -14,6 +14,7 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { RouterLink } from '@angular/router';
 import { CohortManagementFacade } from './cohort-management.facade';
 import { Cohort } from '@core/models/cohort.model';
+import { EntityStore } from '@core/state/entity.store';
 import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components';
 
 @Component({
@@ -25,7 +26,7 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-900">Cohortlar</h1>
         <div class="flex items-center gap-2">
-          <a mat-stroked-button routerLink="/cohorts/analytics">
+          <a mat-stroked-button [routerLink]="['/cohorts/analytics']" [queryParams]="{cohorts: cohorts().map(c => c.id).join(',')}">
             <mat-icon>analytics</mat-icon> Cohort Analizi
           </a>
           <button mat-raised-button color="primary" (click)="openNewForm()">
@@ -84,25 +85,28 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
         <div class="bg-white rounded-lg shadow-sm overflow-x-auto">
           <table mat-table matSort [dataSource]="filteredCohorts()" class="w-full" (matSortChange)="onSort($event)">
             <ng-container matColumnDef="id">
-              <th mat-header-cell *matHeaderCellDef class="w-16">ID</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header class="w-16">ID</th>
               <td mat-cell *matCellDef="let c">{{ c.id }}</td>
             </ng-container>
             <ng-container matColumnDef="name">
-              <th mat-header-cell *matHeaderCellDef>Ad</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Ad</th>
               <td mat-cell *matCellDef="let c" class="font-medium">{{ c.name }}</td>
             </ng-container>
             <ng-container matColumnDef="description">
-              <th mat-header-cell *matHeaderCellDef>Açıklama</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Açıklama</th>
               <td mat-cell *matCellDef="let c">{{ c.description || '-' }}</td>
             </ng-container>
             <ng-container matColumnDef="studentCount">
-              <th mat-header-cell *matHeaderCellDef class="w-24">Öğrenci</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header class="w-24">Öğrenci</th>
               <td mat-cell *matCellDef="let c">{{ c.studentIds.length }}</td>
             </ng-container>
             <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef class="w-28"></th>
+              <th mat-header-cell *matHeaderCellDef class="w-40"></th>
               <td mat-cell *matCellDef="let c">
                 <div class="flex items-center">
+                  <button class mat-icon-button (click)="openStudentDialog(c)" matTooltip="Öğrenciler">
+                    <mat-icon class="!text-gray-700">people</mat-icon>
+                  </button>
                   <button mat-icon-button (click)="onEdit(c)" matTooltip="Düzenle">
                     <mat-icon class="!text-gray-700">edit</mat-icon>
                   </button>
@@ -118,12 +122,36 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
         </div>
       }
     </div>
+
+    <ng-template #studentDialog>
+      <h2 mat-dialog-title>Öğrenci Yönetimi — {{ editingCohort()?.name }}</h2>
+      <mat-dialog-content class="min-w-[400px] !pt-4 !pb-2">
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Öğrenci Ara</mat-label>
+          <input matInput [value]="participantSearch()" (input)="participantSearch.set($any($event.target).value)" placeholder="İsim veya numara...">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="w-full" class="mt-3">
+          <mat-label>Öğrenciler</mat-label>
+          <mat-select [value]="selectedStudentIds()" (selectionChange)="selectedStudentIds.set($event.value)" multiple>
+            @for (p of filteredParticipants(); track p.id) {
+              <mat-option [value]="p.id">{{ p.firstName }} {{ p.lastName }} ({{ p.schoolNumber }})</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </mat-dialog-content>
+      <mat-dialog-actions align="end">
+        <button mat-button mat-dialog-close>İptal</button>
+        <button mat-raised-button color="primary" (click)="saveStudents()">Kaydet</button>
+      </mat-dialog-actions>
+    </ng-template>
   `
 })
 export class CohortListComponent implements OnInit {
   private facade = inject(CohortManagementFacade);
   private fb = inject(FormBuilder);
   private dialog = inject(MatDialog);
+  private store = inject(EntityStore);
 
   loading = signal(true);
   error = signal<string | null>(null);
@@ -234,6 +262,38 @@ export class CohortListComponent implements OnInit {
         this.loadData();
       });
     }
+  }
+
+  studentDialogTpl = viewChild<TemplateRef<any>>('studentDialog');
+  editingCohort = signal<Cohort | null>(null);
+  selectedStudentIds = signal<number[]>([]);
+  participantSearch = signal('');
+
+  filteredParticipants = computed(() => {
+    const search = this.participantSearch().toLowerCase();
+    const all = this.store.participants();
+    if (!search) return all;
+    return all.filter(p =>
+      p.firstName.toLowerCase().includes(search) ||
+      p.lastName.toLowerCase().includes(search) ||
+      p.schoolNumber.includes(search)
+    );
+  });
+
+  openStudentDialog(cohort: Cohort): void {
+    this.editingCohort.set(cohort);
+    this.selectedStudentIds.set([...cohort.studentIds]);
+    const tpl = this.studentDialogTpl();
+    if (tpl) this.dialog.open(tpl).afterClosed().subscribe(() => this.editingCohort.set(null));
+  }
+
+  saveStudents(): void {
+    const cohort = this.editingCohort();
+    if (!cohort) return;
+    this.facade.updateCohort(cohort.id, { studentIds: this.selectedStudentIds() }).subscribe(() => {
+      this.loadData();
+      this.dialog.closeAll();
+    });
   }
 
   onDelete(cohort: Cohort): void {
