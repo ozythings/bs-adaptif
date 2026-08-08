@@ -44,7 +44,7 @@ import { BlueprintStatus } from '@core/models/enums';
 
       <div class="bg-white rounded-lg shadow-sm p-3">
         <mat-form-field appearance="outline" class="w-full sm:w-72">
-          <mat-label>Ada Göre Filtrele</mat-label>
+          <mat-label>Ada Göre Ara</mat-label>
           <input matInput [value]="searchTerm()" (input)="onSearch($event)" placeholder="Blueprint veya sınav adı...">
           <mat-icon matSuffix>search</mat-icon>
         </mat-form-field>

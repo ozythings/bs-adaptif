@@ -35,7 +35,7 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
 
       <div class="bg-white rounded-lg shadow-sm p-3">
         <mat-form-field appearance="outline" class="w-full sm:w-72">
-          <mat-label>Cohort Filtrele</mat-label>
+          <mat-label>Cohort Ara</mat-label>
           <input matInput [value]="searchTerm()" (input)="onSearch($event)" placeholder="İsim veya açıklama...">
           <mat-icon matSuffix>search</mat-icon>
         </mat-form-field>

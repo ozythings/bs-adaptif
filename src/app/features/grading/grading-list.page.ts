@@ -32,7 +32,7 @@ import { DebounceDirective } from '@shared/directives';
       <div class="bg-white rounded-lg shadow-sm p-3">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <mat-form-field appearance="outline" class="w-full">
-          <mat-label>Sınav Filtrele</mat-label>
+          <mat-label>Sınav Ara</mat-label>
           <mat-select [value]="examFilter()" (selectionChange)="onExamFilterChange($event.value)">
             <mat-option [value]="0">Tüm Sınavlar</mat-option>
             @for (e of examTitles(); track e.id) {
