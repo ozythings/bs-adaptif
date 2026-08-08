@@ -71,7 +71,7 @@ export const routes: Routes = [
     path: 'student/:id/analytics',
     loadChildren: () => import('./features/student-analytics/student-analytics.routes').then(m => m.STUDENT_ANALYTICS_ROUTES),
     canActivate: [roleGuard],
-    data: { roles: [UserRole.INSTRUCTOR, UserRole.STUDENT, UserRole.PROGRAM_MANAGER, UserRole.OBSERVER] }
+    data: { roles: [UserRole.INSTRUCTOR, UserRole.STUDENT, UserRole.PROGRAM_MANAGER, UserRole.OBSERVER, UserRole.ASSESSMENT_SPECIALIST] }
   },
   {
     path: 'participant/:id',

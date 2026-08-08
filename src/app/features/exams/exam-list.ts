@@ -20,6 +20,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { ExamsFacade, ExamListItem, ExamFilter, isExamAvailable, ExamAvailability } from './data-access/exams.facade';
 import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components';
 import { CurrentUserService } from '@core/auth/current-user.service';
+import { PermissionService } from '@core/auth/permission.service';
 import { NotificationService } from '@core/observability/notification.service';
 import { UserRole, ExamStatus } from '@core/models/enums';
 import { StatusTextPipe } from '@shared/pipes';
@@ -32,7 +33,7 @@ import { StatusTextPipe } from '@shared/pipes';
     <div class="space-y-4">
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-900">Sınavlar</h1>
-        @if (!isObserver) {
+        @if (canCreateExam()) {
           <button mat-raised-button color="primary" (click)="showCreateDialog()">
             <mat-icon>add</mat-icon> Yeni Sınav
           </button>
@@ -305,6 +306,7 @@ import { StatusTextPipe } from '@shared/pipes';
 export class ExamListPage implements OnInit {
   private facade = inject(ExamsFacade);
   private currentUser = inject(CurrentUserService);
+  private permissionService = inject(PermissionService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private fb = inject(FormBuilder);
@@ -383,6 +385,7 @@ export class ExamListPage implements OnInit {
 
   get isObserver() { return this.currentUser.user().role === UserRole.OBSERVER; }
   get isStudent() { return this.currentUser.user().role === UserRole.STUDENT; }
+  canCreateExam = computed(() => this.permissionService.hasPermission('exam_create'));
 
   ngOnInit() {
     this.courses.set(this.facade.getAllCourses());

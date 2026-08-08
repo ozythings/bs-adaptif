@@ -102,7 +102,7 @@ interface QuestionItem {
 
               <p class="text-sm text-gray-500 mb-2">
                 <span class="font-medium">Öğrenci Cevabı:</span>
-                {{ item.response.answer || 'Cevap verilmemiş' }}
+                {{ getAnswerText(item) }}
               </p>
 
               @if (item.type === QuestionType.SHORT_ANSWER || item.type === QuestionType.ESSAY) {
@@ -426,5 +426,15 @@ export class GradingDetailPage {
       [QuestionType.ESSAY]: 'Kompozisyon',
     };
     return labels[type] ?? type;
+  }
+
+  getAnswerText(item: QuestionItem): string {
+    const a = item.response.answer;
+    if (!a) return 'Cevap verilmemiş';
+    if (item.type === QuestionType.MULTIPLE_CHOICE || item.type === QuestionType.TRUE_FALSE) {
+      const idx = parseInt(a);
+      return item.question.options?.[idx] ?? a;
+    }
+    return a;
   }
 }

@@ -1,5 +1,5 @@
 const SNAPSHOT_KEY = 'bs_adaptif_seed_snapshot';
-const SNAPSHOT_VERSION = 11;
+const SNAPSHOT_VERSION = 13;
 
 export { SNAPSHOT_VERSION };
 
