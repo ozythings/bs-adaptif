@@ -16,6 +16,7 @@ import { CohortManagementFacade } from './cohort-management.facade';
 import { Cohort } from '@core/models/cohort.model';
 import { EntityStore } from '@core/state/entity.store';
 import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components';
+import { PermissionService } from '@core/auth/permission.service';
 
 @Component({
   selector: 'app-cohort-list',
@@ -29,9 +30,11 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
           <a mat-stroked-button [routerLink]="['/cohorts/analytics']" [queryParams]="{cohorts: cohorts().map(c => c.id).join(',')}">
             <mat-icon>analytics</mat-icon> Cohort Analizi
           </a>
-          <button mat-raised-button color="primary" (click)="openNewForm()">
-            <mat-icon>add</mat-icon> Yeni Cohort
-          </button>
+          @if (canModify()) {
+            <button mat-raised-button color="primary" (click)="openNewForm()">
+              <mat-icon>add</mat-icon> Yeni Cohort
+            </button>
+          }
         </div>
       </div>
 
@@ -103,17 +106,19 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef class="w-40"></th>
               <td mat-cell *matCellDef="let c">
-                <div class="flex items-center">
-                  <button class mat-icon-button (click)="openStudentDialog(c)" matTooltip="Öğrenciler">
-                    <mat-icon class="!text-gray-700">people</mat-icon>
-                  </button>
-                  <button mat-icon-button (click)="onEdit(c)" matTooltip="Düzenle">
-                    <mat-icon class="!text-gray-700">edit</mat-icon>
-                  </button>
-                  <button mat-icon-button color="warn" (click)="onDelete(c)" matTooltip="Sil">
-                    <mat-icon>delete</mat-icon>
-                  </button>
-                </div>
+                @if (canModify()) {
+                  <div class="flex items-center">
+                    <button class mat-icon-button (click)="openStudentDialog(c)" matTooltip="Öğrenciler">
+                      <mat-icon class="!text-gray-700">people</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="onEdit(c)" matTooltip="Düzenle">
+                      <mat-icon class="!text-gray-700">edit</mat-icon>
+                    </button>
+                    <button mat-icon-button color="warn" (click)="onDelete(c)" matTooltip="Sil">
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  </div>
+                }
               </td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="columns"></tr>
@@ -152,6 +157,11 @@ export class CohortListComponent implements OnInit {
   private fb = inject(FormBuilder);
   private dialog = inject(MatDialog);
   private store = inject(EntityStore);
+  private permissionService = inject(PermissionService);
+
+  canModify = computed(() =>
+    this.permissionService.hasAnyPermission(['cohort_create', 'cohort_update', 'cohort_delete'])
+  );
 
   loading = signal(true);
   error = signal<string | null>(null);

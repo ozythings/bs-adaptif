@@ -19,6 +19,7 @@ import { QuestionSummary } from '@core/models/question-version.model';
 import { QuestionType, Difficulty, QuestionVersionStatus } from '@core/models/enums';
 import { QuestionEditorComponent, QuestionFormValue } from '@shared/components/question-editor/question-editor.component';
 import { ConfirmDialogComponent, ErrorStateComponent } from '@shared/components';
+import { PermissionService } from '@core/auth/permission.service';
 
 
 @Component({
@@ -47,10 +48,12 @@ import { ConfirmDialogComponent, ErrorStateComponent } from '@shared/components'
     <div class="space-y-4">
       <div class="flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-900">Soru Bankası</h1>
-        <button mat-raised-button color="primary" (click)="openCreateDialog()">
-          <mat-icon>add</mat-icon>
-          Yeni Soru
-        </button>
+        @if (canModify()) {
+          <button mat-raised-button color="primary" (click)="openCreateDialog()">
+            <mat-icon>add</mat-icon>
+            Yeni Soru
+          </button>
+        }
       </div>
 
       <div class="bg-white rounded-lg shadow-sm p-3">
@@ -172,26 +175,28 @@ import { ConfirmDialogComponent, ErrorStateComponent } from '@shared/components'
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef>İşlemler</th>
               <td mat-cell *matCellDef="let q">
-                @if (q.status === QuestionVersionStatus.PUBLISHED) {
-                  <button mat-icon-button matTooltip="Yeni Versiyon" color="primary" (click)="openEditDialog(q)">
-                    <mat-icon>add_circle</mat-icon>
-                  </button>
-                } @else {
-                  <button mat-icon-button matTooltip="Düzenle" (click)="openEditDialog(q)">
-                    <mat-icon>edit</mat-icon>
+                @if (canModify()) {
+                  @if (q.status === QuestionVersionStatus.PUBLISHED) {
+                    <button mat-icon-button matTooltip="Yeni Versiyon" color="primary" (click)="openEditDialog(q)">
+                      <mat-icon>add_circle</mat-icon>
+                    </button>
+                  } @else {
+                    <button mat-icon-button matTooltip="Düzenle" (click)="openEditDialog(q)">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                  }
+                  @if (q.status === QuestionVersionStatus.DRAFT) {
+                    <button mat-icon-button matTooltip="Yayınla" color="primary" (click)="confirmPublish(q)">
+                      <mat-icon>publish</mat-icon>
+                    </button>
+                  }
+                  <button mat-icon-button matTooltip="Sil" color="warn" (click)="confirmDelete(q)">
+                    <mat-icon>delete</mat-icon>
                   </button>
                 }
                 <a mat-icon-button matTooltip="Detay" [routerLink]="['/questions', q.id]" color="primary">
                   <mat-icon>visibility</mat-icon>
                 </a>
-                @if (q.status === QuestionVersionStatus.DRAFT) {
-                  <button mat-icon-button matTooltip="Yayınla" color="primary" (click)="confirmPublish(q)">
-                    <mat-icon>publish</mat-icon>
-                  </button>
-                }
-                <button mat-icon-button matTooltip="Sil" color="warn" (click)="confirmDelete(q)">
-                  <mat-icon>delete</mat-icon>
-                </button>
               </td>
             </ng-container>
 
@@ -216,6 +221,11 @@ export class QuestionBankPage implements OnInit {
   private dialog = inject(MatDialog);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private permissionService = inject(PermissionService);
+
+  canModify = computed(() =>
+    this.permissionService.hasAnyPermission(['question_create', 'question_update', 'question_delete', 'question_publish'])
+  );
 
   readonly QuestionType = QuestionType;
   readonly Difficulty = Difficulty;
