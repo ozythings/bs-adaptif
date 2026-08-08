@@ -7,7 +7,6 @@ import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
@@ -19,7 +18,7 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
 @Component({
   selector: 'app-cohort-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatButtonModule, MatIconModule, MatCardModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatSlideToggleModule, MatProgressSpinnerModule, MatTableModule, MatDialogModule, RouterLink, ErrorStateComponent, ConfirmDialogComponent],
+  imports: [CommonModule, ReactiveFormsModule, MatButtonModule, MatIconModule, MatCardModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressSpinnerModule, MatTableModule, MatDialogModule, RouterLink, ErrorStateComponent, ConfirmDialogComponent],
   template: `
     <div class="space-y-4">
       <div class="flex items-center justify-between">
@@ -32,6 +31,14 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
             <mat-icon>add</mat-icon> Yeni Cohort
           </button>
         </div>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm p-3">
+        <mat-form-field appearance="outline" class="w-full sm:w-72">
+          <mat-label>Cohort Filtrele</mat-label>
+          <input matInput [value]="searchTerm()" (input)="onSearch($event)" placeholder="İsim veya açıklama...">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
       </div>
 
       @if (showForm()) {
@@ -67,14 +74,14 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
         <div class="flex justify-center py-8"><mat-spinner diameter="32" /></div>
       } @else if (error()) {
         <app-error-state [title]="'Cohortlar yüklenemedi'" [message]="error()!" (retry)="loadData()" />
-      } @else if (cohorts().length === 0) {
+      } @else if (filteredCohorts().length === 0) {
         <div class="bg-white rounded-lg shadow-sm text-center p-12 text-gray-500">
           <mat-icon class="text-4xl mb-2">groups</mat-icon>
           <p>Henüz kohort bulunmuyor</p>
         </div>
       } @else {
         <div class="bg-white rounded-lg shadow-sm overflow-x-auto">
-          <table mat-table [dataSource]="cohorts()" class="w-full">
+          <table mat-table [dataSource]="filteredCohorts()" class="w-full">
             <ng-container matColumnDef="id">
               <th mat-header-cell *matHeaderCellDef class="w-16">ID</th>
               <td mat-cell *matCellDef="let c">{{ c.id }}</td>
@@ -91,24 +98,17 @@ import { ErrorStateComponent, ConfirmDialogComponent } from '@shared/components'
               <th mat-header-cell *matHeaderCellDef class="w-24">Öğrenci</th>
               <td mat-cell *matCellDef="let c">{{ c.studentIds.length }}</td>
             </ng-container>
-            <ng-container matColumnDef="isActive">
-              <th mat-header-cell *matHeaderCellDef class="w-24">Aktif</th>
-              <td mat-cell *matCellDef="let c">
-                <mat-slide-toggle
-                  [checked]="c.isActive !== false"
-                  (change)="toggleActive(c)"
-                  color="primary" />
-              </td>
-            </ng-container>
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef class="w-28"></th>
               <td mat-cell *matCellDef="let c">
-                <button mat-icon-button (click)="onEdit(c)" matTooltip="Düzenle">
-                  <mat-icon class="!text-gray-700">edit</mat-icon>
-                </button>
-                <button mat-icon-button color="warn" (click)="onDelete(c)" matTooltip="Sil">
-                  <mat-icon>delete</mat-icon>
-                </button>
+                <div class="flex items-center">
+                  <button mat-icon-button (click)="onEdit(c)" matTooltip="Düzenle">
+                    <mat-icon class="!text-gray-700">edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="onDelete(c)" matTooltip="Sil">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
               </td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="columns"></tr>
@@ -129,8 +129,18 @@ export class CohortListComponent implements OnInit {
   showForm = signal(false);
   editingId = signal<number | null>(null);
   cohorts = signal<Cohort[]>([]);
+  searchTerm = signal('');
 
-  columns = ['id', 'name', 'description', 'studentCount', 'isActive', 'actions'];
+  filteredCohorts = computed(() => {
+    const term = this.searchTerm().toLowerCase();
+    if (!term) return this.cohorts();
+    return this.cohorts().filter(c =>
+      c.name.toLowerCase().includes(term) ||
+      (c.description ?? '').toLowerCase().includes(term)
+    );
+  });
+
+  columns = ['id', 'name', 'description', 'studentCount', 'actions'];
 
   form = this.fb.group({
     name: ['', Validators.required],
@@ -155,6 +165,10 @@ export class CohortListComponent implements OnInit {
         this.loading.set(false);
       }
     });
+  }
+
+  onSearch(event: Event): void {
+    this.searchTerm.set((event.target as HTMLInputElement).value);
   }
 
   openNewForm(): void {
@@ -213,8 +227,4 @@ export class CohortListComponent implements OnInit {
     });
   }
 
-  toggleActive(cohort: Cohort): void {
-    const newActive = cohort.isActive === false;
-    this.facade.updateCohort(cohort.id, { isActive: newActive }).subscribe(() => this.loadData());
-  }
 }
