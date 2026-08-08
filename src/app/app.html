@@ -69,14 +69,14 @@
             </a>
           </li>
         }
-        @if (canAccess([UserRole.PROGRAM_MANAGER, UserRole.PLATFORM_ADMIN, UserRole.OBSERVER])) {
-          <li>
-            <a routerLink="/cohorts" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Cohort Analizi">
-              <mat-icon>groups</mat-icon>
-              <span>Cohort</span>
-            </a>
-          </li>
-        }
+          @if (canAccess([UserRole.PROGRAM_MANAGER, UserRole.PLATFORM_ADMIN, UserRole.OBSERVER])) {
+            <li>
+              <a routerLink="/cohorts" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Cohort Analizi">
+                <mat-icon>groups</mat-icon>
+                <span>Cohort</span>
+              </a>
+            </li>
+          }
         @if (canAccess([UserRole.INSTRUCTOR])) {
           <li>
             <a routerLink="/grading" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Değerlendirme">
@@ -90,6 +90,14 @@
             <a routerLink="/item-analysis" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Madde Analizi">
               <mat-icon>analytics</mat-icon>
               <span>Madde Analizi</span>
+            </a>
+          </li>
+        }
+        @if (can(['system_manage_students'])) {
+          <li>
+            <a routerLink="/admin/students" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors" aria-label="Öğrenci Yönetimi">
+              <mat-icon>people</mat-icon>
+              <span>Öğrenciler</span>
             </a>
           </li>
         }
@@ -219,6 +227,14 @@
                 <a routerLink="/item-analysis" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50" (click)="toggleMenu()" aria-label="Madde Analizi">
                   <mat-icon>analytics</mat-icon>
                   <span>Madde Analizi</span>
+                </a>
+              </li>
+            }
+            @if (can(['system_manage_students'])) {
+              <li>
+                <a routerLink="/admin/students" routerLinkActive="bg-blue-50 text-blue-600" class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-gray-50" (click)="toggleMenu()" aria-label="Öğrenci Yönetimi">
+                  <mat-icon>people</mat-icon>
+                  <span>Öğrenciler</span>
                 </a>
               </li>
             }

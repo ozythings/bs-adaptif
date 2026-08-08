@@ -115,6 +115,12 @@ export const routes: Routes = [
     data: { permissions: ['system_manage_terms'] }
   },
   {
+    path: 'admin/students',
+    loadComponent: () => import('./features/admin/student-management/student-list.component').then(m => m.StudentListComponent),
+    canActivate: [roleGuard],
+    data: { permissions: ['system_manage_students'] }
+  },
+  {
     path: 'switch-role',
     loadComponent: () => import('./features/role-switch/role-switch.component').then(m => m.RoleSwitchComponent)
   },
