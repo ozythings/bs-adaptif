@@ -28,7 +28,7 @@ const MIN_COHORT_SIZE = 3;
         <button mat-icon-button routerLink="/cohorts" matTooltip="Geri Dön">
           <mat-icon>arrow_back</mat-icon>
         </button>
-        <h1 class="text-2xl font-bold text-gray-900">Kohort Analizi</h1>
+        <h1 class="text-2xl font-bold text-gray-900">Cohort Analizi</h1>
       </div>
 
       <div class="bg-white rounded-lg shadow-sm p-3">
@@ -292,18 +292,27 @@ export class CohortAnalyticsPage implements OnInit {
   }
 
   exportCSV(): void {
-    const rows = this.metrics().flatMap(m =>
-      this.validCohorts().map(c => {
+    const metrics = this.metrics();
+    const cohorts = this.validCohorts();
+    if (metrics.length === 0 || cohorts.length === 0) return;
+
+    const rows: Record<string, string>[] = [];
+
+    for (const c of cohorts) {
+      const row: Record<string, string> = { Cohort: c.name };
+      for (const m of metrics) {
         const val = m.cohortValues.find(v => v.cohortId === c.id)?.value ?? 0;
-        return {
-          Metrik: m.metric,
-          Cohort: c.name,
-          Ogrenci_Sayisi: c.studentIds.length,
-          Deger: String(val),
-          Ortalama: String(m.average),
-        };
-      })
-    );
+        row[m.metric] = String(val);
+      }
+      rows.push(row);
+    }
+
+    const avgRow: Record<string, string> = { Cohort: 'Ortalama' };
+    for (const m of metrics) {
+      avgRow[m.metric] = String(m.average);
+    }
+    rows.push(avgRow);
+
     downloadCSV(rows, `cohort-analizi-${new Date().toISOString().slice(0, 10)}.csv`);
   }
 
