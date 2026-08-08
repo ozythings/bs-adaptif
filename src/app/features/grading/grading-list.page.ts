@@ -11,6 +11,7 @@ import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatChipsModule } from '@angular/material/chips';
 import { Attempt } from '@core/models/attempt.model';
 import { GradingFacade } from './data-access/grading.facade';
@@ -21,16 +22,21 @@ import { PermissionService } from '@core/auth/permission.service';
 @Component({
   selector: 'app-grading-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatIconModule, MatButtonModule, MatTableModule, MatProgressSpinnerModule, MatPaginatorModule, MatSortModule, MatFormFieldModule, MatSelectModule, MatInputModule, MatChipsModule, ErrorStateComponent, DebounceDirective],
+  imports: [CommonModule, RouterLink, MatIconModule, MatButtonModule, MatTableModule, MatProgressSpinnerModule, MatPaginatorModule, MatSortModule, MatFormFieldModule, MatSelectModule, MatInputModule, MatSlideToggleModule, MatChipsModule, ErrorStateComponent, DebounceDirective],
   template: `
     <div class="space-y-4">
       <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold text-gray-900">Değerlendirme Bekleyen Sınavlar</h1>
-        @if (canModify()) {
-          <button mat-raised-button color="primary" routerLink="/grading/rubrics">
-            <mat-icon>assignment</mat-icon> Rubrik Yönetimi
-          </button>
-        }
+        <h1 class="text-2xl font-bold text-gray-900">Sınav Değerlendirmeleri</h1>
+        <div class="flex items-center gap-3">
+          <mat-slide-toggle [checked]="showCompleted()" (change)="toggleMode($event.checked)">
+            Değerlendirilenler
+          </mat-slide-toggle>
+          @if (canModify()) {
+            <button mat-raised-button color="primary" routerLink="/grading/rubrics">
+              <mat-icon>assignment</mat-icon> Rubrik Yönetimi
+            </button>
+          }
+        </div>
       </div>
 
       <div class="bg-white rounded-lg shadow-sm p-3">
@@ -62,7 +68,7 @@ import { PermissionService } from '@core/auth/permission.service';
         } @else if (pagedAttempts().length === 0) {
           <div class="text-center p-8 text-gray-500">
             <mat-icon class="text-4xl mb-2">fact_check</mat-icon>
-            <p>Değerlendirme bekleyen sınav bulunmuyor</p>
+            <p>{{ showCompleted() ? 'Değerlendirilmiş sınav bulunmuyor' : 'Değerlendirme bekleyen sınav bulunmuyor' }}</p>
           </div>
         } @else {
           <table mat-table matSort [dataSource]="pagedAttempts()" class="w-full" (matSortChange)="onSort($event)">
@@ -116,8 +122,8 @@ import { PermissionService } from '@core/auth/permission.service';
               <th mat-header-cell *matHeaderCellDef>İşlemler</th>
               <td mat-cell *matCellDef="let a">
                 <button mat-stroked-button color="primary" [routerLink]="['/grading', a.id]">
-                  <mat-icon>rate_review</mat-icon>
-                  Değerlendir
+                  <mat-icon>{{ a.status === 'finalized' ? 'visibility' : 'rate_review' }}</mat-icon>
+                  {{ a.status === 'finalized' ? 'Görüntüle' : 'Değerlendir' }}
                 </button>
               </td>
             </ng-container>
@@ -151,6 +157,7 @@ export class GradingListPage {
 
   loading = signal(true);
   error = signal<string | null>(null);
+  showCompleted = signal(false);
   examFilter = signal(0);
   searchText = signal('');
   pageSize = signal(10);
@@ -220,7 +227,7 @@ export class GradingListPage {
     this.loading.set(true);
     this.error.set(null);
     this.examTitles.set(this.gradingFacade.getExamTitles());
-    this.gradingFacade.getPendingGrading().subscribe({
+    (this.showCompleted() ? this.gradingFacade.getCompletedAttempts() : this.gradingFacade.getPendingGrading()).subscribe({
       next: (data) => {
         this.attempts.set(data);
         this.loading.set(false);
@@ -230,6 +237,14 @@ export class GradingListPage {
         this.loading.set(false);
       }
     });
+  }
+
+  toggleMode(checked: boolean): void {
+    this.showCompleted.set(checked);
+    this.pageIndex.set(0);
+    this.searchText.set('');
+    this.examFilter.set(0);
+    this.loadData();
   }
 
   onExamFilterChange(value: number): void {

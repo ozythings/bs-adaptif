@@ -210,6 +210,16 @@ export class GradingFacade {
     return this.mockApi.get(this.pendingAttempts());
   }
 
+  getCompletedAttempts(): Observable<Attempt[]> {
+    this.syncFromSeed();
+    const scope = this.dataScope.getScope();
+    let attempts = this.attemptsSignal().filter(a => a.status === ResultStatus.FINALIZED);
+    if (scope.allowedStudentIds) {
+      attempts = attempts.filter(a => scope.allowedStudentIds!.includes(a.studentId));
+    }
+    return this.mockApi.get(attempts);
+  }
+
   syncFromSeed(): void {
     const stored = this.storage.get<Attempt[]>(this.ATTEMPTS_KEY);
     const existing = stored ? [...stored] : [...this.attemptsSignal()];
