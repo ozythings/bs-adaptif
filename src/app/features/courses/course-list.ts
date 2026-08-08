@@ -156,6 +156,12 @@ import { StatusTextPipe } from '@shared/pipes';
           </div>
         } @else {
           <table mat-table [dataSource]="paginatedCourses()" class="w-full">
+            <ng-container matColumnDef="id">
+              <th mat-header-cell *matHeaderCellDef class="w-16">ID</th>
+              <td mat-cell *matCellDef="let item" [class.opacity-50]="isPaleRow(item)">
+                <span class="font-mono text-xs text-gray-500">{{ item.course.id }}</span>
+              </td>
+            </ng-container>
             <ng-container matColumnDef="title">
               <th mat-header-cell *matHeaderCellDef>Kurs Adı</th>
               <td mat-cell *matCellDef="let item" [class.opacity-50]="isPaleRow(item)">
@@ -312,7 +318,7 @@ export class CourseListPage implements OnInit {
   });
 
   ngOnInit() {
-    const cols = ['title', 'instructor', 'status', 'actions'];
+    const cols = ['id', 'title', 'instructor', 'status', 'actions'];
     if (this.isStudent()) {
       cols.splice(2, 0, 'enrollmentCount');
       cols.splice(4, 0, 'enrollmentStatus');
