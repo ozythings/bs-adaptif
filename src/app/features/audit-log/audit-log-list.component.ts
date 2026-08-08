@@ -54,7 +54,7 @@ const ACTIONS = Object.values(AuditAction);
 @Component({
   selector: 'app-audit-log-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatPaginatorModule, MatIconModule, MatProgressSpinnerModule, MatSortModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatDatepickerModule, StatusTextPipe, DateFormatPipe, ErrorStateComponent, DebounceDirective],
+  imports: [CommonModule, ReactiveFormsModule, MatTableModule, MatPaginatorModule, MatIconModule, MatProgressSpinnerModule, MatSortModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatDatepickerModule, StatusTextPipe, DateFormatPipe, ErrorStateComponent],
   template: `
     <div class="space-y-4">
       <h1 class="text-2xl font-bold text-gray-900">Denetim Günlüğü</h1>

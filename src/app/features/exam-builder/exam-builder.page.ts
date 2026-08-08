@@ -31,9 +31,9 @@ import { BlueprintStatus } from '@core/models/enums';
   selector: 'app-exam-builder',
   standalone: true,
   imports: [
-    CommonModule, RouterLink, MatDialogModule, MatButtonModule, MatIconModule, MatTableModule, MatCardModule,
+    CommonModule, MatDialogModule, MatButtonModule, MatIconModule, MatTableModule, MatCardModule,
     MatProgressSpinnerModule, MatTooltipModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule, MatPaginatorModule, MatSortModule,
-    BlueprintConstraintPanelComponent, BlueprintEditorComponent, ErrorStateComponent, StatusTextPipe,
+    BlueprintConstraintPanelComponent, ErrorStateComponent, StatusTextPipe,
   ],
   template: `
     <div class="space-y-4">

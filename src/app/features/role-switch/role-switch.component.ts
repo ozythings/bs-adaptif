@@ -17,7 +17,7 @@ import { clearSnapshot } from '@core/data/seed-persist';
 @Component({
   selector: 'app-role-switch',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatDialogModule, MatTooltipModule, MatFormFieldModule, MatSelectModule, ConfirmDialogComponent],
+  imports: [CommonModule, RouterLink, MatButtonModule, MatIconModule, MatDialogModule, MatTooltipModule, MatFormFieldModule, MatSelectModule],
   template: `
     <div class="space-y-4">
       <div class="flex items-center justify-between">

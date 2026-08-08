@@ -25,7 +25,7 @@ import { PermissionService } from '@core/auth/permission.service';
 @Component({
   selector: 'app-outcomes-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ReactiveFormsModule, MatButtonModule, MatIconModule, MatCardModule, MatSelectModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule, MatTableModule, MatPaginatorModule, MatDialogModule, MatSortModule, StatusTextPipe, ErrorStateComponent, ConfirmDialogComponent],
+  imports: [CommonModule, FormsModule, RouterLink, ReactiveFormsModule, MatButtonModule, MatIconModule, MatCardModule, MatSelectModule, MatFormFieldModule, MatInputModule, MatProgressSpinnerModule, MatTableModule, MatPaginatorModule, MatDialogModule, MatSortModule, StatusTextPipe, ErrorStateComponent],
   template: `
     <div class="space-y-4">
       <div class="flex items-center justify-between">

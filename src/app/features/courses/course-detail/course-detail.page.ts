@@ -23,7 +23,7 @@ import { COURSES_SEED } from '@core/data';
   imports: [
     CommonModule, RouterLink, MatIconModule, MatButtonModule, MatTableModule, MatSortModule,
     MatFormFieldModule, MatInputModule, MatPaginatorModule, MatProgressSpinnerModule,
-    MatCardModule, MatTooltipModule, ErrorStateComponent, DebounceDirective,
+    MatCardModule, MatTooltipModule, DebounceDirective,
   ],
   template: `
     <div class="space-y-4">

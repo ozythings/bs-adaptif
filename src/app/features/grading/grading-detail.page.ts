@@ -29,7 +29,7 @@ interface QuestionItem {
 @Component({
   selector: 'app-grading-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, MatIconModule, MatButtonModule, MatProgressSpinnerModule, MatDividerModule, MatCardModule, MatFormFieldModule, MatInputModule, MatDialogModule, MatTooltipModule, RubricGraderComponent, ErrorStateComponent, ConfirmDialogComponent],
+  imports: [CommonModule, RouterLink, MatIconModule, MatButtonModule, MatProgressSpinnerModule, MatDividerModule, MatCardModule, MatFormFieldModule, MatInputModule, MatDialogModule, MatTooltipModule, RubricGraderComponent, ErrorStateComponent],
   template: `
     <div class="space-y-6">
       @if (loading()) {

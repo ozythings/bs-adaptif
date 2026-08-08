@@ -44,7 +44,7 @@ interface ContentFormData {
   imports: [
     CommonModule, RouterLink, ReactiveFormsModule, MatIconModule, MatButtonModule,
     MatTableModule, MatSortModule, MatFormFieldModule, MatInputModule, MatSelectModule,
-    MatProgressSpinnerModule, MatCardModule, MatChipsModule, MatCheckboxModule, MatSlideToggleModule, MatPaginatorModule, MatDialogModule, MatTooltipModule, ErrorStateComponent, ConfirmDialogComponent
+    MatProgressSpinnerModule, MatCardModule, MatChipsModule, MatCheckboxModule, MatSlideToggleModule, MatPaginatorModule, MatDialogModule, MatTooltipModule, ErrorStateComponent
   ],
   template: `
     <div class="space-y-4">

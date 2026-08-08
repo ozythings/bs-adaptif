@@ -28,7 +28,7 @@ import { StatusTextPipe } from '@shared/pipes';
 @Component({
   selector: 'app-exam-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, ReactiveFormsModule, MatIconModule, MatButtonModule, MatTableModule, MatProgressSpinnerModule, MatPaginatorModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTooltipModule, MatDialogModule, MatSortModule, MatDatepickerModule, MatNativeDateModule, ErrorStateComponent, ConfirmDialogComponent, StatusTextPipe],
+  imports: [CommonModule, RouterLink, ReactiveFormsModule, MatIconModule, MatButtonModule, MatTableModule, MatProgressSpinnerModule, MatPaginatorModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatTooltipModule, MatDialogModule, MatSortModule, MatDatepickerModule, MatNativeDateModule, ErrorStateComponent, StatusTextPipe],
   template: `
     <div class="space-y-4">
       <div class="flex items-center justify-between">

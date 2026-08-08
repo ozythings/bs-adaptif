@@ -21,7 +21,7 @@ import { PermissionService } from '@core/auth/permission.service';
 @Component({
   selector: 'app-cohort-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MatButtonModule, MatIconModule, MatCardModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressSpinnerModule, MatTableModule, MatSortModule, MatDialogModule, RouterLink, ErrorStateComponent, ConfirmDialogComponent],
+  imports: [CommonModule, ReactiveFormsModule, MatButtonModule, MatIconModule, MatCardModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatProgressSpinnerModule, MatTableModule, MatSortModule, MatDialogModule, RouterLink, ErrorStateComponent],
   template: `
     <div class="space-y-4">
       <div class="flex items-center justify-between">
