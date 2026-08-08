@@ -53,7 +53,7 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
           </div>
           <div class="flex items-center gap-3">
             @if (isStudent()) {
-              <a [routerLink]="['/student', studentId(), 'analytics']" mat-stroked-button color="primary" class="!text-sm">
+              <a [routerLink]="['/student', studentId(), 'analytics']" [queryParams]="{returnUrl: '/learning/dashboard'}" mat-stroked-button color="primary" class="!text-sm">
                 <mat-icon>analytics</mat-icon> Analizlerim
               </a>
             }

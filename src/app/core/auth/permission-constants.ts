@@ -181,7 +181,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Record<string, boolean>> = {
     cohort_create: false, cohort_read: false, cohort_update: false, cohort_delete: false,
     outcome_create: false, outcome_read: false, outcome_update: false, outcome_delete: false,
     audit_read: false,
-    system_manage_roles: false, system_manage_terms: false, system_manage_students: true,
+    system_manage_roles: false, system_manage_terms: false, system_manage_students: false,
     student_plan: true, student_profile: true,
   },
 };

@@ -74,7 +74,7 @@ import { PermissionService } from '@core/auth/permission.service';
             <ng-container matColumnDef="student">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Öğrenci</th>
               <td mat-cell *matCellDef="let a">
-                <a [routerLink]="['/student', a.studentId, 'analytics']" class="text-blue-600 hover:underline">{{ getStudentName(a.studentId) }}</a>
+                <a [routerLink]="['/grading', a.id]" class="text-blue-600 hover:underline">{{ getStudentName(a.studentId) }}</a>
               </td>
             </ng-container>
 

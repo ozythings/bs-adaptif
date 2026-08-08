@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { roleGuard } from '@core/guards/role.guard';
+import { studentRedirectGuard } from '@core/guards/role.guard';
 import { UserRole } from '@core/models/enums';
 
 export const routes: Routes = [
@@ -117,7 +118,7 @@ export const routes: Routes = [
   {
     path: 'admin/students',
     loadComponent: () => import('./features/admin/student-management/student-list.component').then(m => m.StudentListComponent),
-    canActivate: [roleGuard],
+    canActivate: [studentRedirectGuard, roleGuard],
     data: { permissions: ['system_manage_students'] }
   },
   {

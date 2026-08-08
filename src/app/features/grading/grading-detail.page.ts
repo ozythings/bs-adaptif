@@ -186,7 +186,6 @@ interface QuestionItem {
                         }
                       </div>
                     }
-                  }
         </div>
 
         @if (gradingHistory().length > 0) {

@@ -146,7 +146,7 @@ import { CurrentUserService } from '@core/auth/current-user.service';
                       <mat-icon>edit</mat-icon>
                     </button>
                   }
-                  <a mat-icon-button matTooltip="Detay" color="primary" [routerLink]="['/student', s.id, 'analytics']">
+                  <a mat-icon-button matTooltip="Detay" color="primary" [routerLink]="['/student', s.id, 'analytics']" [queryParams]="{returnUrl: '/admin/students'}">
                     <mat-icon>visibility</mat-icon>
                   </a>
                 </div>

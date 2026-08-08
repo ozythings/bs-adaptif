@@ -4,6 +4,16 @@ import { UserRole } from '@core/models/enums';
 import { CurrentUserService, ROLE_HIERARCHY } from '@core/auth/current-user.service';
 import { PermissionService } from '@core/auth/permission.service';
 
+export const studentRedirectGuard: CanActivateFn = () => {
+  const user = inject(CurrentUserService);
+  const router = inject(Router);
+  if (user.getUser().role === UserRole.STUDENT) {
+    router.navigate(['/learning/dashboard']);
+    return false;
+  }
+  return true;
+};
+
 export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
   const currentUser = inject(CurrentUserService);
   const permissionService = inject(PermissionService);

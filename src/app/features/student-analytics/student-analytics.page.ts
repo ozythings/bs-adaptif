@@ -44,7 +44,7 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
         @if (info.student; as s) {
           <div class="flex items-center gap-3">
             @if (!isObserver()) {
-              <button mat-icon-button routerLink="/grading" matTooltip="Geri Dön">
+              <button mat-icon-button [routerLink]="[returnUrl()]" matTooltip="Geri Dön">
                 <mat-icon>arrow_back</mat-icon>
               </button>
             }
@@ -273,6 +273,8 @@ export class StudentAnalyticsPage implements OnInit {
   protected facade = inject(StudentDashboardFacade);
   private currentUser = inject(CurrentUserService);
   private destroyRef = inject(DestroyRef);
+
+  returnUrl = signal('/learning/dashboard');
 
   private studentId = 0;
 
@@ -519,6 +521,8 @@ export class StudentAnalyticsPage implements OnInit {
   }
 
   ngOnInit(): void {
+    const ru = this.route.snapshot.queryParamMap.get('returnUrl');
+    if (ru) this.returnUrl.set(ru);
     const id = Number(this.route.snapshot.paramMap.get('id'));
     if (isNaN(id)) {
       this.error.set('Geçersiz öğrenci ID');
