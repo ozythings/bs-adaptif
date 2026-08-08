@@ -7,6 +7,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { StudentDashboardFacade } from '../student-dashboard/student-dashboard.facade';
@@ -18,7 +19,7 @@ import { ErrorStateComponent } from '@shared/components';
 import { KpiCardComponent } from '@shared/components';
 import { RecommendationReasonCardComponent } from '@shared/components/recommendation-reason-card/recommendation-reason-card.component';
 import { DebounceDirective } from '@shared/directives';
-import { EXAMS_SEED } from '@core/data';
+import { EXAMS_SEED, COURSES_SEED } from '@core/data';
 import type { StudentDashboardData } from '../student-dashboard/student-dashboard.model';
 
 @Component({
@@ -26,7 +27,7 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
   standalone: true,
   imports: [
     CommonModule, RouterLink, MatIconModule, MatButtonModule, MatProgressSpinnerModule, MatPaginatorModule,
-    MatFormFieldModule, MatInputModule, MatTooltipModule, DebounceDirective,
+    MatFormFieldModule, MatInputModule, MatSelectModule, MatTooltipModule, DebounceDirective,
     MasteryHeatmap, LineChartComponent, ErrorStateComponent,
     KpiCardComponent, RecommendationReasonCardComponent
   ],
@@ -186,6 +187,15 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
           </button>
           @if (expandedMasteryTrend()) {
           <div class="px-4 pb-4">
+            <mat-form-field appearance="outline" class="w-full sm:w-72 mb-3">
+              <mat-label>Kurs</mat-label>
+              <mat-select [value]="trendCourseId()" (selectionChange)="onTrendCourseChange($event.value)">
+                <mat-option [value]="null">Tüm Kurslar</mat-option>
+                @for (c of trendCourses(); track c.id) {
+                  <mat-option [value]="c.id">{{ c.title }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
             <div class="h-72">
               <app-line-chart
                 [labels]="masteryTrendLabels()"
@@ -276,6 +286,7 @@ export class StudentAnalyticsPage implements OnInit {
   expandedMasteryTrend = signal(true);
   expandedMasteryHeatmap = signal(true);
   expandedRecommendations = signal(true);
+  trendCourseId = signal<number | null>(null);
   pageSize = signal(5);
   pageIndex = signal(0);
 
@@ -460,6 +471,20 @@ export class StudentAnalyticsPage implements OnInit {
     return [...new Set(allDates)].sort();
   });
 
+  trendCourses = computed(() => {
+    const info = this.d();
+    if (!info) return [];
+    const courseIds = new Set<number>();
+    for (const s of info.masteryScores) {
+      if (!s.history || s.history.length < 1) continue;
+      const outcome = info.outcomes.find(o => o.id === s.outcomeId);
+      if (outcome) courseIds.add(outcome.courseId);
+    }
+    return COURSES_SEED
+      .filter(c => courseIds.has(c.id))
+      .map(c => ({ id: c.id, title: c.title }));
+  });
+
   masteryTrendLabels = computed(() => {
     return this.rawTrendDates().map(d =>
       new Date(d).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' })
@@ -472,8 +497,14 @@ export class StudentAnalyticsPage implements OnInit {
     const rawDates = this.rawTrendDates();
     if (rawDates.length === 0) return [];
     const outcomeMap = new Map(info.outcomes.map(o => [o.id, o]));
+    const selectedCourse = this.trendCourseId();
     return info.masteryScores
       .filter(s => s.history && s.history.length >= 1)
+      .filter(s => {
+        if (selectedCourse == null) return true;
+        const outcome = outcomeMap.get(s.outcomeId);
+        return outcome?.courseId === selectedCourse;
+      })
       .map(s => {
         const outcome = outcomeMap.get(s.outcomeId);
         const dateToScore = new Map(s.history.map(h => [h.date, h.score]));
@@ -484,6 +515,10 @@ export class StudentAnalyticsPage implements OnInit {
         };
       });
   });
+
+  onTrendCourseChange(courseId: number | null): void {
+    this.trendCourseId.set(courseId ?? null);
+  }
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
