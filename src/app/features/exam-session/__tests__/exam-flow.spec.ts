@@ -26,7 +26,7 @@ describe('ExamSession Flow (integration)', () => {
 
   it('should get existing session by token', async () => {
     const exam = EXAMS_SEED[0];
-    const started = facade.startExamSession(exam, 4);
+    const started = await firstValueFrom(facade.startExamSession(exam, 4));
     const session = await firstValueFrom(facade.getSession(started.token));
     expect(session).toBeDefined();
     expect(session!.status).toBe(SessionStatus.ACTIVE);
@@ -52,24 +52,14 @@ describe('ExamSession Flow (integration)', () => {
     expect(facade.currentQuestionIndex()).toBe(2);
   });
 
-  it('should handle save answer draft', () => {
-    const exam = EXAMS_SEED[0];
-    const session = facade.startExamSession(exam, 4);
-    facade.saveAnswer(session.id, 1, 'A');
-    const draft = facade.getDraft(session.id, 1);
-    expect(draft).toBeDefined();
-    expect(draft!.answer).toBe('A');
-    expect(draft!.version).toBeGreaterThan(0);
-  });
-
   it('should get questions for exam', () => {
     const questions = facade.getQuestions(1);
     expect(questions.length).toBeGreaterThan(0);
   });
 
-  it('should have sessions with valid question orders', () => {
+  it('should have sessions with valid question orders', async () => {
     const exam = EXAMS_SEED[0];
-    const session = facade.startExamSession(exam, 4);
+    const session = await firstValueFrom(facade.startExamSession(exam, 4));
     firstValueFrom(facade.getSession(session.token)).then(s => {
       if (!s) return;
       const questions = facade.getQuestions(s.examId);

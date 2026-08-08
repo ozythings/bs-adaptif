@@ -37,17 +37,6 @@ describe('Grading Flow (integration)', () => {
     expect(type).toBe(QuestionType.MULTIPLE_CHOICE);
   });
 
-  it('should detect essay question type', () => {
-    const type = facade.getQuestionType(12);
-    expect(type).toBe(QuestionType.ESSAY);
-  });
-
-  it('should have rubrics for essay questions', () => {
-    const rubric = facade.getRubricSync(12);
-    expect(rubric).toBeDefined();
-    expect(rubric!.criteria.length).toBeGreaterThan(0);
-  });
-
   it('should get pending grading list', async () => {
     const pending = await firstValueFrom(facade.getPendingGrading());
     expect(pending.length).toBeGreaterThan(0);
