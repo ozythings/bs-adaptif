@@ -44,11 +44,11 @@ npm test             # testleri çalıştır (Vitest)
 
 | Rol | Sorumluluk |
 |-----|-----------|
-| **Platform Yöneticisi** | Rol, izin, dönem ve sistem parametrelerini yönetir |
+| **Platform Yöneticisi** | Rol, izin, dönem, öğrenci ve sistem parametrelerini yönetir |
 | **Program Yöneticisi** | Kazanım haritası, program, cohort ve yayın süreçlerini yönetir |
-| **Eğitmen** | İçerik, soru, rubrik, değerlendirme ve öğrenci ilerlemesini yönetir |
+| **Eğitmen** | İçerik, soru, rubrik, değerlendirme ve öğrenci listesini yönetir |
 | **Ölçme Uzmanı** | Soru kalitesi, sınav blueprint, zorluk ve ayırt edicilik analizlerini inceler |
-| **Gözlemci** | Yetkili cohort için salt okunur raporlara erişir |
+| **Gözlemci** | Yetkili cohort ve öğrenci listesini salt okunur görüntüler |
 | **Öğrenci** | Atanan dersleri, adaptif çalışma planını ve sınav oturumlarını kullanır |
 
 ## Sayfalar ve Rotalar
@@ -70,15 +70,16 @@ npm test             # testleri çalıştır (Vitest)
 | `/grading` | Notlandırma listesi (filtre) | Eğitmen |
 | `/grading/rubrics` | Rubrik yönetimi | Eğitmen |
 | `/grading/:attemptId` | Notlandırma detay (rubrik grader) | Eğitmen |
-| `/student/:id/analytics` | Öğrenci analitiği (başarım, trend) | Eğitmen, Gözlemci |
+| `/student/:id/analytics` | Öğrenci analitiği (başarım, trend) | Eğitmen, Gözlemci, Program Yöneticisi |
 | `/participant/:id/edit` | Profil düzenleme | Yönetici, Eğitmen |
 | `/item-analysis` | Madde analizi (zorluk, ayırt edicilik) | Ölçme Uzmanı |
 | `/audit-log` | Denetim kaydı | Platform Yöneticisi |
 | `/my-plan` | Adaptif çalışma planı | Öğrenci |
-| `/cohorts` | Kohort listesi (CRUD, filtre) | Yönetici |
-| `/cohorts/analytics` | Kohort karşılaştırma analizi | Yönetici, Gözlemci |
+| `/cohorts` | Cohort listesi (CRUD, filtre, öğrenci atama) | Platform/Program Yöneticisi, Gözlemci |
+| `/cohorts/analytics` | Cohort karşılaştırma analizi | Platform/Program Yöneticisi, Gözlemci |
 | `/admin/roles` | Rol ve izin matrisi | Platform Yöneticisi |
 | `/admin/terms` | Dönem yönetimi | Platform Yöneticisi |
+| `/admin/students` | Öğrenci yönetimi (liste, filtre, ekle/düzenle) | Platform/Program Yöneticisi, Eğitmen, Ölçme Uzmanı, Gözlemci |
 | `/switch-role` | Kullanıcı değiştirme | Tüm roller |
 | `/403` | Erişim reddi | Tüm roller |
 
@@ -101,8 +102,9 @@ npm test             # testleri çalıştır (Vitest)
 | Madde Analizi | — | — | R | CRUD | — | — |
 | Denetim Kaydı | R | — | — | — | — | — |
 | Adaptif Plan | — | — | — | — | — | RW |
-| Kohortlar | CRUD | CRUD | — | — | R | — |
-| Kohort Analizi | R | R | — | — | R | — |
+| Cohortlar | CRUD | CRUD | — | — | R | — |
+| Cohort Analizi | R | R | — | — | R | — |
+| Öğrenci Yönetimi | CRUD | CRUD | R | R | R | — |
 | Rol ve İzinler | R | — | — | — | — | — |
 | Dönem Yönetimi | CRUD | — | — | — | — | — |
 
@@ -110,7 +112,7 @@ C = Create, R = Read, U = Update, D = Delete
 
 ## İzin Sistemi
 
-10 kategori altında 35 izin anahtarı. `permission-constants.ts` içinde her rolün izinleri tanımlıdır. Route guard'lar `data.permissions` ve `data.roles` üzerinden erişimi kontrol eder. `PermissionService` çalışma zamanında izin sorgulama sağlar.
+10 kategori altında 33 izin anahtarı. `permission-constants.ts` içinde her rolün izinleri tanımlıdır. Route guard'lar `data.permissions` ve `data.roles` üzerinden erişimi kontrol eder. `PermissionService` çalışma zamanında izin sorgulama sağlar.
 
 | Kategori | İzinler |
 |----------|--------|
@@ -122,7 +124,7 @@ C = Create, R = Read, U = Update, D = Delete
 | Cohort | `cohort_create`, `cohort_read`, `cohort_update`, `cohort_delete` |
 | Kazanım | `outcome_create`, `outcome_read`, `outcome_update`, `outcome_delete` |
 | Denetim | `audit_read` |
-| Sistem | `system_manage_roles`, `system_manage_terms` |
+| Sistem | `system_manage_roles`, `system_manage_terms`, `system_manage_students` |
 | Öğrenci | `student_plan`, `student_profile` |
 
 ## Seed Veri
@@ -136,7 +138,7 @@ C = Create, R = Read, U = Update, D = Delete
 | Soru | 25 |
 | Kazanım | 16 |
 | Blueprint | 7 |
-| Kohort | 3 |
+| Cohort | 3 |
 | Kayıt | 14 |
 | Sınav Denemesi | 12 |
 | İçerik | 11 |
@@ -175,10 +177,10 @@ src/app/
     participant-edit/   Profil düzenleme
     item-analysis/  Madde analizi
     audit-log/      Denetim kaydı
-    cohort-management/  Kohort listesi, kohort analitiği
+    cohort-management/  Cohort listesi, kohort analitiği
     adaptive-plan/  Adaptif çalışma planı
     role-switch/    Rol/kullanıcı değiştirme
-    admin/          Rol-izin matrisi, dönem yönetimi
+    admin/          Rol-izin matrisi, dönem yönetimi, öğrenci yönetimi
     student-dashboard/  Öğrenci veri facade'ı
 ```
 
@@ -195,7 +197,7 @@ src/app/
 ## State Yönetimi
 
 - **Signals + RxJS** — Angular Signals (`signal`, `computed`, `effect`) ile state yönetimi; RxJS (`Observable`, `firstValueFrom`) ile async veri katmanı
-- **EntityStore** — `exams`, `blueprints`, `questions`, `sessions` sinyallerini merkezi olarak tutar
+- **EntityStore** — `exams`, `blueprints`, `questions`, `sessions`, `cohorts`, `participants` sinyallerini merkezi olarak tutar
 - **localStorage kalıcılığı** — `effect()` ile otomatik kayıt, sayfa yenilemede hydrasyon; `DATA_VERSION` ile versiyon kontrolü
 - **QuestionBankFacade** — Soru bankası için ayrı `qb_*` localStorage kalıcılığı
 - **Cross-tab sync** — `window.storage` event ile sınav oturumları sekmeler arası senkronize
