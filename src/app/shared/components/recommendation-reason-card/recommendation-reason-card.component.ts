@@ -69,10 +69,10 @@ const PRIORITY_ICONS: Record<number, string> = {
         @if (outcomeName()) {
           <p class="text-sm text-gray-500 mb-3 flex items-center gap-1.5 flex-wrap">
             <mat-icon class="!w-4 !h-4 !text-[16px] text-gray-400 leading-none">school</mat-icon>
-            <span class="font-medium text-gray-600">{{ outcomeName() }}</span>
+            <span class="font-medium text-gray-800">{{ outcomeName() }}</span>
             @if (courseName()) {
               <span class="text-gray-300">•</span>
-              <span class="text-gray-400">{{ courseName() }}</span>
+              <span class="text-gray-600">{{ courseName() }}</span>
             }
           </p>
         }
@@ -85,7 +85,7 @@ const PRIORITY_ICONS: Record<number, string> = {
             >
               @for (detail of recommendation().reasonDetails; track detail.factor; let last = $last) {
                 <div
-                  class="flex items-center justify-center py-2 text-gray-400 border-gray-100"
+                  class="flex items-center justify-center py-2 text-gray-800 border-gray-100"
                   [class.border-b]="!last"
                 >
                   <mat-icon class="!w-[16px] !h-[16px] !text-[16px] leading-none">
@@ -93,13 +93,13 @@ const PRIORITY_ICONS: Record<number, string> = {
                   </mat-icon>
                 </div>
                 <div
-                  class="py-2 px-3 font-medium text-gray-700 whitespace-nowrap border-l border-gray-100"
+                  class="py-2 px-3 font-medium text-gray-800 whitespace-nowrap border-l border-gray-100"
                   [class.border-b]="!last"
                 >
                   {{ translateFactor(detail.factor) }}
                 </div>
                 <div
-                  class="py-2 px-3 text-gray-600 leading-relaxed border-l border-gray-100"
+                  class="py-2 px-3 text-gray-800 leading-relaxed border-l border-gray-100"
                   [class.border-b]="!last"
                 >
                   {{ detail.description }}

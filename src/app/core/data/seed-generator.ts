@@ -433,32 +433,30 @@ export function generateSeeds() {
     }
   }
 
-  // generated: attempts for all enrolled students across 5 months
+  // generated: 1 attempt per exam per enrolled student, spread across months
   {
     let aid = 200;
-    const enrolledStudentIds = [...new Set(enrollments.filter(e => e.status !== EnrollmentStatus.PENDING).map(e => e.participantId))];
     const months = ['04', '05', '06', '07', '08'];
     const days = ['08', '15', '22', '28'];
+    const enrolledStudentIds = [...new Set(enrollments.filter(e => e.status !== EnrollmentStatus.PENDING).map(e => e.participantId))];
     for (const sid of enrolledStudentIds) {
       const studentCourses = enrollments.filter(e => e.participantId === sid).map(e => e.courseId);
       const studentExams = exams.filter(e => studentCourses.includes(e.courseId));
       if (!studentExams.length) continue;
-      const attemptCount = randInt(3, 5);
-      const usedExams = new Set<number>();
+      const existingExamIds = new Set(attempts.filter(a => a.studentId === sid).map(a => a.examId));
+      const newExams = studentExams.filter(e => !existingExamIds.has(e.id));
       const shuffledMonths = [...months].sort(() => rand() - 0.5);
-      for (let i = 0; i < attemptCount; i++) {
+      for (let i = 0; i < newExams.length && i < shuffledMonths.length; i++) {
+        const exam = newExams[i];
         const month = shuffledMonths[i];
         const day = days[randInt(0, days.length - 1)];
         const dateStr = `2026-${month}-${day}`;
-        const availableExams = studentExams.filter(e => !usedExams.has(e.id));
-        const exam = pick(availableExams.length ? availableExams : studentExams);
-        usedExams.add(exam.id);
         const examQuestions = questions.filter(q => q.examId === exam.id);
         const responses: QuestionResponse[] = examQuestions.map(q => ({
           questionId: q.id,
           answer: String(pick(q.options ?? ['0', '1'])),
-          isCorrect: rand() > 0.3 + i * 0.05,
-          autoScore: rand() > 0.3 + i * 0.05 ? q.points : 0,
+          isCorrect: rand() > 0.35,
+          autoScore: rand() > 0.35 ? q.points : 0,
           maxScore: q.points,
         }));
         const total = responses.reduce((s, r) => s + r.autoScore, 0);

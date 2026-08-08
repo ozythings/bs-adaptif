@@ -32,11 +32,11 @@ import { LearningOutcome } from '@core/models/learning-outcome.model';
                     [style.background-color]="odd ? '#f9fafb' : '#ffffff'">
                   <td class="py-2 px-3 relative md:sticky md:left-0 md:z-10 md:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
                       style="background-color: inherit">
-                    <span class="font-mono text-xs font-medium text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">
+                    <span class="font-mono text-xs font-medium bg-gray-100 px-1.5 py-0.5 rounded">
                       {{ outcome.code }}
                     </span>
                   </td>
-                  <td class="py-2 px-3 text-gray-700 text-xs relative md:sticky md:left-[72px] md:z-10 max-w-[180px] truncate md:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
+                  <td class="py-2 px-3 text-xs relative md:sticky md:left-[72px] md:z-10 max-w-[180px] truncate md:shadow-[2px_0_4px_-2px_rgba(0,0,0,0.1)]"
                       style="background-color: inherit" [title]="outcome.name">
                     {{ outcome.name }}
                   </td>
@@ -78,7 +78,7 @@ import { LearningOutcome } from '@core/models/learning-outcome.model';
                           {{ score.score }}%
                         </span>
                       } @else {
-                        <span class="text-xs text-gray-400 italic">-</span>
+                        <span class="text-xs italic">-</span>
                       }
                     </td>
                   }
@@ -91,13 +91,13 @@ import { LearningOutcome } from '@core/models/learning-outcome.model';
                         {{ score.score }}
                       </span>
                     } @else {
-                      <span class="text-xs text-gray-400">-</span>
+                      <span class="text-xs">-</span>
                     }
                   </td>
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="6" class="text-center py-10 text-gray-400" style="background-color: #ffffff">
+                  <td colspan="6" class="text-center py-10" style="background-color: #ffffff">
                     <div class="flex flex-col items-center gap-1">
                       <span class="text-lg">📋</span>
                       <span class="text-sm">Henüz kazanım bulunmuyor</span>
@@ -110,7 +110,7 @@ import { LearningOutcome } from '@core/models/learning-outcome.model';
         </div>
 
         @if (outcomes().length > 0) {
-          <div class="flex items-center justify-center gap-4 py-2 border-t border-gray-200 bg-gray-50 text-xs text-gray-500">
+          <div class="flex items-center justify-center gap-4 py-2 border-t border-gray-200 bg-gray-50 text-xs">
             <span class="font-medium">Renk:</span>
             <span class="flex items-center gap-1">
               <span class="w-3 h-3 rounded-sm" style="background: #ef4444"></span> &lt;%40

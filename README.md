@@ -144,7 +144,7 @@ C = Create, R = Read, U = Update, D = Delete
 | İçerik | 11 |
 | Rubrik | 2 |
 
-Seed veri `src/app/core/data/seed-specs/` altında tanımlanır. `SNAPSHOT_VERSION = 9` ile localStorage'da versiyonlanır. `/switch-role` > "Verileri Sıfırla" tüm veriyi seed'e döndürür.
+Seed veri `src/app/core/data/seed-specs/` altında tanımlanır. `SNAPSHOT_VERSION = 10` ile localStorage'da versiyonlanır. `/switch-role` > "Verileri Sıfırla" tüm veriyi seed'e döndürür.
 
 ## Mimari
 
