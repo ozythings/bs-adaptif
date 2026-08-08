@@ -139,12 +139,12 @@ C = Create, R = Read, U = Update, D = Delete
 | Kazanım | 16 |
 | Blueprint | 7 |
 | Cohort | 3 |
-| Kayıt | 14 |
+| Kayıt | 16 |
 | Sınav Denemesi | 12 |
 | İçerik | 11 |
 | Rubrik | 2 |
 
-Seed veri `src/app/core/data/seed-specs/` altında tanımlanır. `SNAPSHOT_VERSION = 6` ile localStorage'da versiyonlanır. `/switch-role` > "Verileri Sıfırla" tüm veriyi seed'e döndürür.
+Seed veri `src/app/core/data/seed-specs/` altında tanımlanır. `SNAPSHOT_VERSION = 9` ile localStorage'da versiyonlanır. `/switch-role` > "Verileri Sıfırla" tüm veriyi seed'e döndürür.
 
 ## Mimari
 
@@ -201,7 +201,7 @@ src/app/
 - **localStorage kalıcılığı** — `effect()` ile otomatik kayıt, sayfa yenilemede hydrasyon; `DATA_VERSION` ile versiyon kontrolü
 - **QuestionBankFacade** — Soru bankası için ayrı `qb_*` localStorage kalıcılığı
 - **Cross-tab sync** — `window.storage` event ile sınav oturumları sekmeler arası senkronize
-- **MockApiService** — Tüm HTTP çağrılarını simüle eder (300ms gecikme, hata simülasyonu, conflict detection, retry desteği)
+- **MockApiService** — Tüm HTTP çağrılarını simüle eder (100ms gecikme, hata simülasyonu, conflict detection, retry desteği)
 
 ## Bileşen Özellikleri
 
