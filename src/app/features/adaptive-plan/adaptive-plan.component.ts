@@ -369,8 +369,8 @@ import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/s
         }
 
         <!-- Weekly Plan + Recommendations -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <mat-card appearance="outlined" class="lg:col-span-2">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <mat-card appearance="outlined">
             <div class="p-5">
               <button type="button" class="w-full flex items-center gap-2 mb-4 text-left" (click)="expandedWeeklyPlan.set(!expandedWeeklyPlan())">
                 <mat-icon class="text-teal-600">date_range</mat-icon>
@@ -439,7 +439,7 @@ import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/s
             </div>
           </mat-card>
 
-          <mat-card appearance="outlined" class="lg:col-span-1">
+          <mat-card appearance="outlined">
             <div class="p-5">
               <button type="button" class="w-full flex items-center gap-2 mb-4 text-left" (click)="expandedRecommendations.set(!expandedRecommendations())">
                 <mat-icon class="text-amber-600">lightbulb</mat-icon>
