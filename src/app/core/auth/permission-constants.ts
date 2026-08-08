@@ -85,7 +85,6 @@ export const PERMISSION_CATEGORIES: PermissionCategory[] = [
     permissions: [
       { key: 'system_manage_roles', label: 'Rolleri Yönet' },
       { key: 'system_manage_terms', label: 'Dönemleri Yönet' },
-      { key: 'system_manage_parameters', label: 'Parametreleri Yönet' },
     ],
   },
   {
@@ -121,7 +120,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Record<string, boolean>> = {
     cohort_create: true, cohort_read: true, cohort_update: true, cohort_delete: true,
     outcome_create: true, outcome_read: true, outcome_update: true, outcome_delete: true,
     audit_read: true,
-    system_manage_roles: true, system_manage_terms: true, system_manage_parameters: true,
+    system_manage_roles: true, system_manage_terms: true,
     student_plan: false, student_profile: false,
   },
   [UserRole.PROGRAM_MANAGER]: {
@@ -133,7 +132,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Record<string, boolean>> = {
     cohort_create: true, cohort_read: true, cohort_update: true, cohort_delete: true,
     outcome_create: true, outcome_read: true, outcome_update: true, outcome_delete: true,
     audit_read: false,
-    system_manage_roles: false, system_manage_terms: false, system_manage_parameters: false,
+    system_manage_roles: false, system_manage_terms: false,
     student_plan: false, student_profile: false,
   },
   [UserRole.INSTRUCTOR]: {
@@ -145,7 +144,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Record<string, boolean>> = {
     cohort_create: false, cohort_read: true, cohort_update: false, cohort_delete: false,
     outcome_create: false, outcome_read: true, outcome_update: false, outcome_delete: false,
     audit_read: false,
-    system_manage_roles: false, system_manage_terms: false, system_manage_parameters: false,
+    system_manage_roles: false, system_manage_terms: false,
     student_plan: false, student_profile: false,
   },
   [UserRole.ASSESSMENT_SPECIALIST]: {
@@ -157,7 +156,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Record<string, boolean>> = {
     cohort_create: false, cohort_read: true, cohort_update: false, cohort_delete: false,
     outcome_create: false, outcome_read: true, outcome_update: false, outcome_delete: false,
     audit_read: false,
-    system_manage_roles: false, system_manage_terms: false, system_manage_parameters: false,
+    system_manage_roles: false, system_manage_terms: false,
     student_plan: false, student_profile: false,
   },
   [UserRole.OBSERVER]: {
@@ -169,7 +168,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Record<string, boolean>> = {
     cohort_create: false, cohort_read: true, cohort_update: false, cohort_delete: false,
     outcome_create: false, outcome_read: true, outcome_update: false, outcome_delete: false,
     audit_read: false,
-    system_manage_roles: false, system_manage_terms: false, system_manage_parameters: false,
+    system_manage_roles: false, system_manage_terms: false,
     student_plan: false, student_profile: false,
   },
   [UserRole.STUDENT]: {
@@ -181,7 +180,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Record<string, boolean>> = {
     cohort_create: false, cohort_read: false, cohort_update: false, cohort_delete: false,
     outcome_create: false, outcome_read: false, outcome_update: false, outcome_delete: false,
     audit_read: false,
-    system_manage_roles: false, system_manage_terms: false, system_manage_parameters: false,
+    system_manage_roles: false, system_manage_terms: false,
     student_plan: true, student_profile: true,
   },
 };

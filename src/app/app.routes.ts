@@ -120,12 +120,6 @@ export const routes: Routes = [
     data: { permissions: ['system_manage_terms'] }
   },
   {
-    path: 'admin/parameters',
-    loadComponent: () => import('./features/admin/system-parameters/system-parameters.component').then(m => m.SystemParametersComponent),
-    canActivate: [roleGuard],
-    data: { permissions: ['system_manage_parameters'] }
-  },
-  {
     path: 'switch-role',
     loadComponent: () => import('./features/role-switch/role-switch.component').then(m => m.RoleSwitchComponent)
   },

@@ -138,12 +138,14 @@ let nextId = 4;
             <ng-container matColumnDef="actions">
               <th mat-header-cell *matHeaderCellDef class="w-28"></th>
               <td mat-cell *matCellDef="let t">
-                <button mat-icon-button color="primary" (click)="editTerm(t)" title="Düzenle">
-                  <mat-icon>edit</mat-icon>
-                </button>
-                <button mat-icon-button color="warn" (click)="deleteTerm(t)" title="Sil">
-                  <mat-icon>delete</mat-icon>
-                </button>
+                <div class="flex items-center gap-1">
+                  <button mat-icon-button color="primary" (click)="editTerm(t)" title="Düzenle">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="deleteTerm(t)" title="Sil">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
               </td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
