@@ -26,10 +26,12 @@ const DEMO_USERS: UserInfo[] = [
   { id: 2, name: 'Ahmet Yılmaz', role: UserRole.INSTRUCTOR, instructorId: 1 },
   { id: 3, name: 'Ayşe Demir', role: UserRole.INSTRUCTOR, instructorId: 2 },
   { id: 4, name: 'Ali Korkmaz', role: UserRole.STUDENT, studentId: 1 },
-  { id: 5, name: 'Zeynep Kaya', role: UserRole.STUDENT, studentId: 2 },
+  { id: 5, name: 'Zeynep Arslan', role: UserRole.STUDENT, studentId: 2 },
   { id: 6, name: 'Dr. Mehmet Can', role: UserRole.ASSESSMENT_SPECIALIST, assessmentSpecialistId: 1 },
   { id: 7, name: 'Elif Yıldız', role: UserRole.PROGRAM_MANAGER },
   { id: 8, name: 'Ali Rıza', role: UserRole.OBSERVER, observerCohortIds: [100, 101] },
+  { id: 9, name: 'Mehmet Kaya', role: UserRole.INSTRUCTOR, instructorId: 3 },
+  { id: 10, name: 'Fatma Öztürk', role: UserRole.INSTRUCTOR, instructorId: 4 },
 ];
 export class CurrentUserService {
   private readonly STORAGE_KEY = 'current_user';

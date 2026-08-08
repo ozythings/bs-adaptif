@@ -524,17 +524,17 @@ export function generateSeeds() {
   const answerDrafts: AnswerDraft[] = [
     { id: 100, sessionId: 100, questionId: 14, answer: '0', version: 3, isSynced: true, syncStatus: 'synced', lastSavedAt: '2026-08-06T09:05:00Z', createdAt: '2026-08-06T09:01:00Z', updatedAt: '2026-08-06T09:05:00Z' },
     { id: 101, sessionId: 100, questionId: 15, answer: '1', version: 1, isSynced: false, syncStatus: 'pending', lastSavedAt: '2026-08-06T09:08:00Z', createdAt: '2026-08-06T09:08:00Z', updatedAt: '2026-08-06T09:08:00Z' },
-    { id: 103, sessionId: 103, questionId: 24, answer: '0', version: 1, isSynced: true, syncStatus: 'synced', lastSavedAt: '2026-08-05T11:05:00Z', createdAt: '2026-08-05T11:05:00Z', updatedAt: '2026-08-05T11:05:00Z' },
-    { id: 104, sessionId: 103, questionId: 25, answer: '', version: 1, isSynced: false, syncStatus: 'pending', lastSavedAt: '2026-08-05T11:15:00Z', createdAt: '2026-08-05T11:10:00Z', updatedAt: '2026-08-05T11:15:00Z' },
+    { id: 103, sessionId: 104, questionId: 24, answer: '0', version: 1, isSynced: true, syncStatus: 'synced', lastSavedAt: '2026-08-05T11:05:00Z', createdAt: '2026-08-05T11:05:00Z', updatedAt: '2026-08-05T11:05:00Z' },
+    { id: 104, sessionId: 104, questionId: 25, answer: '', version: 1, isSynced: false, syncStatus: 'pending', lastSavedAt: '2026-08-05T11:15:00Z', createdAt: '2026-08-05T11:10:00Z', updatedAt: '2026-08-05T11:15:00Z' },
   ];
 
   // audit log entries
   const auditLogs: AuditLogEntry[] = [
-    { id: 1, action: AuditAction.CREATE, entity: 'Course', entityId: 1, user: 'Admin Kullanıcı', role: UserRole.PLATFORM_ADMIN, timestamp: '2026-07-07T08:00:00Z', description: 'Kurs oluşturuldu: Angular 22 Temelleri', version: 1, createdAt: '2026-07-07T08:00:00Z', updatedAt: '2026-07-07T08:00:00Z' },
-    { id: 2, action: AuditAction.UPDATE, entity: 'Enrollment', entityId: 1, user: 'Admin Kullanıcı', role: UserRole.PLATFORM_ADMIN, timestamp: '2026-07-08T10:00:00Z', description: 'Kayıt durumu değiştirildi: Pending → Approved', version: 1, createdAt: '2026-07-08T10:00:00Z', updatedAt: '2026-07-08T10:00:00Z' },
+    { id: 1, action: AuditAction.CREATE, entity: 'Course', entityId: 1, user: 'Platform Yöneticisi', role: UserRole.PLATFORM_ADMIN, timestamp: '2026-07-07T08:00:00Z', description: 'Kurs oluşturuldu: Angular 22 Temelleri', version: 1, createdAt: '2026-07-07T08:00:00Z', updatedAt: '2026-07-07T08:00:00Z' },
+    { id: 2, action: AuditAction.UPDATE, entity: 'Enrollment', entityId: 1, user: 'Platform Yöneticisi', role: UserRole.PLATFORM_ADMIN, timestamp: '2026-07-08T10:00:00Z', description: 'Kayıt durumu değiştirildi: Pending → Approved', version: 1, createdAt: '2026-07-08T10:00:00Z', updatedAt: '2026-07-08T10:00:00Z' },
     { id: 3, action: AuditAction.CREATE, entity: 'Exam', entityId: 1, user: 'Ahmet Yılmaz', role: UserRole.INSTRUCTOR, timestamp: '2026-07-09T14:00:00Z', description: 'Sınav oluşturuldu: Angular Temelleri Final Sınavı', version: 1, createdAt: '2026-07-09T14:00:00Z', updatedAt: '2026-07-09T14:00:00Z' },
-    { id: 4, action: AuditAction.CREATE, entity: 'CertificateEligibility', entityId: 1, user: 'System', role: UserRole.PLATFORM_ADMIN, timestamp: '2026-07-10T16:00:00Z', description: 'Sertifika uygunluğu oluşturuldu', version: 1, createdAt: '2026-07-10T16:00:00Z', updatedAt: '2026-07-10T16:00:00Z' },
-    { id: 5, action: AuditAction.UPDATE, entity: 'CertificateEligibility', entityId: 1, user: 'Admin Kullanıcı', role: UserRole.PLATFORM_ADMIN, timestamp: '2026-07-11T09:00:00Z', description: 'Sertifika verildi: CERT-2026-0001', version: 1, createdAt: '2026-07-11T09:00:00Z', updatedAt: '2026-07-11T09:00:00Z' },
+    { id: 4, action: AuditAction.CREATE, entity: 'CertificateEligibility', entityId: 1, user: 'Platform Yöneticisi', role: UserRole.PLATFORM_ADMIN, timestamp: '2026-07-10T16:00:00Z', description: 'Sertifika uygunluğu oluşturuldu', version: 1, createdAt: '2026-07-10T16:00:00Z', updatedAt: '2026-07-10T16:00:00Z' },
+    { id: 5, action: AuditAction.UPDATE, entity: 'CertificateEligibility', entityId: 1, user: 'Platform Yöneticisi', role: UserRole.PLATFORM_ADMIN, timestamp: '2026-07-11T09:00:00Z', description: 'Sertifika verildi: CERT-2026-0001', version: 1, createdAt: '2026-07-11T09:00:00Z', updatedAt: '2026-07-11T09:00:00Z' },
   ];
 
   return {

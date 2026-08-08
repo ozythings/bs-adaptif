@@ -11,7 +11,7 @@ export const PARTICIPANT_SPECS: ParticipantSpec[] = [
   { schoolNumber: '2026001', firstName: 'Ali', lastName: 'Korkmaz', email: 'ali.korkmaz@ogrenci.com', phone: '05421234501', birthDate: '2000-05-15' },
   { schoolNumber: '2026002', firstName: 'Zeynep', lastName: 'Arslan', email: 'zeynep.arslan@ogrenci.com', phone: '05421234502', birthDate: '2001-03-22' },
   { schoolNumber: '2026003', firstName: 'Burak', lastName: 'Çelik', email: 'burak.celik@ogrenci.com', phone: '05421234503', birthDate: '1999-11-08' },
-  { schoolNumber: '2026004', firstName: 'Elif', lastName: 'Yıldız', email: 'elif.yildiz@ogrenci.com', phone: '05421234504', birthDate: '2000-07-30' },
+  { schoolNumber: '2026004', firstName: 'Eda', lastName: 'Yıldız', email: 'eda.yildiz@ogrenci.com', phone: '05421234504', birthDate: '2000-07-30' },
   { schoolNumber: '2026005', firstName: 'Emre', lastName: 'Şahin', email: 'emre.sahin@ogrenci.com', phone: '05421234505', birthDate: '2001-01-12' },
   { schoolNumber: '2026006', firstName: 'Selin', lastName: 'Koç', email: 'selin.koc@ogrenci.com', phone: '05421234506', birthDate: '2000-09-25' },
   { schoolNumber: '2026007', firstName: 'Can', lastName: 'Özdemir', email: 'can.ozdemir@ogrenci.com', phone: '05421234507', birthDate: '1999-04-18' },
