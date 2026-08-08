@@ -87,13 +87,9 @@ const CATEGORY_START_KEYS = new Set(
                       [class]="perm.categoryBorder"
                       [class.border-l-2]="isCategoryStart(perm)">
                       @if (rp.permissions[perm.key]) {
-                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-green-50">
-                          <mat-icon class="text-base leading-none" style="color: #16a34a">check_circle</mat-icon>
-                        </span>
+                        <mat-icon class="text-base" style="color: #16a34a">check_circle</mat-icon>
                       } @else {
-                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-50">
-                          <mat-icon class="text-base leading-none" style="color: #d1d5db">cancel</mat-icon>
-                        </span>
+                        <mat-icon class="text-base" style="color: #d1d5db">cancel</mat-icon>
                       }
                     </td>
                   }
@@ -104,18 +100,14 @@ const CATEGORY_START_KEYS = new Set(
         </div>
       </div>
 
-      <div class="bg-white border border-gray-300 p-4 flex flex-wrap items-center gap-6 text-sm">
+      <div class="bg-white shadow-sm border border-gray-300 p-4 flex flex-wrap items-center gap-6 text-sm">
         <span class="font-medium text-gray-700">Gösterge:</span>
         <div class="flex items-center gap-1.5">
-          <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-50">
-            <mat-icon class="text-sm leading-none" style="color: #16a34a">check_circle</mat-icon>
-          </span>
+          <mat-icon class="text-sm" style="color: #16a34a">check_circle</mat-icon>
           <span class="text-gray-600">İzin Var</span>
         </div>
         <div class="flex items-center gap-1.5">
-          <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-50">
-            <mat-icon class="text-sm leading-none" style="color: #d1d5db">cancel</mat-icon>
-          </span>
+          <mat-icon class="text-sm" style="color: #d1d5db">cancel</mat-icon>
           <span class="text-gray-600">İzin Yok</span>
         </div>
         <div class="h-4 w-px bg-gray-200"></div>
