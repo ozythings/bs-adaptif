@@ -302,6 +302,17 @@ export class SessionFacade {
     this.audit.log({ action: AuditAction.SESSION_EXPIRE, entity: 'Session', entityId: session.id, description: 'Sınav oturumu süre aşımına uğradı', oldValue: { status: SessionStatus.ACTIVE }, newValue: { status: SessionStatus.EXPIRED } });
   }
 
+  expireOverdueSessions(): void {
+    const now = Date.now();
+    for (const s of this.store.sessions()) {
+      if (s.status !== SessionStatus.ACTIVE) continue;
+      const deadline = Date.parse(s.startedAt) + s.durationMinutes * 60 * 1000;
+      if (now >= deadline) {
+        this.expireSession(s.token);
+      }
+    }
+  }
+
   submitExpiredSession(token: string): Observable<boolean> {
     const session = this.sessions().find(s => s.token === token);
     if (!session) return this.mockApi.post(false);

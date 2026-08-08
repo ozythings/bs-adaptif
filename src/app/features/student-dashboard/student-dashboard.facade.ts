@@ -33,6 +33,7 @@ export class StudentDashboardFacade {
   }
 
   getDashboard(studentId?: number): Observable<StudentDashboardData> {
+    this.sessionFacade.expireOverdueSessions();
     const user = this.currentUser.getUser();
     const isStudent = user.role === UserRole.STUDENT;
     const resolvedId = studentId ?? (isStudent ? this.getStudentId() : 0);

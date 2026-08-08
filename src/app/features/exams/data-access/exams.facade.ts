@@ -51,6 +51,7 @@ export class ExamsFacade {
   private router = inject(Router);
 
   getExams(filter: ExamFilter): Observable<{ items: ExamListItem[]; total: number }> {
+    this.sessionFacade.expireOverdueSessions();
     const userId = this.currentUser.getUser().id;
     const studentId = this.currentUser.getUser().studentId ?? userId;
     const scope = this.dataScope.getScope();
