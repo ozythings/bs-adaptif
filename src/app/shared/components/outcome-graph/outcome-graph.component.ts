@@ -80,13 +80,17 @@ function computeLayout(items: LearningOutcome[]): LayoutResult {
 
   const maxDepth = Math.max(0, ...Array.from(depth.values()));
   const levelWidth = 140;
-  const levelCounts = new Map<number, number>();
-  const levelIndices = new Map<number, number>();
   const slotSpacing = items.length > 10 ? 80 : 60;
 
-  const nodes: GraphNode[] = items.map(o => {
+  const levelCounts = new Map<number, number>();
+  items.forEach(o => {
     const lvl = depth.get(o.id) ?? 0;
     levelCounts.set(lvl, (levelCounts.get(lvl) ?? 0) + 1);
+  });
+
+  const levelIndices = new Map<number, number>();
+  const nodes: GraphNode[] = items.map(o => {
+    const lvl = depth.get(o.id) ?? 0;
     const idx = levelIndices.get(lvl) ?? 0;
     levelIndices.set(lvl, idx + 1);
     const count = levelCounts.get(lvl)!;
