@@ -79,11 +79,10 @@ function computeLayout(items: LearningOutcome[]): LayoutResult {
   items.forEach(o => assignDepth(o.id));
 
   const maxDepth = Math.max(0, ...Array.from(depth.values()));
-  const levelHeight = Math.max(90, 320 / (maxDepth + 1));
   const levelWidth = 140;
   const levelCounts = new Map<number, number>();
   const levelIndices = new Map<number, number>();
-  const slotSpacing = 60;
+  const slotSpacing = items.length > 10 ? 80 : 60;
 
   const nodes: GraphNode[] = items.map(o => {
     const lvl = depth.get(o.id) ?? 0;
@@ -158,12 +157,13 @@ const memoizedLayout = memoizeWithKey(
         </button>
       </div>
 
-      <div class="w-full h-full overflow-auto" #viewport
+      <div class="w-full overflow-auto" style="max-height: 600px" #viewport
         (wheel)="onWheel($event)"
         (mousedown)="onPanStart($event)"
         (mousemove)="onPanMove($event)"
         (mouseup)="onPanEnd()"
         (mouseleave)="onPanEnd()">
+        <div [style.minHeight.px]="600">
         <svg [attr.width]="svgWidth() * zoomLevel()" [attr.height]="svgHeight() * zoomLevel()" [attr.viewBox]="'0 0 ' + svgWidth() + ' ' + svgHeight()" class="block">
           @for (edge of edges(); track edge.from + '-' + edge.to) {
             <line
@@ -190,6 +190,7 @@ const memoizedLayout = memoizeWithKey(
             <text x="400" y="200" text-anchor="middle" class="text-sm fill-gray-400">Kazanım bulunmuyor</text>
           }
         </svg>
+        </div>
       </div>
     </div>
   `
