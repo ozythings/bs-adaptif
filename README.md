@@ -70,8 +70,8 @@ npm test             # testleri çalıştır (Vitest)
 | `/grading` | Notlandırma listesi (filtre) | Eğitmen |
 | `/grading/rubrics` | Rubrik yönetimi | Eğitmen |
 | `/grading/:attemptId` | Notlandırma detay (rubrik grader) | Eğitmen |
-| `/student/:id/analytics` | Öğrenci analitiği (başarım, trend) | Eğitmen, Gözlemci, Program Yöneticisi |
-| `/participant/:id/edit` | Profil düzenleme | Yönetici, Eğitmen |
+| `/student/:id/analytics` | Öğrenci analitiği (başarım, trend) | Eğitmen, Öğrenci, Gözlemci, Program Yöneticisi, Ölçme Uzmanı |
+| `/participant/:id` | Profil görüntüleme | Yönetici, Eğitmen, Öğrenci, Program Yöneticisi, Gözlemci |
 | `/item-analysis` | Madde analizi (zorluk, ayırt edicilik) | Ölçme Uzmanı |
 | `/audit-log` | Denetim kaydı | Platform Yöneticisi |
 | `/my-plan` | Adaptif çalışma planı | Öğrenci |
@@ -139,12 +139,12 @@ C = Create, R = Read, U = Update, D = Delete
 | Kazanım | 16 |
 | Blueprint | 7 |
 | Cohort | 3 |
-| Kayıt | 16 |
-| Sınav Denemesi | 12 |
+| Kayıt | 17 |
+| Sınav Denemesi | ~21 |
 | İçerik | 11 |
 | Rubrik | 2 |
 
-Seed veri `src/app/core/data/seed-specs/` altında tanımlanır. `SNAPSHOT_VERSION = 10` ile localStorage'da versiyonlanır. `/switch-role` > "Verileri Sıfırla" tüm veriyi seed'e döndürür.
+Seed veri `src/app/core/data/seed-specs/` altında tanımlanır. `SNAPSHOT_VERSION = 13` ile localStorage'da versiyonlanır. `/switch-role` > "Verileri Sıfırla" tüm veriyi seed'e döndürür.
 
 ## Mimari
 
