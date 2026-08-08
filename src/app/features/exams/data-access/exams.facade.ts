@@ -8,8 +8,10 @@ import { CurrentUserService } from '@core/auth/current-user.service';
 import { PermissionService } from '@core/auth/permission.service';
 import { DataScopeService } from '@core/auth/data-scope.service';
 import { EntityStore } from '@core/state/entity.store';
+import { StorageService } from '@core/storage/storage.service';
 import { SessionFacade } from '../../exam-session/data-access/session.facade';
 import { COURSES_SEED, ATTEMPTS_SEED, ENROLLMENTS_SEED } from '@core/data';
+import { Attempt } from '@core/models/attempt.model';
 import { Exam } from '@core/models/exam.model';
 import { ExamBlueprint } from '@core/models/exam-blueprint.model';
 import { AuditAction, ExamStatus, ResultStatus, UserRole, EnrollmentStatus, BlueprintStatus } from '@core/models/enums';
@@ -47,8 +49,15 @@ export class ExamsFacade {
   private permission = inject(PermissionService);
   private dataScope = inject(DataScopeService);
   private store = inject(EntityStore);
+  private storage = inject(StorageService);
   private sessionFacade = inject(SessionFacade);
   private router = inject(Router);
+
+  private readonly ATTEMPTS_KEY = 'grading_attempts';
+
+  private getAttempts(): Attempt[] {
+    return this.storage.get<Attempt[]>(this.ATTEMPTS_KEY) ?? ATTEMPTS_SEED;
+  }
 
   getExams(filter: ExamFilter): Observable<{ items: ExamListItem[]; total: number }> {
     this.sessionFacade.expireOverdueSessions();
@@ -69,11 +78,12 @@ export class ExamsFacade {
       exams = exams.filter(e => enrolledIds.includes(e.courseId));
     }
 
+    const allAttempts = this.getAttempts();
     let items = exams.map(exam => {
-        const completedAttempt = ATTEMPTS_SEED.find(
+        const completedAttempt = allAttempts.find(
           a => a.examId === exam.id && a.studentId === studentId && a.status === ResultStatus.FINALIZED
         );
-        const submittedAttempt = ATTEMPTS_SEED.find(
+        const submittedAttempt = allAttempts.find(
           a => a.examId === exam.id && a.studentId === studentId && a.status === ResultStatus.DRAFT
         );
         return {
@@ -141,7 +151,7 @@ export class ExamsFacade {
 
     const userId = this.currentUser.getUser().id;
     const studentId = this.currentUser.getUser().studentId ?? userId;
-    const completedAttempt = ATTEMPTS_SEED.find(
+    const completedAttempt = this.getAttempts().find(
       a => a.examId === examId && a.studentId === studentId
         && (a.status === ResultStatus.FINALIZED || a.status === ResultStatus.DRAFT)
     );
