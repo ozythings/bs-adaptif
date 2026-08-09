@@ -1,6 +1,6 @@
 import { Component,  inject,  signal,  computed,  OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -30,7 +30,7 @@ interface ItemAnalysisDisplay extends ItemAnalysis {
 @Component({
   selector: 'app-item-analysis',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatButtonModule, MatIconModule, MatCardModule, MatProgressSpinnerModule, MatTableModule, MatPaginatorModule, MatFormFieldModule, MatSelectModule, MatInputModule, MatTooltipModule, ErrorStateComponent],
+  imports: [CommonModule, MatButtonModule, MatIconModule, MatCardModule, MatProgressSpinnerModule, MatTableModule, MatPaginatorModule, MatFormFieldModule, MatSelectModule, MatInputModule, MatTooltipModule, ErrorStateComponent],
   template: `
     <div class="space-y-4">
       <div class="flex items-center justify-between">
@@ -99,7 +99,7 @@ interface ItemAnalysisDisplay extends ItemAnalysis {
 
         <mat-form-field appearance="outline" class="w-full">
           <mat-label>Soru Ara</mat-label>
-          <input matInput [(ngModel)]="searchText" (ngModelChange)="onSearch()" placeholder="Soru metni veya ID ile ara...">
+          <input matInput [value]="searchText()" (input)="onSearchInput($event)" placeholder="Soru metni veya ID ile ara...">
           <mat-icon matSuffix>search</mat-icon>
         </mat-form-field>
         </div>
@@ -244,7 +244,7 @@ export class ItemAnalysisPage implements OnInit {
   error = signal<string | null>(null);
   selectedExamId = signal(0);
   difficultyFilter = signal('');
-  searchText = '';
+  searchText = signal('');
   pageSize = signal(6);
   pageIndex = signal(0);
 
@@ -294,7 +294,7 @@ export class ItemAnalysisPage implements OnInit {
     } else if (diff === 'hard') {
       items = items.filter(i => i.difficultyIndex < 0.4);
     }
-    const s = this.searchText.toLowerCase();
+    const s = this.searchText().toLowerCase();
     if (s) {
       items = items.filter(i =>
         i.questionId.toString().includes(s) ||
@@ -337,7 +337,7 @@ export class ItemAnalysisPage implements OnInit {
     const qp = this.route.snapshot.queryParamMap;
     if (qp.get('exam')) this.selectedExamId.set(Number(qp.get('exam')));
     if (qp.get('difficulty')) this.difficultyFilter.set(qp.get('difficulty')!);
-    if (qp.get('search')) this.searchText = qp.get('search')!;
+    if (qp.get('search')) this.searchText.set(qp.get('search')!);
     if (qp.get('page')) this.pageIndex.set(Number(qp.get('page')));
     if (qp.get('pageSize')) this.pageSize.set(Number(qp.get('pageSize')));
     this.loadData();
@@ -375,7 +375,8 @@ export class ItemAnalysisPage implements OnInit {
     this.syncUrl();
   }
 
-  onSearch(): void {
+  onSearchInput(event: Event): void {
+    this.searchText.set((event.target as HTMLInputElement).value);
     this.pageIndex.set(0);
     this.syncUrl();
   }
@@ -390,7 +391,7 @@ export class ItemAnalysisPage implements OnInit {
     const params: Record<string, any> = {};
     if (this.selectedExamId() !== 0) params['exam'] = this.selectedExamId();
     if (this.difficultyFilter()) params['difficulty'] = this.difficultyFilter();
-    if (this.searchText) params['search'] = this.searchText;
+    if (this.searchText()) params['search'] = this.searchText();
     if (this.pageIndex() > 0) params['page'] = this.pageIndex();
     if (this.pageSize() !== 6) params['pageSize'] = this.pageSize();
     this.router.navigate([], { queryParams: params, replaceUrl: true });
