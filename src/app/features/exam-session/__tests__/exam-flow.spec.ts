@@ -76,7 +76,7 @@ describe('ExamSession Flow (integration)', () => {
     expect(facade.connectionStatus()).toBe('online');
   });
 
-  it('should default to saved save status', () => {
-    expect(facade.saveStatus()).toBe('saved');
+  it('should default to idle save status', () => {
+    expect(facade.saveStatus()).toBe('idle');
   });
 });
