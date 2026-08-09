@@ -1,6 +1,7 @@
 import { MockApiService } from './core/api/mock-api.service';
 import { CurrentUserService } from './core/auth/current-user.service';
 import { DataScopeService } from './core/auth/data-scope.service';
+import { PermissionService } from './core/auth/permission.service';
 import { SessionService } from './core/auth/session.service';
 import { AuditService } from './core/observability/audit.service';
 import { NotificationService } from './core/observability/notification.service';
@@ -29,6 +30,7 @@ export const APP_SERVICES = [
   MockApiService,
   CurrentUserService,
   DataScopeService,
+  PermissionService,
   SessionService,
   AuditService,
   NotificationService,

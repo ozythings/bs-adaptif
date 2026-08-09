@@ -1,9 +1,8 @@
-import { Injectable, inject } from '@angular/core';
+import { inject } from '@angular/core';
 import { CurrentUserService, ROLE_HIERARCHY } from '@core/auth/current-user.service';
 import { UserRole } from '@core/models/enums';
 import { ROLE_PERMISSIONS, ROLE_LABELS } from '@core/auth/permission-constants';
 
-@Injectable({ providedIn: 'root' })
 export class PermissionService {
   private currentUser = inject(CurrentUserService);
 

@@ -1,6 +1,3 @@
-import { Injectable } from '@angular/core';
-
-@Injectable({ providedIn: 'root' })
 export class StorageService {
   private readonly STORAGE_PREFIX = 'bs_adaptif_';
   private isBrowser = typeof localStorage !== 'undefined';
