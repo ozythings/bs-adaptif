@@ -17,6 +17,7 @@ export class DraftStore {
   private merging = false;
 
   readonly version = signal(0);
+  readonly isOffline = signal(false);
   readonly remoteUpdates = signal<Array<{ sessionId: number; questionId: number; answer: string }>>([]);
 
   constructor() {
@@ -28,7 +29,7 @@ export class DraftStore {
     this.inner.set(map);
 
     effect(() => {
-      if (this.merging) return;
+      if (this.merging || this.isOffline()) return;
       const snapshot = [...this.inner().values()];
       this.storage.set(DRAFT_STORAGE_KEY, snapshot);
     });
@@ -91,6 +92,11 @@ export class DraftStore {
     if (changed) {
       this.inner.set(map);
     }
+  }
+
+  flushPending(): void {
+    const snapshot = [...this.inner().values()];
+    this.storage.set(DRAFT_STORAGE_KEY, snapshot);
   }
 
   private mergeRemoteDrafts(remote: AnswerDraft[]): void {

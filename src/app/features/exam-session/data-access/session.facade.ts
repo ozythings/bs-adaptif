@@ -58,14 +58,18 @@ export class SessionFacade {
   private setupNetworkListeners(): void {
     window.addEventListener('online', () => {
       this.connectionStatus.set('online');
+      this.draftStore.isOffline.set(false);
+      this.draftStore.flushPending();
       this.syncQueuedAnswers();
     });
     window.addEventListener('offline', () => {
       this.connectionStatus.set('offline');
       this.saveStatus.set('offline');
+      this.draftStore.isOffline.set(true);
     });
     if (!navigator.onLine) {
       this.connectionStatus.set('offline');
+      this.draftStore.isOffline.set(true);
     }
   }
 
@@ -400,6 +404,7 @@ export class SessionFacade {
   simulateOffline(): void {
     this.connectionStatus.set('offline');
     this.saveStatus.set('offline');
+    this.draftStore.isOffline.set(true);
     const qId = this.activeSession()?.questionOrder[this.currentQuestionIndex()];
     if (qId != null) this.setQuestionSaveStatus(qId, 'offline');
   }
@@ -407,6 +412,8 @@ export class SessionFacade {
   simulateOnline(): void {
     this.connectionStatus.set('online');
     this.saveStatus.set('saved');
+    this.draftStore.isOffline.set(false);
+    this.draftStore.flushPending();
     const qId = this.activeSession()?.questionOrder[this.currentQuestionIndex()];
     if (qId != null) this.setQuestionSaveStatus(qId, 'saved');
     this.syncQueuedAnswers();
