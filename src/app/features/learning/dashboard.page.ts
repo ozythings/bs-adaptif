@@ -395,34 +395,6 @@ import type { StudentDashboardData } from '../student-dashboard/student-dashboar
           </div>
         }
 
-        <!-- Mastery Heatmap -->
-        @if (isStudent()) {
-        <div class="grid grid-cols-1 gap-6">
-          <mat-card appearance="outlined" class="p-5">
-            <div class="flex items-center justify-between mb-4">
-              <button type="button" class="flex items-center gap-2 text-left" (click)="expandedHeatmap.set(!expandedHeatmap())">
-                <mat-icon class="text-gray-500 text-sm transition-transform" [style.transform]="expandedHeatmap() ? 'rotate(90deg)' : 'none'">chevron_right</mat-icon>
-                <h2 class="text-lg font-semibold text-gray-900">Kazanım Haritası</h2>
-              </button>
-              <select
-                [value]="selectedCourseId()"
-                (change)="onHeatmapCourseChange(+($any($event.target).value))"
-                class="border border-gray-300 rounded-md px-2 py-1 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-teal-500">
-                <option value="0">Tümü</option>
-                @for (c of heatmapCourses(); track c.courseId) {
-                  <option [value]="c.courseId">{{ c.courseTitle }}</option>
-                }
-              </select>
-            </div>
-            @if (expandedHeatmap()) {
-            <app-mastery-heatmap
-              [scores]="filteredMasteryScores()"
-              [outcomes]="filteredOutcomes()" />
-            }
-          </mat-card>
-        </div>
-        }
-
         <!-- Active Sessions (tüm öğrenciler - eğitmen/yönetici) -->
         @if (!isStudent()) {
           <mat-card appearance="outlined" class="p-5">
