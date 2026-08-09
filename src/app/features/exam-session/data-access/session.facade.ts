@@ -43,9 +43,11 @@ export class SessionFacade {
       if (updates.length === 0) return;
       for (const u of updates) {
         const session = this.sessions().find(s => s.id === u.sessionId);
-        const idx = session?.questionOrder.indexOf(u.questionId) ?? -1;
+        if (!session) continue;
+        const idx = session.questionOrder.indexOf(u.questionId);
         const num = idx >= 0 ? idx + 1 : '?';
         this.notification.show(`Soru ${num} cevabı güncellendi`, 'info', 3000);
+        this.setQuestionSaveStatus(u.questionId, 'saved');
       }
       this.draftStore.remoteUpdates.set([]);
     });

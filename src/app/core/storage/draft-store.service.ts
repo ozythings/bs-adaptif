@@ -103,10 +103,14 @@ export class DraftStore {
       const existing = map.get(key);
       if (!existing) {
         map.set(key, remoteDraft);
-        updated.push({ sessionId: remoteDraft.sessionId, questionId: remoteDraft.questionId, answer: remoteDraft.answer });
+        if (remoteDraft.answer) {
+          updated.push({ sessionId: remoteDraft.sessionId, questionId: remoteDraft.questionId, answer: remoteDraft.answer });
+        }
       } else if (remoteDraft.version > existing.version) {
         map.set(key, remoteDraft);
-        updated.push({ sessionId: remoteDraft.sessionId, questionId: remoteDraft.questionId, answer: remoteDraft.answer });
+        if (remoteDraft.answer) {
+          updated.push({ sessionId: remoteDraft.sessionId, questionId: remoteDraft.questionId, answer: remoteDraft.answer });
+        }
       }
     }
 
