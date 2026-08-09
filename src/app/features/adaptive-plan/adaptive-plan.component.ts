@@ -53,7 +53,7 @@ import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/s
         <app-error-state [title]="'Veri Yüklenemedi'" [message]="err" [retryable]="true" (retry)="loadData()" />
       } @else if (d(); as info) {
         <!-- KPI Cards -->
-        <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <app-kpi-card
             borderClass="border-emerald-500" iconBgClass="bg-emerald-100" iconColorClass="text-emerald-600"
             icon="psychology" label="Genel Başarım" [value]="info.overallMastery + '%'"
@@ -66,10 +66,6 @@ import type { StudentDashboardData, ScheduledTask } from '../student-dashboard/s
             borderClass="border-purple-500" iconBgClass="bg-purple-100" iconColorClass="text-purple-600"
             icon="schedule" label="Planlanan Çalışma" [value]="info.studyHours.toFixed(1) + ' saat'"
             [clickable]="true" [expanded]="expandedKpi() === 'tasks'" (click)="toggleDetail('tasks')" />
-          <app-kpi-card
-            borderClass="border-orange-500" iconBgClass="bg-orange-100" iconColorClass="text-orange-600"
-            icon="quiz" label="Yaklaşan Sınav" [value]="info.upcomingExams.length"
-            [clickable]="true" [expanded]="expandedKpi() === 'exams'" (click)="toggleDetail('exams')" />
         </div>
 
         <!-- KPI Expand Detail Panel -->
