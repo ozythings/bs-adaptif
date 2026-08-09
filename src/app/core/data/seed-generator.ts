@@ -353,6 +353,10 @@ export function generateSeeds() {
     { id: 100, examId: 5, sessionToken: 'sess_102_ghi789', studentId: 5, startedAt: '2026-08-06T09:00:00Z', submittedAt: '2026-08-06T09:40:00Z', status: ResultStatus.FINALIZED, questionResponses: Q1, totalScore: 5, maxScore: 10, scorePercentage: 50, gradingCompletedAt: '2026-08-06T09:45:00Z', version: 1, createdAt: '2026-08-06T09:00:00Z', updatedAt: '2026-08-06T09:45:00Z' },
     { id: 101, examId: 4, sessionToken: 'sess_101_def456', studentId: 3, startedAt: '2026-08-05T14:00:00Z', submittedAt: '2026-08-05T14:40:00Z', status: ResultStatus.FINALIZED, questionResponses: Q2, totalScore: 20, maxScore: 30, scorePercentage: 66.67, gradingCompletedAt: '2026-08-05T14:45:00Z', version: 1, createdAt: '2026-08-05T14:00:00Z', updatedAt: '2026-08-05T14:45:00Z' },
     { id: 102, examId: 3, sessionToken: 'sess_100_abc123', studentId: 4, startedAt: '2026-08-06T10:00:00Z', submittedAt: '2026-08-06T10:30:00Z', status: ResultStatus.FINALIZED, questionResponses: Q3, totalScore: 15, maxScore: 15, scorePercentage: 100, gradingCompletedAt: '2026-08-06T10:35:00Z', version: 1, createdAt: '2026-08-06T10:00:00Z', updatedAt: '2026-08-06T10:35:00Z' },
+    { id: 109, examId: 3, sessionToken: 'sess_109_zeynep01', studentId: 2, startedAt: '2026-08-13T09:00:00Z', submittedAt: '2026-08-13T09:30:00Z', status: ResultStatus.FINALIZED, questionResponses: [
+      { questionId: 8, answer: '0', isCorrect: true, autoScore: 10, maxScore: 10 },
+      { questionId: 9, answer: '1', isCorrect: false, autoScore: 0, maxScore: 5 },
+    ], totalScore: 10, maxScore: 15, scorePercentage: 66.67, gradingCompletedAt: '2026-08-13T09:35:00Z', version: 1, createdAt: '2026-08-13T09:00:00Z', updatedAt: '2026-08-13T09:35:00Z' },
     { id: 103, examId: 6, sessionToken: 'sess_104_mno345', studentId: 7, startedAt: '2026-08-04T13:00:00Z', submittedAt: '2026-08-04T13:50:00Z', status: ResultStatus.FINALIZED, questionResponses: [
       { questionId: 16, answer: '0', isCorrect: true, autoScore: 5, maxScore: 5 },
       { questionId: 17, answer: '0', isCorrect: true, autoScore: 10, maxScore: 10 },
