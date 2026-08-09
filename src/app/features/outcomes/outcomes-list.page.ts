@@ -342,6 +342,12 @@ export class OutcomesListPage implements OnInit {
 
   openNewForm(): void {
     this.editingOutcomeId.set(null);
+    const codeControl = this.form.get('code');
+    if (codeControl) {
+      codeControl.clearAsyncValidators();
+      codeControl.setAsyncValidators([uniqueCodeValidator(this.facade.outcomes().map(o => o.code))]);
+      codeControl.updateValueAndValidity();
+    }
     this.form.reset({ courseId: 1, level: OutcomeLevel.REMEMBER, isActive: true, status: OutcomeStatus.ACTIVE, prerequisiteIds: [], sortOrder: 0 });
     this.showForm.set(true);
   }
@@ -354,6 +360,15 @@ export class OutcomesListPage implements OnInit {
   onEdit(outcome: LearningOutcome): void {
     this.editingOutcomeId.set(outcome.id);
     this.showForm.set(true);
+    const codeControl = this.form.get('code');
+    if (codeControl) {
+      codeControl.clearAsyncValidators();
+      codeControl.setAsyncValidators([uniqueCodeValidator(
+        this.facade.outcomes().map(o => o.code).filter(c => c !== outcome.code),
+        outcome.code
+      )]);
+      codeControl.updateValueAndValidity();
+    }
     this.form.patchValue({
       code: outcome.code,
       name: outcome.name,

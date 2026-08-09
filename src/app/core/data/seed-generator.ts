@@ -369,6 +369,23 @@ export function generateSeeds() {
       { questionId: 22, answer: '', isCorrect: false, autoScore: 0, maxScore: 5 },
       { questionId: 23, answer: '1', isCorrect: false, autoScore: 0, maxScore: 10 },
     ], totalScore: 15, maxScore: 30, scorePercentage: 50, version: 1, createdAt: '2026-08-06T09:00:00Z', updatedAt: '2026-08-06T09:00:00Z' },
+    // 2026 Güz Grubu — Tolga Erdoğan (11), İrem Kılıç (12), Serkan Yılmaz (13)
+    { id: 106, examId: 5, sessionToken: 'sess_106_tolga01', studentId: 11, startedAt: '2026-08-10T09:00:00Z', submittedAt: '2026-08-10T09:35:00Z', status: ResultStatus.FINALIZED, questionResponses: [
+      { questionId: 14, answer: '0', isCorrect: true, autoScore: 5, maxScore: 5 },
+      { questionId: 15, answer: '0', isCorrect: true, autoScore: 5, maxScore: 5 },
+    ], totalScore: 10, maxScore: 10, scorePercentage: 100, gradingCompletedAt: '2026-08-10T09:40:00Z', version: 1, createdAt: '2026-08-10T09:00:00Z', updatedAt: '2026-08-10T09:40:00Z' },
+    { id: 107, examId: 6, sessionToken: 'sess_107_irem01', studentId: 12, startedAt: '2026-08-11T10:00:00Z', submittedAt: '2026-08-11T10:55:00Z', status: ResultStatus.FINALIZED, questionResponses: [
+      { questionId: 16, answer: '0', isCorrect: true, autoScore: 5, maxScore: 5 },
+      { questionId: 17, answer: '1', isCorrect: false, autoScore: 0, maxScore: 10 },
+      { questionId: 18, answer: '0', isCorrect: true, autoScore: 5, maxScore: 5 },
+      { questionId: 19, answer: '0', isCorrect: true, autoScore: 10, maxScore: 10 },
+    ], totalScore: 20, maxScore: 30, scorePercentage: 66.67, gradingCompletedAt: '2026-08-11T11:00:00Z', version: 1, createdAt: '2026-08-11T10:00:00Z', updatedAt: '2026-08-11T11:00:00Z' },
+    { id: 108, examId: 7, sessionToken: 'sess_108_serkan01', studentId: 13, startedAt: '2026-08-12T14:00:00Z', submittedAt: '2026-08-12T14:40:00Z', status: ResultStatus.FINALIZED, questionResponses: [
+      { questionId: 20, answer: '0', isCorrect: true, autoScore: 10, maxScore: 10 },
+      { questionId: 21, answer: '0', isCorrect: true, autoScore: 5, maxScore: 5 },
+      { questionId: 22, answer: '1', isCorrect: false, autoScore: 0, maxScore: 5 },
+      { questionId: 23, answer: '1', isCorrect: false, autoScore: 0, maxScore: 10 },
+    ], totalScore: 15, maxScore: 30, scorePercentage: 50, gradingCompletedAt: '2026-08-12T14:45:00Z', version: 1, createdAt: '2026-08-12T14:00:00Z', updatedAt: '2026-08-12T14:45:00Z' },
   ];
 
   // mastery — lastAssessedAt around 05/08/26
@@ -384,6 +401,11 @@ export function generateSeeds() {
     { id: 108, studentId: 5, outcomeId: 109, masteryLevel: MasteryLevel.PROFICIENT, score: 85, recentAnswers: [1, 1, 0, 1], difficultyWeightedAverage: 0.82, difficultyBreakdown: breakdownFor(85), repeatCount: 1, lastAssessedAt: '2026-06-15T10:00:00Z', calculatedAt: '2026-06-15T10:00:00Z', history: historyFor(85, '2026-06-15T10:00:00Z'), version: 1, createdAt: '2026-06-15T10:00:00Z', updatedAt: '2026-06-15T10:00:00Z' },
     { id: 109, studentId: 5, outcomeId: 110, masteryLevel: MasteryLevel.EMERGING, score: 45, recentAnswers: [0, 1, 0], difficultyWeightedAverage: 0.4, difficultyBreakdown: breakdownFor(45), repeatCount: 2, lastAssessedAt: '2026-06-20T10:00:00Z', calculatedAt: '2026-06-20T10:00:00Z', history: historyFor(45, '2026-06-20T10:00:00Z'), version: 1, createdAt: '2026-06-20T10:00:00Z', updatedAt: '2026-06-20T10:00:00Z' },
     { id: 110, studentId: 7, outcomeId: 114, masteryLevel: MasteryLevel.PROFICIENT, score: 72, recentAnswers: [1, 1, 0, 1], difficultyWeightedAverage: 0.7, difficultyBreakdown: breakdownFor(72), repeatCount: 2, lastAssessedAt: '2026-08-05T10:00:00Z', calculatedAt: '2026-08-05T10:00:00Z', history: historyFor(72, '2026-08-05T10:00:00Z'), version: 1, createdAt: '2026-08-05T10:00:00Z', updatedAt: '2026-08-05T10:00:00Z' },
+    { id: 111, studentId: 11, outcomeId: 114, masteryLevel: MasteryLevel.PROFICIENT, score: 74, recentAnswers: [1, 1, 0, 1], difficultyWeightedAverage: 0.71, difficultyBreakdown: breakdownFor(74), repeatCount: 2, lastAssessedAt: '2026-08-10T10:00:00Z', calculatedAt: '2026-08-10T10:00:00Z', history: historyFor(74, '2026-08-10T10:00:00Z'), version: 1, createdAt: '2026-08-10T10:00:00Z', updatedAt: '2026-08-10T10:00:00Z' },
+    { id: 112, studentId: 11, outcomeId: 115, masteryLevel: MasteryLevel.EMERGING, score: 52, recentAnswers: [1, 0, 0, 1], difficultyWeightedAverage: 0.48, difficultyBreakdown: breakdownFor(52), repeatCount: 3, lastAssessedAt: '2026-08-12T10:00:00Z', calculatedAt: '2026-08-12T10:00:00Z', history: historyFor(52, '2026-08-12T10:00:00Z'), version: 1, createdAt: '2026-08-12T10:00:00Z', updatedAt: '2026-08-12T10:00:00Z' },
+    { id: 113, studentId: 12, outcomeId: 111, masteryLevel: MasteryLevel.ADVANCED, score: 88, recentAnswers: [1, 1, 1, 1, 0], difficultyWeightedAverage: 0.85, difficultyBreakdown: breakdownFor(88), repeatCount: 1, lastAssessedAt: '2026-08-11T10:00:00Z', calculatedAt: '2026-08-11T10:00:00Z', history: historyFor(88, '2026-08-11T10:00:00Z'), version: 1, createdAt: '2026-08-11T10:00:00Z', updatedAt: '2026-08-11T10:00:00Z' },
+    { id: 114, studentId: 12, outcomeId: 112, masteryLevel: MasteryLevel.PROFICIENT, score: 67, recentAnswers: [1, 0, 1, 1], difficultyWeightedAverage: 0.64, difficultyBreakdown: breakdownFor(67), repeatCount: 2, lastAssessedAt: '2026-08-13T10:00:00Z', calculatedAt: '2026-08-13T10:00:00Z', history: historyFor(67, '2026-08-13T10:00:00Z'), version: 1, createdAt: '2026-08-13T10:00:00Z', updatedAt: '2026-08-13T10:00:00Z' },
+    { id: 115, studentId: 13, outcomeId: 113, masteryLevel: MasteryLevel.EMERGING, score: 46, recentAnswers: [0, 1, 0, 1], difficultyWeightedAverage: 0.42, difficultyBreakdown: breakdownFor(46), repeatCount: 2, lastAssessedAt: '2026-08-14T10:00:00Z', calculatedAt: '2026-08-14T10:00:00Z', history: historyFor(46, '2026-08-14T10:00:00Z'), version: 1, createdAt: '2026-08-14T10:00:00Z', updatedAt: '2026-08-14T10:00:00Z' },
   ];
 
   // generated: masteries for enrolled students with forced weak distribution
